@@ -5,7 +5,8 @@
   "scripts": {
     "backup": "node scripts/export-backup.mjs",
     "seed": "node scripts/seed-data.mjs",
-    "digest": "node scripts/send-digest.mjs"
+    "digest": "node scripts/send-digest.mjs",
+    "bump-version": "node scripts/bump-cache-version.mjs"
   },
   "dependencies": {
     "firebase-admin": "^12.6.0"

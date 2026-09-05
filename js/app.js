@@ -1,4 +1,4 @@
-import { isFirebaseConfigured, auth } from "./firebase-init.js";
+import { isFirebaseConfigured, auth } from "./firebase-init.js?v=1788583805172";
 import {
   watchAuthState,
   signInWithPassword,
@@ -6,7 +6,7 @@ import {
   sendEmailLink,
   completeEmailLinkSignInIfPresent,
   signOutUser,
-} from "./auth.js";
+} from "./auth.js?v=1788583805172";
 import {
   startSync,
   stopSync,
@@ -22,12 +22,12 @@ import {
   deleteItem,
   markComplete,
   unmarkComplete,
-} from "./data.js";
-import { renderCalendar } from "./calendar-view.js";
-import { renderList } from "./list-view.js";
-import { describeRecurrence, toISODate } from "./recurrence.js";
-import { colorFor } from "./colors.js";
-import { githubRepoSlug } from "./firebase-config.js";
+} from "./data.js?v=1788583805172";
+import { renderCalendar } from "./calendar-view.js?v=1788583805172";
+import { renderList } from "./list-view.js?v=1788583805172";
+import { describeRecurrence, toISODate } from "./recurrence.js?v=1788583805172";
+import { colorFor } from "./colors.js?v=1788583805172";
+import { githubRepoSlug } from "./firebase-config.js?v=1788583805172";
 
 const DEFAULT_CATEGORIES = [
   "Payroll",

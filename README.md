@@ -48,6 +48,15 @@ Authentication + Cloud Firestore. A GitHub Actions workflow backs up the databas
    "Deploy from a branch", branch `main`, folder `/ (root)`. Save.
 3. GitHub will give you a URL like `https://yourusername.github.io/client-compliance-tracker/`.
 
+**GitHub Pages caches every file for up to 10 minutes per CDN edge, independent of anyone's
+browser cache.** Deploying a change to `index.html`, anything in `css/`, or anything in `js/`
+without accounting for this can mean visitors silently keep running old code for a while after a
+push -- confusing since it looks identical to a real bug. Run `npm run bump-version` before
+committing any such change; it stamps every internal `<script>`/`<link>` reference and
+`import ... from "./x.js"` with the same fresh `?v=<timestamp>`, forcing a real fetch on the next
+deploy instead of relying on a stale cached copy. (It only touches local file references --
+CDN-hosted imports like the Firebase SDK are untouched.)
+
 ### 1c. Authorize the GitHub Pages domain in Firebase
 
 This step is easy to miss and causes sign-in to silently fail:
@@ -263,6 +272,7 @@ firebase.json                  Points the Firebase CLI at firestore.rules
 scripts/export-backup.mjs      Used by the GitHub Actions backup workflow
 scripts/seed-data.mjs          One-time sample data seeder
 scripts/send-digest.mjs        Used by the GitHub Actions digest workflow
+scripts/bump-cache-version.mjs Cache-busts index.html/js/css references (see below)
 .github/workflows/backup.yml   Daily + manual backup workflow
 .github/workflows/digest.yml   Daily overdue/due-this-week email digest
 backups/                       JSON snapshots land here
