@@ -3,12 +3,12 @@
 // This config is safe to expose in client-side code -- it is NOT a secret. Access control is enforced by Firestore
 // Security Rules (see firestore.rules), not by hiding this object.
 export const firebaseConfig = {
-  apiKey: "REPLACE_WITH_API_KEY",
-  authDomain: "REPLACE_WITH_PROJECT_ID.firebaseapp.com",
-  projectId: "REPLACE_WITH_PROJECT_ID",
-  storageBucket: "REPLACE_WITH_PROJECT_ID.appspot.com",
-  messagingSenderId: "REPLACE_WITH_SENDER_ID",
-  appId: "REPLACE_WITH_APP_ID",
+  apiKey: "AIzaSyBEjJhGnhJlm0UuZ_SDd93F_h-0Fp8i7_k",
+  authDomain: "client-compliance-tracker.firebaseapp.com",
+  projectId: "client-compliance-tracker",
+  storageBucket: "client-compliance-tracker.firebasestorage.app",
+  messagingSenderId: "736199739850",
+  appId: "1:736199739850:web:df72a22f5f17821e90a733",
 };
 
 // Set automatically to false until the placeholders above are filled in, so the app can show a
