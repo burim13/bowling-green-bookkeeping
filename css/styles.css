@@ -182,3 +182,12 @@ label { display: block; margin-bottom: 0.75rem; font-size: 0.9rem; color: var(--
 .category-list li { display: flex; justify-content: space-between; align-items: center; padding: 0.3rem 0; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
 
 #add-category-form { display: flex; gap: 0.5rem; }
+
+.bulk-clients-section { margin-bottom: 0.75rem; }
+.bulk-clients-header { display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.4rem; }
+.bulk-select-all-label { display: flex; align-items: center; gap: 0.35rem; font-size: 0.85rem; color: var(--text-muted); }
+.bulk-select-all-label input { width: auto; }
+.bulk-clients-list { max-height: 220px; overflow-y: auto; border: 1px solid var(--border); border-radius: 6px; padding: 0.4rem 0.6rem; }
+.bulk-client-row { display: flex; align-items: center; gap: 0.5rem; padding: 0.3rem 0; font-size: 0.9rem; cursor: pointer; }
+.bulk-client-row input { width: auto; }
+.bulk-excluded-note { font-size: 0.8rem; color: var(--text-muted); padding-top: 0.4rem; }

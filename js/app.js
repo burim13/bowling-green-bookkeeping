@@ -1,4 +1,4 @@
-import { isFirebaseConfigured, auth } from "./firebase-init.js?v=1788583805172";
+import { isFirebaseConfigured, auth } from "./firebase-init.js?v=1788584085195";
 import {
   watchAuthState,
   signInWithPassword,
@@ -6,7 +6,7 @@ import {
   sendEmailLink,
   completeEmailLinkSignInIfPresent,
   signOutUser,
-} from "./auth.js?v=1788583805172";
+} from "./auth.js?v=1788584085195";
 import {
   startSync,
   stopSync,
@@ -22,12 +22,12 @@ import {
   deleteItem,
   markComplete,
   unmarkComplete,
-} from "./data.js?v=1788583805172";
-import { renderCalendar } from "./calendar-view.js?v=1788583805172";
-import { renderList } from "./list-view.js?v=1788583805172";
-import { describeRecurrence, toISODate } from "./recurrence.js?v=1788583805172";
-import { colorFor } from "./colors.js?v=1788583805172";
-import { githubRepoSlug } from "./firebase-config.js?v=1788583805172";
+} from "./data.js?v=1788584085195";
+import { renderCalendar } from "./calendar-view.js?v=1788584085195";
+import { renderList } from "./list-view.js?v=1788584085195";
+import { describeRecurrence, toISODate } from "./recurrence.js?v=1788584085195";
+import { colorFor } from "./colors.js?v=1788584085195";
+import { githubRepoSlug } from "./firebase-config.js?v=1788584085195";
 
 const DEFAULT_CATEGORIES = [
   "Payroll",
@@ -189,6 +189,7 @@ function wireToolbar() {
 
   qs("add-client-btn").addEventListener("click", () => openClientModal());
   qs("manage-categories-btn").addEventListener("click", () => openCategoriesModal());
+  qs("bulk-add-item-btn").addEventListener("click", () => openBulkAddItemModal());
   qs("export-btn").addEventListener("click", openExportInfo);
   qs("modal-backdrop").addEventListener("click", (e) => {
     if (e.target.id === "modal-backdrop") closeModal();
@@ -441,13 +442,7 @@ function openItemModal(clientId, itemId) {
 
     const label = customLabel || category;
     const normalizedLabel = label.trim().toLowerCase();
-    const isDuplicate = [...latestState.items.values()].some(
-      (existing) =>
-        existing.clientId === clientId &&
-        existing.id !== itemId &&
-        (existing.customLabel || existing.category).trim().toLowerCase() === normalizedLabel
-    );
-    if (isDuplicate) {
+    if (labelAlreadyOnClient(clientId, normalizedLabel, itemId)) {
       const errorEl = qs("item-form-error");
       errorEl.textContent = `${client.name} already has an item called "${label}". Edit the existing one instead of adding a duplicate.`;
       errorEl.hidden = false;
@@ -484,6 +479,166 @@ function openItemModal(clientId, itemId) {
       }
     });
   }
+  qs("modal-content").querySelector('[data-action="cancel"]').addEventListener("click", closeModal);
+}
+
+function labelAlreadyOnClient(clientId, normalizedLabel, excludeItemId) {
+  return [...latestState.items.values()].some(
+    (existing) =>
+      existing.clientId === clientId &&
+      existing.id !== excludeItemId &&
+      (existing.customLabel || existing.category).trim().toLowerCase() === normalizedLabel
+  );
+}
+
+function openBulkAddItemModal() {
+  const categories = latestState.categories;
+
+  openModal(`
+    <h2>Add item to multiple clients</h2>
+    <div id="bulk-form-error" class="auth-error" hidden></div>
+    <form id="bulk-item-form">
+      <label>Category<br/>
+        <select id="bulk-category">
+          ${categories.map((c) => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join("")}
+          <option value="__custom__">Custom…</option>
+        </select>
+      </label>
+      <label id="bulk-custom-label-wrap" hidden>
+        Custom label<br/><input type="text" id="bulk-custom-label" />
+      </label>
+      <label>Start date<br/><input type="date" id="bulk-start-date" required value="${toISODate(new Date())}" /></label>
+      <label>Recurrence<br/>
+        <select id="bulk-recurrence-type">
+          <option value="monthly">Monthly</option>
+          <option value="quarterly">Quarterly</option>
+          <option value="annually">Annually</option>
+          <option value="custom">Custom (every N months)</option>
+        </select>
+      </label>
+      <label id="bulk-interval-wrap" hidden>
+        Every N months<br/><input type="number" id="bulk-interval" min="1" value="1" />
+      </label>
+      <label>Day of month (optional, defaults to start date's day)<br/>
+        <input type="number" id="bulk-day-of-month" min="1" max="31" />
+      </label>
+
+      <div class="bulk-clients-section">
+        <div class="bulk-clients-header">
+          <span>Add to which clients?</span>
+          <label class="bulk-select-all-label"><input type="checkbox" id="bulk-select-all" /> Select all</label>
+        </div>
+        <div id="bulk-clients-list" class="bulk-clients-list"></div>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="btn" data-action="cancel">Cancel</button>
+        <button type="submit" class="btn btn-primary" id="bulk-submit-btn">Add to clients</button>
+      </div>
+    </form>
+  `);
+
+  function currentLabel() {
+    const categorySelect = qs("bulk-category").value;
+    return categorySelect === "__custom__" ? qs("bulk-custom-label").value.trim() : categorySelect;
+  }
+
+  function renderClientChecklist() {
+    const label = currentLabel();
+    const normalizedLabel = label.trim().toLowerCase();
+    const allClients = [...latestState.clients.values()].sort((a, b) => a.name.localeCompare(b.name));
+    const eligible = allClients.filter((c) => !normalizedLabel || !labelAlreadyOnClient(c.id, normalizedLabel));
+    const excludedCount = allClients.length - eligible.length;
+
+    const listEl = qs("bulk-clients-list");
+    if (allClients.length === 0) {
+      listEl.innerHTML = `<div class="empty-hint">No clients yet. Add a client first.</div>`;
+    } else if (eligible.length === 0) {
+      listEl.innerHTML = `<div class="empty-hint">Every client already has an item called "${escapeHtml(label)}".</div>`;
+    } else {
+      const excludedNote =
+        excludedCount > 0
+          ? `<div class="bulk-excluded-note">${excludedCount} client${excludedCount === 1 ? "" : "s"} already ${excludedCount === 1 ? "has" : "have"} this item and ${excludedCount === 1 ? "isn't" : "aren't"} shown.</div>`
+          : "";
+      listEl.innerHTML =
+        eligible
+          .map(
+            (c) => `
+        <label class="bulk-client-row">
+          <input type="checkbox" class="bulk-client-checkbox" value="${c.id}" />
+          <span class="client-dot" style="background:${colorFor(c.id)}"></span>
+          ${escapeHtml(c.name)}
+        </label>`
+          )
+          .join("") + excludedNote;
+    }
+    qs("bulk-select-all").checked = false;
+  }
+
+  qs("bulk-category").addEventListener("change", (e) => {
+    qs("bulk-custom-label-wrap").hidden = e.target.value !== "__custom__";
+    renderClientChecklist();
+  });
+  qs("bulk-recurrence-type").addEventListener("change", (e) => {
+    qs("bulk-interval-wrap").hidden = e.target.value !== "custom";
+  });
+  qs("bulk-custom-label-wrap").addEventListener("input", renderClientChecklist);
+  qs("bulk-select-all").addEventListener("change", (e) => {
+    qs("bulk-clients-list")
+      .querySelectorAll(".bulk-client-checkbox")
+      .forEach((cb) => (cb.checked = e.target.checked));
+  });
+
+  renderClientChecklist();
+
+  qs("bulk-item-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const categorySelect = qs("bulk-category").value;
+    const isCustomCategory = categorySelect === "__custom__";
+    const customLabel = isCustomCategory ? qs("bulk-custom-label").value.trim() : null;
+    const category = isCustomCategory ? customLabel : categorySelect;
+    const startDate = qs("bulk-start-date").value;
+    const recurrenceType = qs("bulk-recurrence-type").value;
+    const recurrenceInterval = recurrenceType === "custom" ? Number(qs("bulk-interval").value) || 1 : null;
+    const dayOfMonthRaw = qs("bulk-day-of-month").value;
+    const recurrenceDayOfMonth = dayOfMonthRaw ? Number(dayOfMonthRaw) : null;
+
+    if (!category || !startDate) return;
+
+    const selectedClientIds = [...qs("bulk-clients-list").querySelectorAll(".bulk-client-checkbox:checked")].map(
+      (cb) => cb.value
+    );
+    if (selectedClientIds.length === 0) {
+      const errorEl = qs("bulk-form-error");
+      errorEl.textContent = "Select at least one client.";
+      errorEl.hidden = false;
+      return;
+    }
+
+    const itemData = {
+      category,
+      customLabel,
+      startDate,
+      recurrenceType,
+      recurrenceInterval,
+      recurrenceDayOfMonth,
+      recurrenceCustomRule: null,
+    };
+
+    const submitBtn = qs("bulk-submit-btn");
+    submitBtn.disabled = true;
+    try {
+      for (const clientId of selectedClientIds) {
+        await addItem(clientId, itemData);
+      }
+      closeModal();
+    } catch (err) {
+      alert("Could not add item to every selected client: " + err.message);
+    } finally {
+      submitBtn.disabled = false;
+    }
+  });
+
   qs("modal-content").querySelector('[data-action="cancel"]').addEventListener("click", closeModal);
 }
 

@@ -1,5 +1,5 @@
-import { getOccurrenceInMonth, describeRecurrence } from "./recurrence.js?v=1788583805172";
-import { colorFor } from "./colors.js?v=1788583805172";
+import { getOccurrenceInMonth, describeRecurrence } from "./recurrence.js?v=1788584085195";
+import { colorFor } from "./colors.js?v=1788584085195";
 
 function isDone(state, itemId, periodKey) {
   const forItem = state.completions.get(itemId);
