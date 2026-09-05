@@ -1,0 +1,12 @@
+{
+  "name": "client-compliance-tracker-backup-tools",
+  "private": true,
+  "description": "Node scripts used by the GitHub Actions backup workflow and one-time seeding. The front end itself has no build step and does not depend on this package.",
+  "scripts": {
+    "backup": "node scripts/export-backup.mjs",
+    "seed": "node scripts/seed-data.mjs"
+  },
+  "dependencies": {
+    "firebase-admin": "^12.6.0"
+  }
+}

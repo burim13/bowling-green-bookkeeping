@@ -1,0 +1,11 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // v1: every signed-in user (owner + any staff added later) has full read/write access.
+    // The users/{uid}.role field is stored for future use but not enforced here yet —
+    // tightening this to admin/staff-specific rules later does not require a data migration.
+    match /{document=**} {
+      allow read, write: if request.auth != null;
+    }
+  }
+}

@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Client Compliance Tracker</title>
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+
+  <div id="config-warning" hidden>
+    <div class="config-warning-box">
+      <h1>Firebase isn't configured yet</h1>
+      <p>Edit <code>js/firebase-config.js</code> and paste in your Firebase project's web app config
+      (Firebase Console → Project settings → General → Your apps). See <code>README.md</code> for the
+      full setup walkthrough.</p>
+    </div>
+  </div>
+
+  <div id="auth-screen">
+    <div class="auth-box">
+      <h1>Client Compliance Tracker</h1>
+
+      <div id="auth-error" class="auth-error" hidden></div>
+
+      <form id="password-signin-form">
+        <label>Email<br/><input type="email" id="auth-email" required autocomplete="email" /></label>
+        <label>Password<br/><input type="password" id="auth-password" required autocomplete="current-password" /></label>
+        <div class="auth-actions">
+          <button type="submit" class="btn btn-primary">Sign in</button>
+          <button type="button" id="password-register-btn" class="btn">Create account</button>
+        </div>
+      </form>
+
+      <p class="auth-divider">or sign in without a password</p>
+
+      <form id="email-link-form">
+        <label>Email<br/><input type="email" id="auth-email-link" required autocomplete="email" /></label>
+        <button type="submit" class="btn">Email me a sign-in link</button>
+        <p id="email-link-status" class="auth-status"></p>
+      </form>
+    </div>
+  </div>
+
+  <div id="app-shell" hidden>
+    <header class="app-header">
+      <h1>Client Compliance Tracker</h1>
+      <div class="header-right">
+        <span id="save-status" class="save-status"></span>
+        <span id="user-email" class="user-email"></span>
+        <button id="sign-out-btn" class="btn btn-ghost">Sign out</button>
+      </div>
+    </header>
+
+    <div class="toolbar">
+      <div class="view-toggle">
+        <button id="view-toggle-calendar" class="btn view-toggle-btn">Calendar</button>
+        <button id="view-toggle-list" class="btn view-toggle-btn">List</button>
+      </div>
+      <div id="list-filter-wrap" class="list-filter-wrap" hidden>
+        <label>Client filter <select id="list-filter-client"></select></label>
+      </div>
+      <div class="toolbar-spacer"></div>
+      <button id="manage-categories-btn" class="btn">Manage categories</button>
+      <button id="export-btn" class="btn">Export to GitHub</button>
+      <button id="add-client-btn" class="btn btn-primary">Add client</button>
+    </div>
+
+    <div class="app-body">
+      <aside class="sidebar">
+        <h2>Clients</h2>
+        <div id="client-list"></div>
+      </aside>
+      <main id="view-container" class="view-container"></main>
+    </div>
+  </div>
+
+  <div id="modal-backdrop" class="modal-backdrop" hidden>
+    <div id="modal-content" class="modal-content"></div>
+  </div>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
