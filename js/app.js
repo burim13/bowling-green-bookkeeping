@@ -1,11 +1,11 @@
-import { isFirebaseConfigured, auth } from "./firebase-init.js?v=1788589624746";
+import { isFirebaseConfigured, auth } from "./firebase-init.js?v=1788630123479";
 import {
   watchAuthState,
   signInWithPassword,
   sendEmailLink,
   completeEmailLinkSignInIfPresent,
   signOutUser,
-} from "./auth.js?v=1788589624746";
+} from "./auth.js?v=1788630123479";
 import {
   startSync,
   stopSync,
@@ -23,13 +23,13 @@ import {
   markComplete,
   unmarkComplete,
   isFullyLoaded,
-} from "./data.js?v=1788589624746";
-import { renderCalendar } from "./calendar-view.js?v=1788589624746";
-import { renderList } from "./list-view.js?v=1788589624746";
-import { describeRecurrence, describeRecurrenceHistory, getLastDueOccurrence, toISODate } from "./recurrence.js?v=1788589624746";
-import { colorFor } from "./colors.js?v=1788589624746";
-import { githubRepoSlug } from "./firebase-config.js?v=1788589624746";
-import { iconEdit, iconTrash, iconPlus, iconPlusLarge, iconCheck } from "./icons.js?v=1788589624746";
+} from "./data.js?v=1788630123479";
+import { renderCalendar } from "./calendar-view.js?v=1788630123479";
+import { renderList } from "./list-view.js?v=1788630123479";
+import { describeRecurrence, describeRecurrenceHistory, getLastDueOccurrence, toISODate } from "./recurrence.js?v=1788630123479";
+import { colorFor } from "./colors.js?v=1788630123479";
+import { githubRepoSlug } from "./firebase-config.js?v=1788630123479";
+import { iconEdit, iconTrash, iconPlus, iconPlusLarge, iconCheck, iconTag, iconUpload, iconLogout } from "./icons.js?v=1788630123479";
 
 const DEFAULT_CATEGORIES = [
   "Payroll",
@@ -91,6 +91,12 @@ function init() {
     els.authScreen.hidden = true;
     return;
   }
+
+  // Icon + label markup so these can collapse to icon-only on narrow screens (see .btn-header
+  // in styles.css) without duplicating the icon set into static HTML.
+  qs("manage-categories-btn").innerHTML = `<span class="btn-header-icon">${iconTag}</span><span class="btn-header-label">Manage categories</span>`;
+  qs("export-btn").innerHTML = `<span class="btn-header-icon">${iconUpload}</span><span class="btn-header-label">Export to GitHub</span>`;
+  qs("sign-out-btn").innerHTML = `<span class="btn-header-icon">${iconLogout}</span><span class="btn-header-label">Sign out</span>`;
 
   wireAuthForms();
   wireToolbar();
