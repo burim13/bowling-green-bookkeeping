@@ -95,6 +95,28 @@ npm run seed
 This adds two sample clients ("Riverside Coffee Roasters LLC" and "Harper & Vance Consulting
 Inc.") with a handful of items. Delete them from the UI whenever you're ready for real data.
 
+### 1f. Set up the daily digest email
+
+A separate workflow ([`.github/workflows/digest.yml`](.github/workflows/digest.yml)) emails a
+summary of overdue items + anything due in the next 7 days, once a day. It's skipped automatically
+on days with nothing to report. It uses [Resend](https://resend.com) to send mail:
+
+1. Sign up at https://resend.com (free tier: 3,000 emails/month, no credit card).
+2. In the Resend dashboard, go to **API Keys -> Create API Key**. Copy the key (starts with `re_`).
+3. Add two more GitHub Actions secrets (same place as step 1d: repo **Settings -> Secrets and
+   variables -> Actions**):
+   - `RESEND_API_KEY` -- the key from step 2.
+   - `DIGEST_TO_EMAIL` -- the email address that should receive the digest (e.g. your own).
+
+That's it -- no domain verification needed. The digest sends from Resend's shared
+`onboarding@resend.dev` address, which works for any recipient without extra setup. If you'd
+rather send from your own domain later, verify it in Resend's dashboard and set a
+`DIGEST_FROM_EMAIL` secret (e.g. `"Client Compliance Tracker <alerts@yourdomain.com>"`) -- the
+workflow already reads that variable if it's present.
+
+The default schedule is 13:00 UTC (~8am US Central). To change the time, edit the `cron` line in
+`.github/workflows/digest.yml`. You can also trigger it manually any time from the **Actions** tab.
+
 ---
 
 ## 2. Adding a staff login later
@@ -231,12 +253,14 @@ firestore.rules                Security rules (deploy via console or Firebase CL
 firebase.json                  Points the Firebase CLI at firestore.rules
 scripts/export-backup.mjs      Used by the GitHub Actions backup workflow
 scripts/seed-data.mjs          One-time sample data seeder
+scripts/send-digest.mjs        Used by the GitHub Actions digest workflow
 .github/workflows/backup.yml   Daily + manual backup workflow
+.github/workflows/digest.yml   Daily overdue/due-this-week email digest
 backups/                       JSON snapshots land here
 ```
 
 ## 8. Non-goals for v1
 
-- No email/SMS/push notifications or reminders.
+- No SMS/push notifications (email digest only -- see section 1f).
 - No fine-grained roles/permissions yet (see "Roles" above).
 - No storage of sensitive PII, account numbers, or dollar figures.
