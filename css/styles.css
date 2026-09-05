@@ -141,6 +141,7 @@ label { display: block; margin-bottom: 0.75rem; font-size: 0.9rem; color: var(--
 .cal-cell-dots { display: flex; flex-wrap: wrap; gap: 3px; align-items: center; }
 .cal-dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
 .cal-dot-done { opacity: 0.35; }
+.cal-dot-overdue { box-shadow: 0 0 0 2px var(--danger); }
 .cal-more { font-size: 0.7rem; color: var(--text-muted); }
 
 /* ---- list view ---- */
@@ -159,6 +160,10 @@ label { display: block; margin-bottom: 0.75rem; font-size: 0.9rem; color: var(--
 .list-row-recurrence { color: var(--text-muted); font-size: 0.8rem; }
 .list-row-completed-by { color: var(--text-muted); font-size: 0.8rem; }
 .list-empty { color: var(--text-muted); }
+
+.list-group-header-overdue { color: var(--danger); }
+.list-row-overdue { border-color: var(--danger); background: #fdf1f0; }
+.list-row-overdue-tag { color: var(--danger); font-size: 0.8rem; font-weight: 600; }
 
 /* ---- modal ---- */
 .modal-backdrop {

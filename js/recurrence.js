@@ -87,6 +87,33 @@ export function getOccurrencesInRange(item, rangeStart, rangeEnd) {
   return occurrences;
 }
 
+// Returns the most recent occurrence of `item` whose date is on or before `referenceDate`
+// (typically "today"), or null if the recurrence hasn't started yet. Used to check whether an
+// item is overdue without walking its entire history -- only the current outstanding period
+// matters, not every period ever missed.
+export function getLastDueOccurrence(item, referenceDate) {
+  const start = parseISODate(item.startDate);
+  const startYear = start.getFullYear();
+  const startMonth = start.getMonth();
+
+  const diff = (referenceDate.getFullYear() - startYear) * 12 + (referenceDate.getMonth() - startMonth);
+  if (diff < 0) return null;
+
+  const n = intervalMonths(item);
+  let k = Math.floor(diff / n) * n;
+
+  while (k >= 0) {
+    const totalMonths = startMonth + k;
+    const year = startYear + Math.floor(totalMonths / 12);
+    const month = totalMonths % 12;
+    const occurrence = getOccurrenceInMonth(item, year, month);
+    if (occurrence && occurrence.date <= referenceDate) return occurrence;
+    k -= n;
+  }
+
+  return null;
+}
+
 export function describeRecurrence(item) {
   switch (item.recurrenceType) {
     case "monthly":

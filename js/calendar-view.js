@@ -31,6 +31,7 @@ export function renderCalendar(container, ctx) {
   const startWeekday = firstOfMonth.getDay();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const today = new Date();
+  const todayMidnight = new Date(today.getFullYear(), today.getMonth(), today.getDate());
   const isCurrentMonth = today.getFullYear() === year && today.getMonth() === month;
 
   const cells = [];
@@ -43,12 +44,14 @@ export function renderCalendar(container, ctx) {
       if (day === null) return `<div class="cal-cell cal-cell-empty"></div>`;
       const entries = dayBuckets.get(day) || [];
       const isToday = isCurrentMonth && today.getDate() === day;
+      const isPast = new Date(year, month, day) < todayMidnight;
       const dots = entries
         .slice(0, 4)
         .map(({ item, periodKey }) => {
           const color = colorMode === "category" ? colorFor(item.category) : colorFor(item.clientId);
           const done = isDone(state, item.id, periodKey);
-          return `<span class="cal-dot ${done ? "cal-dot-done" : ""}" style="background:${color}" title="${escapeAttr(labelFor(item, state))}"></span>`;
+          const overdue = isPast && !done;
+          return `<span class="cal-dot ${done ? "cal-dot-done" : ""} ${overdue ? "cal-dot-overdue" : ""}" style="background:${color}" title="${escapeAttr(labelFor(item, state))}"></span>`;
         })
         .join("");
       const more = entries.length > 4 ? `<span class="cal-more">+${entries.length - 4}</span>` : "";
