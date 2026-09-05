@@ -6,6 +6,15 @@
       "createdAt": "2026-09-05T03:31:12.651Z",
       "_subcollections": {
         "items": {
+          "fpi1QMfyQHRh421FjFcy": {
+            "recurrenceCustomRule": null,
+            "recurrenceInterval": null,
+            "startDate": "2026-09-03",
+            "recurrenceDayOfMonth": null,
+            "customLabel": null,
+            "recurrenceType": "monthly",
+            "category": "Payroll"
+          },
           "iZ4VvaAe6eHe9gwrXPCo": {
             "startDate": "2026-09-20",
             "recurrenceCustomRule": null,
