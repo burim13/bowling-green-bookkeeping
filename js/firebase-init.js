@@ -7,7 +7,7 @@ import {
   browserLocalPersistence,
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 import { getFirestore } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
-import { firebaseConfig, isFirebaseConfigured } from "./firebase-config.js?v=1788631428209";
+import { firebaseConfig, isFirebaseConfigured } from "./firebase-config.js?v=1788631798476";
 
 export { isFirebaseConfigured };
 
