@@ -1,5 +1,6 @@
-import { getOccurrencesInRange, getLastDueOccurrence, describeRecurrence, toISODate } from "./recurrence.js?v=1788584085195";
-import { colorFor } from "./colors.js?v=1788584085195";
+import { getOccurrencesInRange, getLastDueOccurrence, describeRecurrence, toISODate } from "./recurrence.js?v=1788584821572";
+import { colorFor } from "./colors.js?v=1788584821572";
+import { iconEdit } from "./icons.js?v=1788584821572";
 
 function completionFor(state, itemId, periodKey) {
   const forItem = state.completions.get(itemId);
@@ -103,6 +104,6 @@ function rowHtml({ item, periodKey, date }, state, today) {
         ${overdue ? `<span class="list-row-overdue-tag">${daysOverdue}d overdue</span>` : ""}
         ${completion ? `<span class="list-row-completed-by">done by ${completion.completedBy}</span>` : ""}
       </label>
-      <button class="icon-btn" data-action="edit-item" data-item-id="${item.id}" data-client-id="${item.clientId}" title="Edit or remove item">✎</button>
+      <button class="icon-btn" data-action="edit-item" data-item-id="${item.id}" data-client-id="${item.clientId}" title="Edit or remove item">${iconEdit}</button>
     </div>`;
 }

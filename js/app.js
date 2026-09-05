@@ -1,4 +1,4 @@
-import { isFirebaseConfigured, auth } from "./firebase-init.js?v=1788584085195";
+import { isFirebaseConfigured, auth } from "./firebase-init.js?v=1788584821572";
 import {
   watchAuthState,
   signInWithPassword,
@@ -6,7 +6,7 @@ import {
   sendEmailLink,
   completeEmailLinkSignInIfPresent,
   signOutUser,
-} from "./auth.js?v=1788584085195";
+} from "./auth.js?v=1788584821572";
 import {
   startSync,
   stopSync,
@@ -22,12 +22,14 @@ import {
   deleteItem,
   markComplete,
   unmarkComplete,
-} from "./data.js?v=1788584085195";
-import { renderCalendar } from "./calendar-view.js?v=1788584085195";
-import { renderList } from "./list-view.js?v=1788584085195";
-import { describeRecurrence, toISODate } from "./recurrence.js?v=1788584085195";
-import { colorFor } from "./colors.js?v=1788584085195";
-import { githubRepoSlug } from "./firebase-config.js?v=1788584085195";
+  isFullyLoaded,
+} from "./data.js?v=1788584821572";
+import { renderCalendar } from "./calendar-view.js?v=1788584821572";
+import { renderList } from "./list-view.js?v=1788584821572";
+import { describeRecurrence, toISODate } from "./recurrence.js?v=1788584821572";
+import { colorFor } from "./colors.js?v=1788584821572";
+import { githubRepoSlug } from "./firebase-config.js?v=1788584821572";
+import { iconEdit, iconTrash, iconPlus } from "./icons.js?v=1788584821572";
 
 const DEFAULT_CATEGORIES = [
   "Payroll",
@@ -206,6 +208,10 @@ function setActiveView(view) {
 }
 
 function renderCurrentView() {
+  if (!isFullyLoaded()) {
+    els.viewContainer.innerHTML = `<div class="loading-hint"><span class="spinner"></span> Loading…</div>`;
+    return;
+  }
   if (viewState.view === "calendar") {
     renderCalendar(els.viewContainer, {
       state: latestState,
@@ -271,7 +277,9 @@ function renderClientList() {
   const clients = query ? allClients.filter((c) => c.name.toLowerCase().includes(query)) : allClients;
   const isAdmin = latestState.currentUserRole === "admin";
 
-  if (allClients.length === 0) {
+  if (!isFullyLoaded()) {
+    els.clientList.innerHTML = `<div class="loading-hint"><span class="spinner"></span> Loading…</div>`;
+  } else if (allClients.length === 0) {
     els.clientList.innerHTML = `<div class="empty-hint">No clients yet. Click "Add Client" above.</div>`;
   } else if (clients.length === 0) {
     els.clientList.innerHTML = `<div class="empty-hint">No clients match "${escapeHtml(viewState.clientSearch)}".</div>`;
@@ -283,9 +291,9 @@ function renderClientList() {
           <span class="client-dot" style="background:${colorFor(c.id)}"></span>
           <span class="client-name" data-action="filter">${c.name}</span>
           <span class="client-actions">
-            <button class="icon-btn" data-action="add-item" title="Add item">+</button>
-            <button class="icon-btn" data-action="edit" title="Edit client">✎</button>
-            ${isAdmin ? `<button class="icon-btn" data-action="delete" title="Delete client">🗑</button>` : ""}
+            <button class="icon-btn" data-action="add-item" title="Add item">${iconPlus}</button>
+            <button class="icon-btn" data-action="edit" title="Edit client">${iconEdit}</button>
+            ${isAdmin ? `<button class="icon-btn" data-action="delete" title="Delete client">${iconTrash}</button>` : ""}
           </span>
         </div>`
       )
@@ -683,7 +691,7 @@ function renderDayRows(container, entries) {
           <span class="list-row-label">${escapeHtml(label)}</span>
           <span class="list-row-recurrence">${describeRecurrence(item)}</span>
         </label>
-        <button class="icon-btn" data-action="edit-item" data-item-id="${item.id}" data-client-id="${item.clientId}" title="Edit or remove item">✎</button>
+        <button class="icon-btn" data-action="edit-item" data-item-id="${item.id}" data-client-id="${item.clientId}" title="Edit or remove item">${iconEdit}</button>
       </div>`;
     })
     .join("");

@@ -14,7 +14,7 @@ import {
   serverTimestamp,
   writeBatch,
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
-import { db, auth } from "./firebase-init.js?v=1788584085195";
+import { db, auth } from "./firebase-init.js?v=1788584821572";
 
 // ---- live store ----------------------------------------------------------
 
@@ -24,7 +24,14 @@ const state = {
   completions: new Map(), // itemId -> Map(periodKey -> { completedOn, completedBy })
   categories: [],
   currentUserRole: null, // "admin" | "staff" | null, for the signed-in user
+  // Whether each live listener has received its first snapshot yet -- lets the UI show a
+  // loading state instead of momentarily flashing "no clients yet" while data is still en route.
+  loaded: { clients: false, items: false, completions: false, categories: false },
 };
+
+export function isFullyLoaded() {
+  return Object.values(state.loaded).every(Boolean);
+}
 
 const dataListeners = new Set();
 const saveStatusListeners = new Set();
@@ -51,6 +58,10 @@ export function subscribeToSaveStatus(callback) {
 
 export function startSync() {
   stopSync();
+  state.loaded.clients = false;
+  state.loaded.items = false;
+  state.loaded.completions = false;
+  state.loaded.categories = false;
 
   unsubscribers.push(
     onSnapshot(
@@ -69,6 +80,7 @@ export function startSync() {
       (snap) => {
         state.clients.clear();
         snap.forEach((d) => state.clients.set(d.id, { id: d.id, ...d.data() }));
+        state.loaded.clients = true;
         notifyData();
       },
       (err) => setSaveStatus("error", err.message)
@@ -84,6 +96,7 @@ export function startSync() {
           const clientId = d.ref.parent.parent.id;
           state.items.set(d.id, { id: d.id, clientId, ...d.data() });
         });
+        state.loaded.items = true;
         notifyData();
       },
       (err) => setSaveStatus("error", err.message)
@@ -100,6 +113,7 @@ export function startSync() {
           if (!state.completions.has(itemId)) state.completions.set(itemId, new Map());
           state.completions.get(itemId).set(d.id, d.data());
         });
+        state.loaded.completions = true;
         notifyData();
       },
       (err) => setSaveStatus("error", err.message)
@@ -111,6 +125,7 @@ export function startSync() {
       doc(db, "settings", "categories"),
       (snap) => {
         state.categories = snap.exists() ? snap.data().names || [] : [];
+        state.loaded.categories = true;
         notifyData();
       },
       (err) => setSaveStatus("error", err.message)

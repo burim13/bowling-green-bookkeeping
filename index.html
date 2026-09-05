@@ -4,7 +4,9 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Client Compliance Tracker</title>
-  <link rel="stylesheet" href="css/styles.css?v=1788584085195" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" />
+  <link rel="stylesheet" href="css/styles.css?v=1788584821572" />
 </head>
 <body>
 
@@ -19,7 +21,10 @@
 
   <div id="auth-screen">
     <div class="auth-box">
-      <h1>Client Compliance Tracker</h1>
+      <div class="brand" style="margin-bottom: 1rem;">
+        <span class="brand-mark"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="14" height="13" rx="2"/><path d="M3 8h14"/><path d="M7 2.5v3"/><path d="M13 2.5v3"/><path d="m7 12 2 2 4-4"/></svg></span>
+        <h1 style="margin:0;">Client Compliance Tracker</h1>
+      </div>
 
       <div id="auth-error" class="auth-error" hidden></div>
 
@@ -44,7 +49,10 @@
 
   <div id="app-shell" hidden>
     <header class="app-header">
-      <h1>Client Compliance Tracker</h1>
+      <div class="brand">
+        <span class="brand-mark"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="14" height="13" rx="2"/><path d="M3 8h14"/><path d="M7 2.5v3"/><path d="M13 2.5v3"/><path d="m7 12 2 2 4-4"/></svg></span>
+        <h1>Client Compliance Tracker</h1>
+      </div>
       <div class="header-right">
         <span id="save-status" class="save-status"></span>
         <span id="user-email" class="user-email"></span>
@@ -81,6 +89,6 @@
     <div id="modal-content" class="modal-content"></div>
   </div>
 
-  <script type="module" src="js/app.js?v=1788584085195"></script>
+  <script type="module" src="js/app.js?v=1788584821572"></script>
 </body>
 </html>

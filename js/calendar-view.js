@@ -1,5 +1,6 @@
-import { getOccurrenceInMonth, describeRecurrence } from "./recurrence.js?v=1788584085195";
-import { colorFor } from "./colors.js?v=1788584085195";
+import { getOccurrenceInMonth, describeRecurrence } from "./recurrence.js?v=1788584821572";
+import { colorFor } from "./colors.js?v=1788584821572";
+import { iconChevronLeft, iconChevronRight } from "./icons.js?v=1788584821572";
 
 function isDone(state, itemId, periodKey) {
   const forItem = state.completions.get(itemId);
@@ -45,6 +46,8 @@ export function renderCalendar(container, ctx) {
       const entries = dayBuckets.get(day) || [];
       const isToday = isCurrentMonth && today.getDate() === day;
       const isPast = new Date(year, month, day) < todayMidnight;
+      const weekday = new Date(year, month, day).getDay();
+      const isWeekend = weekday === 0 || weekday === 6;
       const dots = entries
         .slice(0, 4)
         .map(({ item, periodKey }) => {
@@ -56,8 +59,8 @@ export function renderCalendar(container, ctx) {
         .join("");
       const more = entries.length > 4 ? `<span class="cal-more">+${entries.length - 4}</span>` : "";
       return `
-        <div class="cal-cell ${isToday ? "cal-cell-today" : ""}" data-day="${day}" role="button" tabindex="0">
-          <div class="cal-cell-num">${day}</div>
+        <div class="cal-cell ${isToday ? "cal-cell-today" : ""} ${isWeekend ? "cal-cell-weekend" : ""}" data-day="${day}" role="button" tabindex="0">
+          <div class="cal-cell-num">${day}${isToday ? '<span class="cal-today-badge">Today</span>' : ""}</div>
           <div class="cal-cell-dots">${dots}${more}</div>
         </div>`;
     })
@@ -65,9 +68,9 @@ export function renderCalendar(container, ctx) {
 
   container.innerHTML = `
     <div class="cal-header">
-      <button class="btn btn-ghost" data-action="prev" aria-label="Previous month">&larr;</button>
+      <button class="btn btn-ghost btn-icon" data-action="prev" aria-label="Previous month">${iconChevronLeft}</button>
       <div class="cal-title">${MONTH_NAMES[month]} ${year}</div>
-      <button class="btn btn-ghost" data-action="next" aria-label="Next month">&rarr;</button>
+      <button class="btn btn-ghost btn-icon" data-action="next" aria-label="Next month">${iconChevronRight}</button>
       <button class="btn btn-ghost" data-action="today">Today</button>
       <label class="cal-colormode">
         Color by
