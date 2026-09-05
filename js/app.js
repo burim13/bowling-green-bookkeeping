@@ -236,6 +236,7 @@ function renderCurrentView() {
       rangeStart,
       rangeEnd,
       onToggleComplete: handleToggleComplete,
+      onEditItem: (clientId, itemId) => openItemModal(clientId, itemId),
     });
   }
 }
@@ -519,15 +520,24 @@ function renderDayRows(container, entries) {
       const done = !!(forItem && forItem.has(periodKey));
       const label = item.customLabel || item.category;
       return `
-      <label class="list-row">
-        <input type="checkbox" data-item-id="${item.id}" data-client-id="${item.clientId}" data-period-key="${periodKey}" ${done ? "checked" : ""} />
-        <span class="list-row-dot" style="background:${colorFor(item.clientId)}"></span>
-        <span class="list-row-client">${escapeHtml(client ? client.name : "?")}</span>
-        <span class="list-row-label">${escapeHtml(label)}</span>
-        <span class="list-row-recurrence">${describeRecurrence(item)}</span>
-      </label>`;
+      <div class="list-row">
+        <label style="display:flex; align-items:center; gap:0.6rem; flex:1; cursor:pointer;">
+          <input type="checkbox" data-item-id="${item.id}" data-client-id="${item.clientId}" data-period-key="${periodKey}" ${done ? "checked" : ""} />
+          <span class="list-row-dot" style="background:${colorFor(item.clientId)}"></span>
+          <span class="list-row-client">${escapeHtml(client ? client.name : "?")}</span>
+          <span class="list-row-label">${escapeHtml(label)}</span>
+          <span class="list-row-recurrence">${describeRecurrence(item)}</span>
+        </label>
+        <button class="icon-btn" data-action="edit-item" data-item-id="${item.id}" data-client-id="${item.clientId}" title="Edit or remove item">✎</button>
+      </div>`;
     })
     .join("");
+
+  container.querySelectorAll('[data-action="edit-item"]').forEach((btn) => {
+    btn.addEventListener("click", () => {
+      openItemModal(btn.dataset.clientId, btn.dataset.itemId);
+    });
+  });
 
   container.querySelectorAll("input[type=checkbox]").forEach((el) => {
     el.addEventListener("change", () => {
