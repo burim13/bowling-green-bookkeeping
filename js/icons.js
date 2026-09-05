@@ -21,3 +21,14 @@ export const iconCheck = svg(`<path d="M4 10.5 8 14.5 16 5.5"/>`);
 // Larger badge-sized versions, for empty states.
 export const iconPlusLarge = svg(`<path d="M10 4.5v11"/><path d="M4.5 10h11"/>`, { size: 22 });
 export const iconCheckLarge = svg(`<path d="M4 10.5 8 14.5 16 5.5"/>`, { size: 22 });
+
+// Header action icons -- used with a text label that collapses to icon-only on narrow screens.
+export const iconTag = svg(
+  `<path d="M3 3h6.5L17 10.5 10.5 17 3 9.5V3z"/><circle cx="6.5" cy="6.5" r="1" fill="currentColor" stroke="none"/>`
+);
+export const iconUpload = svg(
+  `<path d="M10 13V4"/><path d="M6.5 7.5 10 4l3.5 3.5"/><path d="M4 13.5v1.5a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-1.5"/>`
+);
+export const iconLogout = svg(
+  `<path d="M8 4H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3"/><path d="M13 7l3 3-3 3"/><path d="M16 10H8"/>`
+);
