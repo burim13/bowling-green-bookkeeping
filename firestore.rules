@@ -5,16 +5,30 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    // The one costly (extra-read) check, so it's only used where it actually matters.
-    function isAdmin() {
+    // The real access-control boundary. Anyone can still technically create a Firebase Auth
+    // account (the free Spark plan has no built-in way to block that without Cloud Functions,
+    // which need the paid Blaze plan) -- but unless their email is in this list, every single
+    // read/write below is denied, so an unapproved account can't touch any real data.
+    //
+    // Manage this directly in the Firestore console: Data tab -> settings -> allowlist ->
+    // edit the `emails` array. IMPORTANT: this document must exist (with your own email in it)
+    // BEFORE you publish these rules, or you'll lock yourself out too -- see README.
+    function isApproved() {
       return isSignedIn() &&
+        request.auth.token.email in get(/databases/$(database)/documents/settings/allowlist).data.emails;
+    }
+
+    // The one extra-costly check (on top of isApproved's own lookup), so it's only used where
+    // it actually matters.
+    function isAdmin() {
+      return isApproved() &&
         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
     }
 
-    // Every signed-in user (owner + any staff) can read/write everything except one thing:
-    // deleting a client outright is admin-only, since it cascades and can't be undone.
+    // Every approved user (owner + any approved staff) can read/write everything except one
+    // thing: deleting a client outright is admin-only, since it cascades and can't be undone.
     match /clients/{clientId} {
-      allow read, create, update: if isSignedIn();
+      allow read, create, update: if isApproved();
       allow delete: if isAdmin();
     }
 
@@ -24,25 +38,25 @@ service cloud.firestore {
     // recursive {path=**} wildcard form does. (It still matches direct, non-group access
     // at the same path too, so this fully replaces a nested rule rather than adding to it.)
     match /{path=**}/items/{itemId} {
-      allow read, write: if isSignedIn();
+      allow read, write: if isApproved();
     }
     match /{path=**}/completions/{completionId} {
-      allow read, write: if isSignedIn();
+      allow read, write: if isApproved();
     }
 
     match /settings/{docId} {
-      allow read, write: if isSignedIn();
+      allow read, write: if isApproved();
     }
 
     // Users can read anyone's doc (nothing sensitive in it) and create/update only their OWN
     // doc -- and never through a change to their own `role`. role always starts as "staff" and
     // can only ever become "admin" via the Firebase console (which uses the Admin SDK and so
-    // bypasses these rules entirely). Without this, any signed-in user could self-promote to
+    // bypasses these rules entirely). Without this, any approved user could self-promote to
     // admin with a single client-side write and delete any client.
     match /users/{uid} {
-      allow read: if isSignedIn();
-      allow create: if isSignedIn() && request.auth.uid == uid && request.resource.data.role == 'staff';
-      allow update: if isSignedIn() && request.auth.uid == uid && request.resource.data.role == resource.data.role;
+      allow read: if isApproved();
+      allow create: if isApproved() && request.auth.uid == uid && request.resource.data.role == 'staff';
+      allow update: if isApproved() && request.auth.uid == uid && request.resource.data.role == resource.data.role;
     }
   }
 }

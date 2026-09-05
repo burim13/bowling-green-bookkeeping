@@ -1,12 +1,11 @@
-import { isFirebaseConfigured, auth } from "./firebase-init.js?v=1788586372168";
+import { isFirebaseConfigured, auth } from "./firebase-init.js?v=1788587161471";
 import {
   watchAuthState,
   signInWithPassword,
-  registerWithPassword,
   sendEmailLink,
   completeEmailLinkSignInIfPresent,
   signOutUser,
-} from "./auth.js?v=1788586372168";
+} from "./auth.js?v=1788587161471";
 import {
   startSync,
   stopSync,
@@ -23,13 +22,13 @@ import {
   markComplete,
   unmarkComplete,
   isFullyLoaded,
-} from "./data.js?v=1788586372168";
-import { renderCalendar } from "./calendar-view.js?v=1788586372168";
-import { renderList } from "./list-view.js?v=1788586372168";
-import { describeRecurrence, toISODate } from "./recurrence.js?v=1788586372168";
-import { colorFor } from "./colors.js?v=1788586372168";
-import { githubRepoSlug } from "./firebase-config.js?v=1788586372168";
-import { iconEdit, iconTrash, iconPlus, iconPlusLarge, iconCheck } from "./icons.js?v=1788586372168";
+} from "./data.js?v=1788587161471";
+import { renderCalendar } from "./calendar-view.js?v=1788587161471";
+import { renderList } from "./list-view.js?v=1788587161471";
+import { describeRecurrence, toISODate } from "./recurrence.js?v=1788587161471";
+import { colorFor } from "./colors.js?v=1788587161471";
+import { githubRepoSlug } from "./firebase-config.js?v=1788587161471";
+import { iconEdit, iconTrash, iconPlus, iconPlusLarge, iconCheck } from "./icons.js?v=1788587161471";
 
 const DEFAULT_CATEGORIES = [
   "Payroll",
@@ -143,21 +142,6 @@ function wireAuthForms() {
     const password = qs("auth-password").value;
     try {
       await signInWithPassword(email, password);
-    } catch (err) {
-      showAuthError(err.message);
-    }
-  });
-
-  qs("password-register-btn").addEventListener("click", async () => {
-    const email = qs("auth-email").value.trim();
-    const password = qs("auth-password").value;
-    if (!email || !password) {
-      showAuthError("Enter an email and password first, then click Create account.");
-      return;
-    }
-    if (!confirm(`Create a new login for ${email}?`)) return;
-    try {
-      await registerWithPassword(email, password);
     } catch (err) {
       showAuthError(err.message);
     }

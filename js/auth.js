@@ -1,14 +1,13 @@
 import {
   onAuthStateChanged,
   signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
   sendSignInLinkToEmail,
   signInWithEmailLink,
   isSignInWithEmailLink,
   signOut,
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 import { doc, setDoc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
-import { auth, db } from "./firebase-init.js?v=1788586372168";
+import { auth, db } from "./firebase-init.js?v=1788587161471";
 
 const EMAIL_LINK_STORAGE_KEY = "cct_email_for_signin";
 
@@ -18,13 +17,6 @@ export function watchAuthState(callback) {
 
 export async function signInWithPassword(email, password) {
   await signInWithEmailAndPassword(auth, email, password);
-  await ensureUserDoc();
-}
-
-// Used the very first time an account is created (owner today, staff later via the same flow
-// if you'd rather not add them from the Firebase console).
-export async function registerWithPassword(email, password) {
-  await createUserWithEmailAndPassword(auth, email, password);
   await ensureUserDoc();
 }
 

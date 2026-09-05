@@ -24,21 +24,27 @@ Authentication + Cloud Firestore. A GitHub Actions workflow backs up the databas
 3. In the left sidebar, go to **Build -> Firestore Database -> Create database**. Choose
    **Production mode** and any nearby region. (Production mode just means "start locked down" --
    we deploy our own rules below, so this is fine.)
-4. Deploy the security rules in [`firestore.rules`](firestore.rules):
+4. **Before deploying rules**, create the access allowlist -- skipping this locks everyone
+   (including you) out the moment the rules below go live:
+   - Firestore console -> **Data** tab -> **Start collection** -> collection ID `settings`.
+   - Document ID: `allowlist`. Add one field: `emails` (type **array**), with a single string
+     entry: your own email address, exactly as you'll sign in with (lowercase).
+   - Save.
+5. Deploy the security rules in [`firestore.rules`](firestore.rules):
    - Easiest path: in the Firestore console, open the **Rules** tab, paste in the contents of
      `firestore.rules` from this repo, and click **Publish**.
    - Or, if you have the Firebase CLI (`npm install -g firebase-tools`, then `firebase login` and
      `firebase use --add` to select this project once), run `firebase deploy --only firestore:rules`
      from this folder any time the rules file changes.
-5. Register a web app: **Project settings (gear icon) -> General -> Your apps -> Add app -> Web**
+6. Register a web app: **Project settings (gear icon) -> General -> Your apps -> Add app -> Web**
    (the `</>` icon). Give it any nickname. You do **not** need Firebase Hosting.
-6. Copy the `firebaseConfig` object it shows you (apiKey, authDomain, projectId, etc.) into
+7. Copy the `firebaseConfig` object it shows you (apiKey, authDomain, projectId, etc.) into
    [`js/firebase-config.js`](js/firebase-config.js), replacing the `REPLACE_WITH_...` placeholders.
    This config is public/safe to commit -- it is not a secret. Access control is enforced entirely
    by Firestore Security Rules, not by hiding this file.
-7. Create your own login: either use the app's own "Create account" button on the sign-in screen
-   once it's deployed (see below), or add yourself directly under **Authentication -> Users -> Add
-   user** in the console.
+8. Create your own login: **Authentication -> Users -> Add user** in the console, using the same
+   email you put in the allowlist above. (There's no self-service "Create account" button in the
+   app on purpose -- see "Restricting who can sign in" below.)
 
 ### 1b. Deploy to GitHub Pages
 
@@ -128,17 +134,27 @@ The default schedule is 13:00 UTC (~8am US Central). To change the time, edit th
 
 ---
 
-## 2. Adding a staff login later
+## 2. Restricting who can sign in
 
-No code changes needed. Either:
+This app has no public sign-up -- there's no "Create account" button, and every account is added
+by you, one at a time. Two things are checked before anyone can use the app for real:
 
-- **From the Firebase console:** Authentication -> Users -> Add user (set an email + temporary
-  password, tell them to change it, or send a password reset).
-- **From the app itself:** have the staff member open the site and use the "Create account"
-  button on the sign-in screen.
+1. **A Firebase Auth login exists for them** (Firebase Console -> **Authentication -> Users -> Add
+   user**, with an email + temporary password -- tell them to change it, or send a password reset).
+2. **Their email is in the allowlist** (Firestore console -> **Data** tab -> `settings` ->
+   `allowlist` -> the `emails` array -- add their address, exactly as they'll sign in with).
 
-Every signed-in user currently has full read/write access to all data (see "Roles" below) -- there
-is no invite-only gate beyond "has a login in this Firebase project."
+Both are needed. Someone with a login but no allowlist entry can reach the sign-in screen and even
+"successfully" sign in, but every read/write in the app fails immediately -- they'll see errors,
+not real data. Someone in the allowlist without a login can't sign in at all. This split exists
+because Firebase's free (Spark) plan has no built-in way to block self-service account creation
+outright (that needs a paid-tier "blocking function") -- so instead, the allowlist in
+[`firestore.rules`](firestore.rules) is the actual boundary that decides who can touch any data,
+regardless of how many Firebase Auth accounts happen to exist.
+
+To remove someone's access, delete their email from the `allowlist` array -- their login still
+exists in Firebase Auth, but every action in the app will fail for them from that point on. Delete
+the Auth user too (**Authentication -> Users**) if you want the login itself gone as well.
 
 ### Roles
 
