@@ -16,14 +16,18 @@ service cloud.firestore {
     match /clients/{clientId} {
       allow read, create, update: if isSignedIn();
       allow delete: if isAdmin();
+    }
 
-      match /items/{itemId} {
-        allow read, write: if isSignedIn();
-
-        match /completions/{completionId} {
-          allow read, write: if isSignedIn();
-        }
-      }
+    // The app loads items/completions across ALL clients at once via collectionGroup()
+    // queries, not just within one client's subcollection. A nested match under
+    // /clients/{id}/items/{id} does NOT authorize collection-group queries -- only this
+    // recursive {path=**} wildcard form does. (It still matches direct, non-group access
+    // at the same path too, so this fully replaces a nested rule rather than adding to it.)
+    match /{path=**}/items/{itemId} {
+      allow read, write: if isSignedIn();
+    }
+    match /{path=**}/completions/{completionId} {
+      allow read, write: if isSignedIn();
     }
 
     match /settings/{docId} {
