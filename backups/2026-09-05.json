@@ -1,0 +1,47 @@
+{
+  "clients": {
+    "Kee4UqQudIhJm2UIS4YL": {
+      "name": "Cafe Italia, LLC",
+      "notes": "",
+      "createdAt": "2026-09-05T03:31:12.651Z",
+      "_subcollections": {
+        "items": {
+          "iZ4VvaAe6eHe9gwrXPCo": {
+            "startDate": "2026-09-20",
+            "recurrenceCustomRule": null,
+            "category": "Sales Tax Filing",
+            "recurrenceInterval": null,
+            "recurrenceDayOfMonth": null,
+            "customLabel": null,
+            "recurrenceType": "monthly"
+          }
+        }
+      }
+    }
+  },
+  "settings": {
+    "categories": {
+      "names": [
+        "Payroll",
+        "Sales Tax Filing",
+        "Quarterly Estimated Taxes",
+        "1099-NEC / 1099-MISC Filing",
+        "W-2 / W-3 Filing",
+        "Annual Report / State Franchise Filing",
+        "Partnership Return (Form 1065)",
+        "Corporate Return (Form 1120/1120-S)",
+        "Personal Return (Form 1040)",
+        "Monthly Bookkeeping Reconciliation",
+        "BOI (Beneficial Ownership Information) Report",
+        "Extension Deadline"
+      ]
+    }
+  },
+  "users": {
+    "nbf70VXbl7Y5PAlHuolerIKfrom2": {
+      "role": "staff",
+      "displayName": "bmbkservices@gmail.com",
+      "createdAt": "2026-09-05T03:29:26.143Z"
+    }
+  }
+}
