@@ -6,7 +6,7 @@
   <title>Client Compliance Tracker</title>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" />
-  <link rel="stylesheet" href="css/styles.css?v=1788584821572" />
+  <link rel="stylesheet" href="css/styles.css?v=1788585457480" />
 </head>
 <body>
 
@@ -65,9 +65,13 @@
         <button id="view-toggle-calendar" class="btn view-toggle-btn">Calendar</button>
         <button id="view-toggle-list" class="btn view-toggle-btn">List</button>
       </div>
+      <div class="list-filter-wrap">
+        <label>Category <select id="filter-category"></select></label>
+      </div>
       <div id="list-filter-wrap" class="list-filter-wrap" hidden>
         <label>Client filter <select id="list-filter-client"></select></label>
       </div>
+      <button id="mark-all-complete-btn" class="btn" hidden>Mark all shown complete</button>
       <div class="toolbar-spacer"></div>
       <button id="manage-categories-btn" class="btn">Manage categories</button>
       <button id="export-btn" class="btn">Export to GitHub</button>
@@ -89,6 +93,6 @@
     <div id="modal-content" class="modal-content"></div>
   </div>
 
-  <script type="module" src="js/app.js?v=1788584821572"></script>
+  <script type="module" src="js/app.js?v=1788585457480"></script>
 </body>
 </html>

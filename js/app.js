@@ -1,4 +1,4 @@
-import { isFirebaseConfigured, auth } from "./firebase-init.js?v=1788584821572";
+import { isFirebaseConfigured, auth } from "./firebase-init.js?v=1788585457480";
 import {
   watchAuthState,
   signInWithPassword,
@@ -6,7 +6,7 @@ import {
   sendEmailLink,
   completeEmailLinkSignInIfPresent,
   signOutUser,
-} from "./auth.js?v=1788584821572";
+} from "./auth.js?v=1788585457480";
 import {
   startSync,
   stopSync,
@@ -23,13 +23,13 @@ import {
   markComplete,
   unmarkComplete,
   isFullyLoaded,
-} from "./data.js?v=1788584821572";
-import { renderCalendar } from "./calendar-view.js?v=1788584821572";
-import { renderList } from "./list-view.js?v=1788584821572";
-import { describeRecurrence, toISODate } from "./recurrence.js?v=1788584821572";
-import { colorFor } from "./colors.js?v=1788584821572";
-import { githubRepoSlug } from "./firebase-config.js?v=1788584821572";
-import { iconEdit, iconTrash, iconPlus } from "./icons.js?v=1788584821572";
+} from "./data.js?v=1788585457480";
+import { renderCalendar } from "./calendar-view.js?v=1788585457480";
+import { renderList } from "./list-view.js?v=1788585457480";
+import { describeRecurrence, toISODate } from "./recurrence.js?v=1788585457480";
+import { colorFor } from "./colors.js?v=1788585457480";
+import { githubRepoSlug } from "./firebase-config.js?v=1788585457480";
+import { iconEdit, iconTrash, iconPlus } from "./icons.js?v=1788585457480";
 
 const DEFAULT_CATEGORIES = [
   "Payroll",
@@ -60,8 +60,11 @@ let viewState = {
   month: new Date().getMonth(),
   colorMode: localStorage.getItem("cct_colormode") || "client",
   clientFilter: null,
+  categoryFilter: null,
   clientSearch: "",
 };
+
+let currentListRows = []; // rows currently rendered (unfiltered by completion) by the list view
 
 function qs(id) {
   return document.getElementById(id);
@@ -78,6 +81,8 @@ function init() {
   els.viewToggleCalendar = qs("view-toggle-calendar");
   els.viewToggleList = qs("view-toggle-list");
   els.listFilterClient = qs("list-filter-client");
+  els.filterCategory = qs("filter-category");
+  els.markAllCompleteBtn = qs("mark-all-complete-btn");
   els.userEmail = qs("user-email");
 
   if (!isFirebaseConfigured) {
@@ -108,6 +113,7 @@ function init() {
   subscribeToData((state) => {
     latestState = state;
     renderClientList();
+    renderCategoryFilterOptions();
     renderCurrentView();
   });
 
@@ -183,6 +189,11 @@ function wireToolbar() {
     viewState.clientFilter = e.target.value || null;
     renderCurrentView();
   });
+  els.filterCategory.addEventListener("change", (e) => {
+    viewState.categoryFilter = e.target.value || null;
+    renderCurrentView();
+  });
+  els.markAllCompleteBtn.addEventListener("click", handleMarkAllShownComplete);
 
   els.clientSearch.addEventListener("input", (e) => {
     viewState.clientSearch = e.target.value;
@@ -204,6 +215,7 @@ function setActiveView(view) {
   els.viewToggleCalendar.classList.toggle("active", view === "calendar");
   els.viewToggleList.classList.toggle("active", view === "list");
   qs("list-filter-wrap").hidden = view !== "list";
+  els.markAllCompleteBtn.hidden = view !== "list";
   renderCurrentView();
 }
 
@@ -219,6 +231,7 @@ function renderCurrentView() {
       month: viewState.month,
       colorMode: viewState.colorMode,
       clientFilter: viewState.clientFilter,
+      categoryFilter: viewState.categoryFilter,
       onPrev: () => shiftMonth(-1),
       onNext: () => shiftMonth(1),
       onToday: () => {
@@ -237,14 +250,34 @@ function renderCurrentView() {
   } else {
     const rangeStart = new Date(viewState.year, viewState.month - 1, 1);
     const rangeEnd = new Date(viewState.year, viewState.month + 4, 0);
-    renderList(els.viewContainer, {
+    currentListRows = renderList(els.viewContainer, {
       state: latestState,
       clientFilter: viewState.clientFilter,
+      categoryFilter: viewState.categoryFilter,
       rangeStart,
       rangeEnd,
       onToggleComplete: handleToggleComplete,
       onEditItem: (clientId, itemId) => openItemModal(clientId, itemId),
     });
+  }
+}
+
+async function handleMarkAllShownComplete() {
+  if (currentListRows.length === 0) {
+    alert("Nothing shown is left to mark complete.");
+    return;
+  }
+  if (!confirm(`Mark all ${currentListRows.length} shown item(s) as complete?`)) return;
+
+  els.markAllCompleteBtn.disabled = true;
+  try {
+    for (const { clientId, itemId, periodKey } of currentListRows) {
+      await markComplete(clientId, itemId, periodKey);
+    }
+  } catch (err) {
+    alert("Could not mark everything complete: " + err.message);
+  } finally {
+    els.markAllCompleteBtn.disabled = false;
   }
 }
 
@@ -316,6 +349,19 @@ function renderClientList() {
     row.querySelector('[data-action="edit"]').addEventListener("click", () => openClientModal(clientId));
     row.querySelector('[data-action="delete"]')?.addEventListener("click", () => confirmDeleteClient(clientId));
   });
+}
+
+function renderCategoryFilterOptions() {
+  // Union of the master category list plus any category actually in use (covers custom labels
+  // that were typed in rather than picked from the list) -- sorted for a stable dropdown order.
+  const inUse = new Set(latestState.categories);
+  for (const item of latestState.items.values()) inUse.add(item.category);
+  const options = [...inUse].sort((a, b) => a.localeCompare(b));
+
+  els.filterCategory.innerHTML =
+    `<option value="">All categories</option>` +
+    options.map((c) => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join("");
+  els.filterCategory.value = viewState.categoryFilter || "";
 }
 
 // ---- modals ------------------------------------------------------------

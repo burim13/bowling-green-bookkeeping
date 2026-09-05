@@ -1,6 +1,6 @@
-import { getOccurrenceInMonth, describeRecurrence } from "./recurrence.js?v=1788584821572";
-import { colorFor } from "./colors.js?v=1788584821572";
-import { iconChevronLeft, iconChevronRight } from "./icons.js?v=1788584821572";
+import { getOccurrenceInMonth, describeRecurrence } from "./recurrence.js?v=1788585457480";
+import { colorFor } from "./colors.js?v=1788585457480";
+import { iconChevronLeft, iconChevronRight } from "./icons.js?v=1788585457480";
 
 function isDone(state, itemId, periodKey) {
   const forItem = state.completions.get(itemId);
@@ -13,7 +13,7 @@ const MONTH_NAMES = [
 ];
 const WEEKDAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
-// ctx: { state, year, month, colorMode, clientFilter, onPrev, onNext, onToday, onDayClick, onColorModeChange }
+// ctx: { state, year, month, colorMode, clientFilter, categoryFilter, onPrev, onNext, onToday, onDayClick, onColorModeChange }
 export function renderCalendar(container, ctx) {
   const { state, year, month, colorMode } = ctx;
 
@@ -21,6 +21,7 @@ export function renderCalendar(container, ctx) {
   const dayBuckets = new Map(); // day -> [{item, periodKey}]
   for (const item of state.items.values()) {
     if (ctx.clientFilter && item.clientId !== ctx.clientFilter) continue;
+    if (ctx.categoryFilter && item.category !== ctx.categoryFilter) continue;
     const occ = getOccurrenceInMonth(item, year, month);
     if (!occ) continue;
     const day = occ.date.getDate();
