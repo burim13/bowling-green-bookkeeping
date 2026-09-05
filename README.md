@@ -133,9 +133,10 @@ is no invite-only gate beyond "has a login in this Firebase project."
 
 ### Roles
 
-Each user gets a `users/{uid}` document with a `role` field, either `"admin"` or `"staff"`. The
-very first person to ever sign in (when the `users` collection is empty) becomes `admin`
-automatically; everyone after that starts as `staff`.
+Each user gets a `users/{uid}` document with a `role` field, either `"admin"` or `"staff"`. Every
+new account starts as `staff` -- this is enforced in `firestore.rules` itself (new user docs are
+only accepted with `role: "staff"`), so a user can never grant themselves admin by signing up or
+by editing their own doc.
 
 The only thing role currently gates is **deleting a client outright** -- that's the one action
 that's irreversible and cascades (removes all its items and completion history), so it's

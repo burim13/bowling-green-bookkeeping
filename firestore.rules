@@ -34,8 +34,15 @@ service cloud.firestore {
       allow read, write: if isSignedIn();
     }
 
+    // Users can read anyone's doc (nothing sensitive in it) and create/update only their OWN
+    // doc -- and never through a change to their own `role`. role always starts as "staff" and
+    // can only ever become "admin" via the Firebase console (which uses the Admin SDK and so
+    // bypasses these rules entirely). Without this, any signed-in user could self-promote to
+    // admin with a single client-side write and delete any client.
     match /users/{uid} {
-      allow read, write: if isSignedIn();
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && request.auth.uid == uid && request.resource.data.role == 'staff';
+      allow update: if isSignedIn() && request.auth.uid == uid && request.resource.data.role == resource.data.role;
     }
   }
 }

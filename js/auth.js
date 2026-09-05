@@ -7,14 +7,7 @@ import {
   isSignInWithEmailLink,
   signOut,
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
-import {
-  doc,
-  setDoc,
-  getDoc,
-  getDocs,
-  collection,
-  serverTimestamp,
-} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+import { doc, setDoc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 import { auth, db } from "./firebase-init.js";
 
 const EMAIL_LINK_STORAGE_KEY = "cct_email_for_signin";
@@ -72,15 +65,13 @@ async function ensureUserDoc() {
   const existing = await getDoc(ref);
   if (existing.exists()) return;
 
-  // The very first person to sign in (an empty users collection) becomes admin
-  // automatically; everyone after that starts as staff. Security Rules use this role
-  // to gate the one action that's admin-only: deleting a client outright.
-  const usersSnap = await getDocs(collection(db, "users"));
-  const role = usersSnap.empty ? "admin" : "staff";
-
+  // Every new account starts as staff -- Security Rules only accept role: "staff" on
+  // create, so this can't be a client-side decision (a user could otherwise just claim
+  // "admin" for themselves). Promoting someone to admin is a manual step in the Firebase
+  // console (see README), which uses the Admin SDK and so bypasses this restriction.
   await setDoc(ref, {
     displayName: user.displayName || user.email,
-    role,
+    role: "staff",
     createdAt: serverTimestamp(),
   });
 }

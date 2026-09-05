@@ -383,6 +383,7 @@ function openItemModal(clientId, itemId) {
 
   openModal(`
     <h2>${item ? "Edit item" : "Add item"} — ${escapeHtml(client.name)}</h2>
+    <div id="item-form-error" class="auth-error" hidden></div>
     <form id="item-form">
       <label>Category<br/>
         <select id="item-category">
@@ -436,6 +437,21 @@ function openItemModal(clientId, itemId) {
     const recurrenceDayOfMonth = dayOfMonthRaw ? Number(dayOfMonthRaw) : null;
 
     if (!category || !startDate) return;
+
+    const label = customLabel || category;
+    const normalizedLabel = label.trim().toLowerCase();
+    const isDuplicate = [...latestState.items.values()].some(
+      (existing) =>
+        existing.clientId === clientId &&
+        existing.id !== itemId &&
+        (existing.customLabel || existing.category).trim().toLowerCase() === normalizedLabel
+    );
+    if (isDuplicate) {
+      const errorEl = qs("item-form-error");
+      errorEl.textContent = `${client.name} already has an item called "${label}". Edit the existing one instead of adding a duplicate.`;
+      errorEl.hidden = false;
+      return;
+    }
 
     const itemData = {
       category,
