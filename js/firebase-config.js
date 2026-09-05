@@ -16,5 +16,4 @@ export const firebaseConfig = {
 export const isFirebaseConfigured = !firebaseConfig.apiKey.startsWith("REPLACE_WITH");
 
 // Used to build the "Run backup workflow" link on the export button.
-// Set this to your GitHub repo once it exists, e.g. "yourusername/client-compliance-tracker".
-export const githubRepoSlug = "REPLACE_WITH_OWNER/REPLACE_WITH_REPO";
+export const githubRepoSlug = "burim13/client-compliance-tracker";
