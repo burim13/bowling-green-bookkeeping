@@ -1,11 +1,11 @@
-import { isFirebaseConfigured, auth } from "./firebase-init.js?v=1788589036344";
+import { isFirebaseConfigured, auth } from "./firebase-init.js?v=1788589624746";
 import {
   watchAuthState,
   signInWithPassword,
   sendEmailLink,
   completeEmailLinkSignInIfPresent,
   signOutUser,
-} from "./auth.js?v=1788589036344";
+} from "./auth.js?v=1788589624746";
 import {
   startSync,
   stopSync,
@@ -23,13 +23,13 @@ import {
   markComplete,
   unmarkComplete,
   isFullyLoaded,
-} from "./data.js?v=1788589036344";
-import { renderCalendar } from "./calendar-view.js?v=1788589036344";
-import { renderList } from "./list-view.js?v=1788589036344";
-import { describeRecurrence, describeRecurrenceHistory, getLastDueOccurrence, toISODate } from "./recurrence.js?v=1788589036344";
-import { colorFor } from "./colors.js?v=1788589036344";
-import { githubRepoSlug } from "./firebase-config.js?v=1788589036344";
-import { iconEdit, iconTrash, iconPlus, iconPlusLarge, iconCheck } from "./icons.js?v=1788589036344";
+} from "./data.js?v=1788589624746";
+import { renderCalendar } from "./calendar-view.js?v=1788589624746";
+import { renderList } from "./list-view.js?v=1788589624746";
+import { describeRecurrence, describeRecurrenceHistory, getLastDueOccurrence, toISODate } from "./recurrence.js?v=1788589624746";
+import { colorFor } from "./colors.js?v=1788589624746";
+import { githubRepoSlug } from "./firebase-config.js?v=1788589624746";
+import { iconEdit, iconTrash, iconPlus, iconPlusLarge, iconCheck } from "./icons.js?v=1788589624746";
 
 const DEFAULT_CATEGORIES = [
   "Payroll",
@@ -235,6 +235,7 @@ function renderCurrentView() {
         localStorage.setItem("cct_colormode", mode);
         renderCurrentView();
       },
+      onJumpToMonth: () => openJumpToMonthModal(),
       onDayClick: (date, entries) => openDayModal(date, entries),
     });
   } else {
@@ -282,6 +283,40 @@ function shiftMonth(delta) {
     viewState.year += 1;
   }
   renderCurrentView();
+}
+
+const MONTH_NAMES = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December",
+];
+
+function openJumpToMonthModal() {
+  openModal(`
+    <h2>Jump to month</h2>
+    <form id="jump-form">
+      <label>Month<br/>
+        <select id="jump-month">
+          ${MONTH_NAMES.map((name, i) => `<option value="${i}" ${i === viewState.month ? "selected" : ""}>${name}</option>`).join("")}
+        </select>
+      </label>
+      <label>Year<br/><input type="number" id="jump-year" value="${viewState.year}" /></label>
+      <div class="modal-actions">
+        <button type="button" class="btn" data-action="cancel">Cancel</button>
+        <button type="submit" class="btn btn-primary">Go</button>
+      </div>
+    </form>
+  `);
+  qs("jump-form").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const year = Number(qs("jump-year").value);
+    const month = Number(qs("jump-month").value);
+    if (!year) return;
+    viewState.year = year;
+    viewState.month = month;
+    closeModal();
+    renderCurrentView();
+  });
+  qs("modal-content").querySelector('[data-action="cancel"]').addEventListener("click", closeModal);
 }
 
 async function handleToggleComplete(clientId, itemId, periodKey, checked) {
@@ -479,7 +514,7 @@ function confirmDeleteClient(clientId) {
   qs("modal-content").querySelector('[data-action="cancel"]').addEventListener("click", closeModal);
 }
 
-function openItemModal(clientId, itemId) {
+function openItemModal(clientId, itemId, defaultStartDate) {
   const item = itemId ? latestState.items.get(itemId) : null;
   const categories = latestState.categories;
   const client = latestState.clients.get(clientId);
@@ -498,7 +533,7 @@ function openItemModal(clientId, itemId) {
       <label id="custom-label-wrap" ${item && !categories.includes(item.category) ? "" : "hidden"}>
         Custom label<br/><input type="text" id="item-custom-label" value="${item ? escapeHtml(item.customLabel || item.category) : ""}" />
       </label>
-      <label>Start date<br/><input type="date" id="item-start-date" required value="${item ? item.startDate : toISODate(new Date())}" /></label>
+      <label>Start date<br/><input type="date" id="item-start-date" required value="${item ? item.startDate : defaultStartDate || toISODate(new Date())}" /></label>
       <label>Recurrence<br/>
         <select id="item-recurrence-type">
           <option value="monthly" ${item && item.recurrenceType === "monthly" ? "selected" : ""}>Monthly</option>
@@ -790,11 +825,43 @@ function openDayModal(date, entries) {
 
   qs("modal-content").querySelector('[data-action="close"]').addEventListener("click", closeModal);
   qs("modal-content").querySelector('[data-action="add-item"]').addEventListener("click", () => {
-    closeModal();
-    const firstClientId = [...latestState.clients.keys()][0];
-    if (firstClientId) openItemModal(firstClientId);
-    else alert("Add a client first.");
+    openAddItemForDateModal(date);
   });
+}
+
+// Lets the user pick which client to add an item for, then opens the normal item form
+// pre-filled with the date that was actually clicked -- rather than silently defaulting to
+// today's date and an arbitrary first client, which is what a bare "open the add-item form"
+// call would otherwise do.
+function openAddItemForDateModal(date) {
+  const clients = [...latestState.clients.values()]
+    .filter((c) => !c.archived)
+    .sort((a, b) => a.name.localeCompare(b.name));
+  if (clients.length === 0) {
+    alert("Add a client first.");
+    return;
+  }
+  const label = date.toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric", year: "numeric" });
+  openModal(`
+    <h2>Add item due ${label}</h2>
+    <form id="pick-client-form">
+      <label>Client<br/>
+        <select id="pick-client-select">
+          ${clients.map((c) => `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join("")}
+        </select>
+      </label>
+      <div class="modal-actions">
+        <button type="button" class="btn" data-action="cancel">Cancel</button>
+        <button type="submit" class="btn btn-primary">Continue</button>
+      </div>
+    </form>
+  `);
+  qs("pick-client-form").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const clientId = qs("pick-client-select").value;
+    openItemModal(clientId, null, toISODate(date));
+  });
+  qs("modal-content").querySelector('[data-action="cancel"]').addEventListener("click", closeModal);
 }
 
 function renderDayRows(container, entries) {
