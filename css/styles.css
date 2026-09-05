@@ -188,6 +188,22 @@ label { display: block; margin-bottom: 0.75rem; font-size: 0.9rem; color: var(--
 }
 .icon-btn:hover { background: var(--border); color: var(--text); }
 
+.client-row-archived { opacity: 0.6; }
+.client-archived-tag {
+  font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em;
+  color: var(--text-muted); background: var(--border); padding: 0.05rem 0.35rem; border-radius: 999px;
+}
+.client-progress { font-size: 0.7rem; font-weight: 700; padding: 0.05rem 0.4rem; border-radius: 999px; flex-shrink: 0; }
+.client-progress-ok { background: rgba(46, 125, 82, 0.12); color: #2e7d52; }
+.client-progress-behind { background: rgba(192, 57, 43, 0.12); color: var(--danger); }
+.client-row:hover .client-progress { display: none; }
+
+.show-archived-toggle {
+  display: flex; align-items: center; gap: 0.4rem; font-size: 0.8rem; color: var(--text-muted);
+  padding: 0.5rem 0.4rem 0.1rem; cursor: pointer;
+}
+.show-archived-toggle input { width: auto; }
+
 /* ---- calendar ---- */
 .cal-header { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem; }
 .cal-title { font-weight: 700; min-width: 10rem; }
@@ -262,6 +278,9 @@ label { display: block; margin-bottom: 0.75rem; font-size: 0.9rem; color: var(--
 .category-list li { display: flex; justify-content: space-between; align-items: center; padding: 0.35rem 0; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
 
 #add-category-form { display: flex; gap: 0.5rem; }
+
+.recurrence-history-note { font-size: 0.85rem; color: var(--text-muted); background: var(--bg); padding: 0.5rem 0.75rem; border-radius: 6px; margin: 0 0 1rem; }
+#item-form small { display: block; margin-top: 0.25rem; font-size: 0.78rem; line-height: 1.4; }
 
 .bulk-clients-section { margin-bottom: 0.75rem; }
 .bulk-clients-header { display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.4rem; }

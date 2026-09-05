@@ -113,8 +113,11 @@ Inc.") with a handful of items. Delete them from the UI whenever you're ready fo
 ### 1f. Set up the daily digest email
 
 A separate workflow ([`.github/workflows/digest.yml`](.github/workflows/digest.yml)) emails a
-summary of overdue items + anything due in the next 7 days, once a day. It's skipped automatically
-on days with nothing to report. It uses [Resend](https://resend.com) to send mail:
+summary of overdue items + anything due soon, once a day. It's skipped automatically on days with
+nothing to report. "Due soon" isn't a fixed window -- how far ahead an item shows up depends on how
+often it recurs, since a monthly task doesn't need weeks of notice the way an annual filing does:
+monthly/custom items get a 7-day lookahead, quarterly items 14 days, annual items 30 days. It uses
+[Resend](https://resend.com) to send mail:
 
 1. Sign up at https://resend.com (free tier: 3,000 emails/month, no credit card).
 2. In the Resend dashboard, go to **API Keys -> Create API Key**. Copy the key (starts with `re_`).
@@ -214,6 +217,28 @@ Marking an item complete writes a document to
 date is always recomputed from `startDate` + recurrence rules rather than stored per-period,
 nothing needs to be manually created when a new month/quarter/year starts -- the next unchecked
 instance simply appears on its own.
+
+### Changing an item's recurrence mid-life
+
+Editing an item's category/date/day-of-month fields is a plain correction -- it applies to the
+whole item, past and future, same as always. But if the *frequency itself* genuinely changed
+partway through (e.g. a client moved from monthly to quarterly bookkeeping starting a given
+month), editing the item also offers a **"Recurrence change effective from"** date. Filling that
+in snapshots whatever the recurrence was *before* this edit into the item's `priorRule` field, and
+stores the given date as `currentRuleEffectiveFrom` -- occurrences before that month keep using the
+old cadence, occurrences from that month on use whatever you just entered. Leaving it blank clears
+any existing split, back to one rule for the item's entire life. The edit form shows the current
+history summary (e.g. "Quarterly (was Monthly through Aug 2026)") whenever a split exists.
+
+### Archiving a client
+
+Archiving (via the "Archive client" button in a client's edit modal) sets `archived: true` on the
+client document -- it's a plain field, not a deletion. Archived clients disappear from the sidebar,
+the calendar, and the list view by default (their history and data are untouched), with a "Show N
+archived clients" toggle at the bottom of the sidebar to bring them back into view when needed
+(e.g. to look something up, or to restore them via the same button). Each client row in the
+sidebar also shows a small `current/total` badge based on whether its items' most recent due
+occurrence is complete -- it's a quick at-a-glance signal, not a data field of its own.
 
 ---
 

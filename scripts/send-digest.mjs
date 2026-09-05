@@ -37,6 +37,15 @@ function labelFor(item) {
   return item.customLabel || item.category;
 }
 
+// How far ahead to warn about an upcoming item, based on how infrequently it recurs -- a
+// monthly task rarely needs more than a week's notice, but an annual filing (like a BOI report)
+// benefits from a much earlier heads-up than a fixed 7-day window would give it.
+function lookaheadDays(item) {
+  if (item.recurrenceType === "annually") return 30;
+  if (item.recurrenceType === "quarterly") return 14;
+  return 7; // monthly, custom
+}
+
 async function main() {
   const RESEND_API_KEY = process.env.RESEND_API_KEY;
   const DIGEST_TO_EMAIL = process.env.DIGEST_TO_EMAIL;
@@ -48,13 +57,11 @@ async function main() {
   const db = admin.firestore();
 
   const today = new Date(new Date().setHours(0, 0, 0, 0));
-  const weekAhead = new Date(today);
-  weekAhead.setDate(weekAhead.getDate() + 6);
 
   const { items, clientNames } = await loadItems(db);
 
   const overdue = [];
-  const dueThisWeek = [];
+  const dueSoon = [];
 
   for (const item of items) {
     const lastDue = getLastDueOccurrence(item, today);
@@ -63,28 +70,30 @@ async function main() {
       overdue.push({ item, occurrence: lastDue, daysOverdue });
     }
 
-    for (const occ of getOccurrencesInRange(item, today, weekAhead)) {
+    const lookAheadTo = new Date(today);
+    lookAheadTo.setDate(lookAheadTo.getDate() + lookaheadDays(item));
+    for (const occ of getOccurrencesInRange(item, today, lookAheadTo)) {
       if (await isCompleted(db, item.clientId, item.id, occ.periodKey)) continue;
-      dueThisWeek.push({ item, occurrence: occ });
+      dueSoon.push({ item, occurrence: occ });
     }
   }
 
-  if (overdue.length === 0 && dueThisWeek.length === 0) {
-    console.log("Nothing overdue or due this week -- skipping email.");
+  if (overdue.length === 0 && dueSoon.length === 0) {
+    console.log("Nothing overdue or due soon -- skipping email.");
     return;
   }
 
   overdue.sort((a, b) => a.occurrence.date - b.occurrence.date);
-  dueThisWeek.sort((a, b) => a.occurrence.date - b.occurrence.date);
+  dueSoon.sort((a, b) => a.occurrence.date - b.occurrence.date);
 
   const clientName = (id) => clientNames.get(id) || "Unknown client";
   const dateStr = (d) => d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
   const todayStr = today.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" });
 
-  const text = buildPlainText({ overdue, dueThisWeek, clientName, dateStr, todayStr });
-  const html = buildHtml({ overdue, dueThisWeek, clientName, dateStr, todayStr });
+  const text = buildPlainText({ overdue, dueSoon, clientName, dateStr, todayStr });
+  const html = buildHtml({ overdue, dueSoon, clientName, dateStr, todayStr });
 
-  const subject = `Compliance digest: ${overdue.length} overdue, ${dueThisWeek.length} due this week`;
+  const subject = `Compliance digest: ${overdue.length} overdue, ${dueSoon.length} due soon`;
 
   const res = await fetch("https://api.resend.com/emails", {
     method: "POST",
@@ -105,7 +114,7 @@ async function main() {
     throw new Error(`Resend API error ${res.status}: ${await res.text()}`);
   }
 
-  console.log(`Digest sent: ${overdue.length} overdue, ${dueThisWeek.length} due this week.`);
+  console.log(`Digest sent: ${overdue.length} overdue, ${dueSoon.length} due soon.`);
 }
 
 function escapeHtml(str) {
@@ -123,7 +132,7 @@ function groupByClient(rows, clientName) {
   return groups;
 }
 
-function buildPlainText({ overdue, dueThisWeek, clientName, dateStr, todayStr }) {
+function buildPlainText({ overdue, dueSoon, clientName, dateStr, todayStr }) {
   const section = (title, rows, lineFor) => {
     if (rows.length === 0) return `${title}\n  Nothing here -- nice work.`;
     const groups = groupByClient(rows, clientName);
@@ -134,11 +143,11 @@ function buildPlainText({ overdue, dueThisWeek, clientName, dateStr, todayStr })
   };
 
   return [
-    `${overdue.length} overdue, ${dueThisWeek.length} due in the next 7 days -- ${todayStr}`,
+    `${overdue.length} overdue, ${dueSoon.length} due soon -- ${todayStr}`,
     section(`OVERDUE (${overdue.length})`, overdue, ({ item, occurrence, daysOverdue }) =>
       `${labelFor(item)} -- due ${dateStr(occurrence.date)} (${daysOverdue}d overdue)`
     ),
-    section(`DUE IN THE NEXT 7 DAYS (${dueThisWeek.length})`, dueThisWeek, ({ item, occurrence }) =>
+    section(`DUE SOON (${dueSoon.length})`, dueSoon, ({ item, occurrence }) =>
       `${labelFor(item)} -- due ${dateStr(occurrence.date)} (${describeRecurrence(item)})`
     ),
     `Open the tracker: ${APP_URL}`,
@@ -146,7 +155,7 @@ function buildPlainText({ overdue, dueThisWeek, clientName, dateStr, todayStr })
   ].join("\n\n");
 }
 
-function buildHtml({ overdue, dueThisWeek, clientName, dateStr, todayStr }) {
+function buildHtml({ overdue, dueSoon, clientName, dateStr, todayStr }) {
   const rowHtml = (label, dueDateText, badgeText, badgeColor) => `
     <tr>
       <td style="padding:8px 12px;background:#f7f5f2;border-radius:6px;font-size:13px;color:#2b2926;">
@@ -191,7 +200,7 @@ function buildHtml({ overdue, dueThisWeek, clientName, dateStr, todayStr }) {
   const overdueSection = section(`Overdue (${overdue.length})`, "#c0392b", overdue, ({ item, occurrence, daysOverdue }) =>
     rowHtml(labelFor(item), dateStr(occurrence.date), `${daysOverdue}d overdue`, "#c0392b")
   );
-  const dueThisWeekSection = section(`Due in the next 7 days (${dueThisWeek.length})`, "#3d5a80", dueThisWeek, ({ item, occurrence }) =>
+  const dueSoonSection = section(`Due soon (${dueSoon.length})`, "#3d5a80", dueSoon, ({ item, occurrence }) =>
     rowHtml(labelFor(item), dateStr(occurrence.date), escapeHtml(describeRecurrence(item)), "#7a7369")
   );
 
@@ -206,11 +215,11 @@ function buildHtml({ overdue, dueThisWeek, clientName, dateStr, todayStr }) {
     </tr>
     <tr>
       <td style="padding:8px 28px 20px;font-size:14px;color:#2b2926;">
-        <strong>${overdue.length}</strong> overdue &middot; <strong>${dueThisWeek.length}</strong> due in the next 7 days
+        <strong>${overdue.length}</strong> overdue &middot; <strong>${dueSoon.length}</strong> due soon
       </td>
     </tr>
     ${overdueSection}
-    ${dueThisWeekSection}
+    ${dueSoonSection}
     <tr>
       <td style="padding:16px 28px;border-top:1px solid #e2ddd6;">
         <a href="${APP_URL}" style="display:inline-block;background:#3d5a80;color:#ffffff;text-decoration:none;padding:10px 18px;border-radius:6px;font-size:14px;font-weight:600;">Open Client Compliance Tracker</a>

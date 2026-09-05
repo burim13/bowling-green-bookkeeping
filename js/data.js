@@ -14,7 +14,7 @@ import {
   serverTimestamp,
   writeBatch,
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
-import { db, auth } from "./firebase-init.js?v=1788587161471";
+import { db, auth } from "./firebase-init.js?v=1788588244177";
 
 // ---- live store ----------------------------------------------------------
 
@@ -177,6 +177,10 @@ export function addClient(name, notes) {
 
 export function updateClient(clientId, { name, notes }) {
   return withSaveStatus(() => updateDoc(doc(db, "clients", clientId), { name, notes: notes || "" }));
+}
+
+export function setClientArchived(clientId, archived) {
+  return withSaveStatus(() => updateDoc(doc(db, "clients", clientId), { archived }));
 }
 
 export async function deleteClientCascade(clientId) {

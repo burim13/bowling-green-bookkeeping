@@ -1,11 +1,11 @@
-import { isFirebaseConfigured, auth } from "./firebase-init.js?v=1788587161471";
+import { isFirebaseConfigured, auth } from "./firebase-init.js?v=1788588244177";
 import {
   watchAuthState,
   signInWithPassword,
   sendEmailLink,
   completeEmailLinkSignInIfPresent,
   signOutUser,
-} from "./auth.js?v=1788587161471";
+} from "./auth.js?v=1788588244177";
 import {
   startSync,
   stopSync,
@@ -15,6 +15,7 @@ import {
   saveCategories,
   addClient,
   updateClient,
+  setClientArchived,
   deleteClientCascade,
   addItem,
   updateItem,
@@ -22,13 +23,13 @@ import {
   markComplete,
   unmarkComplete,
   isFullyLoaded,
-} from "./data.js?v=1788587161471";
-import { renderCalendar } from "./calendar-view.js?v=1788587161471";
-import { renderList } from "./list-view.js?v=1788587161471";
-import { describeRecurrence, toISODate } from "./recurrence.js?v=1788587161471";
-import { colorFor } from "./colors.js?v=1788587161471";
-import { githubRepoSlug } from "./firebase-config.js?v=1788587161471";
-import { iconEdit, iconTrash, iconPlus, iconPlusLarge, iconCheck } from "./icons.js?v=1788587161471";
+} from "./data.js?v=1788588244177";
+import { renderCalendar } from "./calendar-view.js?v=1788588244177";
+import { renderList } from "./list-view.js?v=1788588244177";
+import { describeRecurrence, describeRecurrenceHistory, getLastDueOccurrence, toISODate } from "./recurrence.js?v=1788588244177";
+import { colorFor } from "./colors.js?v=1788588244177";
+import { githubRepoSlug } from "./firebase-config.js?v=1788588244177";
+import { iconEdit, iconTrash, iconPlus, iconPlusLarge, iconCheck } from "./icons.js?v=1788588244177";
 
 const DEFAULT_CATEGORIES = [
   "Payroll",
@@ -61,6 +62,7 @@ let viewState = {
   clientFilter: null,
   categoryFilter: null,
   clientSearch: "",
+  showArchived: false,
 };
 
 let currentListRows = []; // rows currently rendered (unfiltered by completion) by the list view
@@ -219,6 +221,7 @@ function renderCurrentView() {
       colorMode: viewState.colorMode,
       clientFilter: viewState.clientFilter,
       categoryFilter: viewState.categoryFilter,
+      showArchived: viewState.showArchived,
       onPrev: () => shiftMonth(-1),
       onNext: () => shiftMonth(1),
       onToday: () => {
@@ -241,6 +244,7 @@ function renderCurrentView() {
       state: latestState,
       clientFilter: viewState.clientFilter,
       categoryFilter: viewState.categoryFilter,
+      showArchived: viewState.showArchived,
       rangeStart,
       rangeEnd,
       onToggleComplete: handleToggleComplete,
@@ -291,10 +295,27 @@ async function handleToggleComplete(clientId, itemId, periodKey, checked) {
 
 // ---- client sidebar ---------------------------------------------------------
 
+function clientCompletionStats(clientId) {
+  const items = [...latestState.items.values()].filter((i) => i.clientId === clientId);
+  if (items.length === 0) return null;
+  const today = new Date(new Date().setHours(0, 0, 0, 0));
+  let current = 0;
+  for (const item of items) {
+    const occ = getLastDueOccurrence(item, today);
+    const forItem = latestState.completions.get(item.id);
+    const overdue = occ && occ.date < today && !(forItem && forItem.has(occ.periodKey));
+    if (!overdue) current++;
+  }
+  return { current, total: items.length };
+}
+
 function renderClientList() {
   const allClients = [...latestState.clients.values()].sort((a, b) => a.name.localeCompare(b.name));
+  const activeClients = allClients.filter((c) => !c.archived);
+  const archivedCount = allClients.length - activeClients.length;
+  const baseClients = viewState.showArchived ? allClients : activeClients;
   const query = viewState.clientSearch.trim().toLowerCase();
-  const clients = query ? allClients.filter((c) => c.name.toLowerCase().includes(query)) : allClients;
+  const clients = query ? baseClients.filter((c) => c.name.toLowerCase().includes(query)) : baseClients;
   const isAdmin = latestState.currentUserRole === "admin";
 
   if (!isFullyLoaded()) {
@@ -310,24 +331,43 @@ function renderClientList() {
     els.clientList.innerHTML = `<div class="empty-hint">No clients match "${escapeHtml(viewState.clientSearch)}".</div>`;
   } else {
     els.clientList.innerHTML = clients
-      .map(
-        (c) => `
-        <div class="client-row ${viewState.clientFilter === c.id ? "client-row-active" : ""}" data-client-id="${c.id}">
+      .map((c) => {
+        const stats = clientCompletionStats(c.id);
+        const progressBadge = stats
+          ? `<span class="client-progress ${stats.current === stats.total ? "client-progress-ok" : "client-progress-behind"}">${stats.current}/${stats.total}</span>`
+          : "";
+        return `
+        <div class="client-row ${viewState.clientFilter === c.id ? "client-row-active" : ""} ${c.archived ? "client-row-archived" : ""}" data-client-id="${c.id}">
           <span class="client-dot" style="background:${colorFor(c.id)}"></span>
-          <span class="client-name" data-action="filter">${c.name}</span>
+          <span class="client-name" data-action="filter">${escapeHtml(c.name)}${c.archived ? ' <span class="client-archived-tag">Archived</span>' : ""}</span>
+          ${progressBadge}
           <span class="client-actions">
             <button class="icon-btn" data-action="add-item" title="Add item">${iconPlus}</button>
             <button class="icon-btn" data-action="edit" title="Edit client">${iconEdit}</button>
             ${isAdmin ? `<button class="icon-btn" data-action="delete" title="Delete client">${iconTrash}</button>` : ""}
           </span>
-        </div>`
-      )
+        </div>`;
+      })
       .join("");
   }
 
+  if (archivedCount > 0) {
+    els.clientList.innerHTML += `
+      <label class="show-archived-toggle">
+        <input type="checkbox" id="show-archived-checkbox" ${viewState.showArchived ? "checked" : ""} />
+        ${viewState.showArchived ? "Hide" : "Show"} ${archivedCount} archived client${archivedCount === 1 ? "" : "s"}
+      </label>`;
+    qs("show-archived-checkbox").addEventListener("change", (e) => {
+      viewState.showArchived = e.target.checked;
+      renderClientList();
+      renderCurrentView();
+    });
+  }
+
+  const clientFilterOptions = viewState.showArchived ? allClients : activeClients;
   els.listFilterClient.innerHTML =
     `<option value="">All clients</option>` +
-    allClients.map((c) => `<option value="${c.id}">${c.name}</option>`).join("");
+    clientFilterOptions.map((c) => `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join("");
   els.listFilterClient.value = viewState.clientFilter || "";
 
   els.clientList.querySelectorAll(".client-row").forEach((row) => {
@@ -377,6 +417,11 @@ function openClientModal(clientId) {
       <label>Notes (optional)<br/><textarea id="client-notes">${client ? escapeHtml(client.notes || "") : ""}</textarea></label>
       <div class="modal-actions">
         <button type="button" class="btn" data-action="cancel">Cancel</button>
+        ${
+          client
+            ? `<button type="button" class="btn" data-action="toggle-archive">${client.archived ? "Restore client" : "Archive client"}</button>`
+            : ""
+        }
         <button type="submit" class="btn btn-primary">${client ? "Save" : "Add client"}</button>
       </div>
     </form>
@@ -394,6 +439,16 @@ function openClientModal(clientId) {
       alert("Could not save client: " + err.message);
     }
   });
+  if (client) {
+    qs("modal-content").querySelector('[data-action="toggle-archive"]').addEventListener("click", async () => {
+      try {
+        await setClientArchived(clientId, !client.archived);
+        closeModal();
+      } catch (err) {
+        alert("Could not update client: " + err.message);
+      }
+    });
+  }
   qs("modal-content").querySelector('[data-action="cancel"]').addEventListener("click", closeModal);
 }
 
@@ -432,6 +487,7 @@ function openItemModal(clientId, itemId) {
   openModal(`
     <h2>${item ? "Edit item" : "Add item"} — ${escapeHtml(client.name)}</h2>
     <div id="item-form-error" class="auth-error" hidden></div>
+    ${item && item.priorRule ? `<p class="recurrence-history-note">Currently: ${escapeHtml(describeRecurrenceHistory(item))}</p>` : ""}
     <form id="item-form">
       <label>Category<br/>
         <select id="item-category">
@@ -457,6 +513,18 @@ function openItemModal(clientId, itemId) {
       <label>Day of month (optional, defaults to start date's day)<br/>
         <input type="number" id="item-day-of-month" min="1" max="31" value="${item && item.recurrenceDayOfMonth ? item.recurrenceDayOfMonth : ""}" />
       </label>
+      ${
+        item
+          ? `<label>Recurrence change effective from (optional)<br/>
+        <input type="date" id="item-recurrence-effective-from" value="${item.currentRuleEffectiveFrom || ""}" />
+        <small>Only fill this in if the frequency above is genuinely changing (e.g. monthly &rarr;
+        quarterly) starting some month -- everything before that month keeps using whatever this
+        item's recurrence was set to before this edit, only the new occurrences from that month on
+        use what you just entered above. Leave blank for a plain correction that applies to the
+        whole item, past and future.</small>
+      </label>`
+          : ""
+      }
       <div class="modal-actions">
         <button type="button" class="btn" data-action="cancel">Cancel</button>
         ${item ? `<button type="button" class="btn btn-danger" data-action="remove">Remove item</button>` : ""}
@@ -504,6 +572,23 @@ function openItemModal(clientId, itemId) {
       recurrenceDayOfMonth,
       recurrenceCustomRule: null,
     };
+
+    // A recurrence change only splits the item's history if an effective-from date was given.
+    // Otherwise this is a plain correction, applying to the whole item -- clear any earlier split.
+    if (item) {
+      const effectiveFrom = qs("item-recurrence-effective-from").value || null;
+      if (effectiveFrom) {
+        itemData.priorRule = {
+          recurrenceType: item.recurrenceType,
+          recurrenceInterval: item.recurrenceInterval,
+          recurrenceDayOfMonth: item.recurrenceDayOfMonth,
+        };
+        itemData.currentRuleEffectiveFrom = effectiveFrom;
+      } else {
+        itemData.priorRule = null;
+        itemData.currentRuleEffectiveFrom = null;
+      }
+    }
 
     try {
       if (item) await updateItem(clientId, itemId, itemData);

@@ -1,6 +1,6 @@
-import { getOccurrencesInRange, getLastDueOccurrence, describeRecurrence, toISODate } from "./recurrence.js?v=1788587161471";
-import { colorFor } from "./colors.js?v=1788587161471";
-import { iconEdit, iconCheckLarge } from "./icons.js?v=1788587161471";
+import { getOccurrencesInRange, getLastDueOccurrence, describeRecurrence, toISODate } from "./recurrence.js?v=1788588244177";
+import { colorFor } from "./colors.js?v=1788588244177";
+import { iconEdit, iconCheckLarge } from "./icons.js?v=1788588244177";
 
 function completionFor(state, itemId, periodKey) {
   const forItem = state.completions.get(itemId);
@@ -10,7 +10,7 @@ function completionFor(state, itemId, periodKey) {
 const WEEKDAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-// ctx: { state, clientFilter, categoryFilter, rangeStart, rangeEnd, onToggleComplete, onEditItem }
+// ctx: { state, clientFilter, categoryFilter, showArchived, rangeStart, rangeEnd, onToggleComplete, onEditItem }
 // Returns the list of currently-rendered, not-yet-complete rows ({ clientId, itemId, periodKey }),
 // so callers can offer a "mark all shown complete" bulk action without recomputing the filtering.
 export function renderList(container, ctx) {
@@ -18,7 +18,8 @@ export function renderList(container, ctx) {
   const today = new Date(new Date().setHours(0, 0, 0, 0));
   const matchesFilters = (item) =>
     (!ctx.clientFilter || item.clientId === ctx.clientFilter) &&
-    (!ctx.categoryFilter || item.category === ctx.categoryFilter);
+    (!ctx.categoryFilter || item.category === ctx.categoryFilter) &&
+    (ctx.showArchived || !state.clients.get(item.clientId)?.archived);
 
   // Overdue = each item's most recent due-by-today occurrence, if it's still unchecked. Computed
   // over *all* items regardless of the rolling window below, since a miss from months ago
