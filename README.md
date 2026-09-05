@@ -6,8 +6,11 @@ deadlines (payroll, sales tax, quarterly estimates, annual filings, etc.) per cl
 No SSNs, account numbers, or dollar amounts are stored here -- only client names, task/category
 labels, and dates.
 
-**Stack:** static HTML/CSS/JS (no build step) on GitHub Pages, talking directly to Firebase
-Authentication + Cloud Firestore. A GitHub Actions workflow backs up the database to JSON daily.
+**Stack:** static HTML/CSS/JS on GitHub Pages, talking directly to Firebase Authentication + Cloud
+Firestore. There's no build step *at deploy time* -- GitHub Pages serves the committed files
+as-is -- but styling is written in Tailwind CSS and compiled locally to a static, committed
+stylesheet before each push (see "Styling with Tailwind CSS" below); the JS itself still has zero
+tooling. A GitHub Actions workflow backs up the database to JSON daily.
 
 ---
 
@@ -134,6 +137,36 @@ workflow already reads that variable if it's present.
 
 The default schedule is 13:00 UTC (~8am US Central). To change the time, edit the `cron` line in
 `.github/workflows/digest.yml`. You can also trigger it manually any time from the **Actions** tab.
+
+### 1g. Styling with Tailwind CSS
+
+All styling is written in Tailwind CSS and compiled locally with the Tailwind CLI into a static,
+committed CSS file -- there's no server-side/CI build, so the compiled file has to be checked in
+like any other asset, the same spirit as the cache-busting step below.
+
+- **`css/tailwind.css` is the source you edit.** It defines the color palette and other design
+  tokens in an `@theme` block, then rebuilds every one of the app's existing class names (`.btn`,
+  `.modal-content`, `.cal-cell`, etc.) using Tailwind's utilities via `@apply` in a
+  `@layer components` block. `index.html` and every `.js` file keep using those same class names
+  unchanged -- this is Tailwind's own documented pattern for a reused component, not raw
+  utility classes sprinkled through markup.
+- **`css/styles.css` is generated -- never hand-edit it.** It's what `index.html` actually loads
+  and what GitHub Pages serves; the next build silently overwrites any manual edit.
+- One-time: `npm install` (pulls in `tailwindcss` + `@tailwindcss/cli` as dev dependencies).
+- After changing anything in `css/tailwind.css`, run:
+  ```bash
+  npm run build-css
+  ```
+  (or `npm run watch-css` to rebuild automatically while iterating locally.)
+- **Order matters before a push:** run `npm run build-css` *first*, then `npm run bump-version`
+  *second* -- bump-version only re-stamps the `?v=` query string on `index.html`'s `<link>`
+  reference, it doesn't know anything about `styles.css`'s content, so it has to run after the
+  content it's versioning has actually changed.
+- The two responsive breakpoints (768px/480px) are written as plain, hand-written `@media` blocks
+  inside `css/tailwind.css` rather than Tailwind's `max-md:`-style variants on purpose: Tailwind's
+  variants compile to an *exclusive* `width < 768px` query, but this app's breakpoints need to be
+  *inclusive* (a viewport at exactly 768px must still get the narrow layout). Keep new
+  breakpoint-specific rules inside those same two blocks rather than reaching for `max-md:`.
 
 ---
 
@@ -298,7 +331,8 @@ button is for taking a snapshot right before a big change.
 
 ```
 index.html                   Single-page app shell
-css/styles.css                All styling
+css/tailwind.css               Tailwind source -- edit this (theme + component classes)
+css/styles.css                 Compiled by Tailwind (`npm run build-css`) -- do not hand-edit
 js/firebase-config.js         Your Firebase web config (edit this)
 js/firebase-init.js           Initializes the Firebase SDK
 js/auth.js                    Sign in/up/out, email-link sign-in

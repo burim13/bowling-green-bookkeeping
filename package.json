@@ -1,14 +1,20 @@
 {
   "name": "client-compliance-tracker-backup-tools",
   "private": true,
-  "description": "Node scripts used by the GitHub Actions backup workflow and one-time seeding. The front end itself has no build step and does not depend on this package.",
+  "description": "Node scripts used by the GitHub Actions backup workflow and one-time seeding, plus the local Tailwind CSS build. The deployed front end is still 100% static -- these tools only run on a developer's machine before a push, never at request time.",
   "scripts": {
     "backup": "node scripts/export-backup.mjs",
     "seed": "node scripts/seed-data.mjs",
     "digest": "node scripts/send-digest.mjs",
-    "bump-version": "node scripts/bump-cache-version.mjs"
+    "bump-version": "node scripts/bump-cache-version.mjs",
+    "build-css": "tailwindcss -i ./css/tailwind.css -o ./css/styles.css --minify",
+    "watch-css": "tailwindcss -i ./css/tailwind.css -o ./css/styles.css --watch"
   },
   "dependencies": {
     "firebase-admin": "^12.6.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/cli": "^4.3.3",
+    "tailwindcss": "^4.3.3"
   }
 }

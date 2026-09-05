@@ -1,0 +1,668 @@
+@import "tailwindcss";
+
+/* Scan these for class names in use -- template-literal-generated markup in the .js files
+   counts as "content" just as much as index.html does. */
+@source "../index.html";
+@source "../js";
+
+@theme {
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+
+  --color-bg: #f4f5f7;
+  --color-panel: #ffffff;
+  --color-border: #e2e5eb;
+  --color-text: #1a1d23;
+  --color-text-muted: #64748b;
+  --color-primary: #4338ca;
+  --color-primary-hover: #3730a3;
+  --color-danger: #dc2626;
+  --color-danger-bg: #fef2f2;
+  --color-success: #16a34a;
+  --color-success-bg: #f0fdf4;
+  --color-warning: #b45309;
+  --color-warning-bg: #fffbeb;
+  --color-warning-border: #fcd34d;
+  --color-done-bg: #f0fdf4;
+  --color-weekend-bg: #eef0f4;
+
+  /* Overrides Tailwind's default shadow-sm/md/lg so every `shadow-*` utility below matches this
+     app's existing shadow system exactly, instead of introducing a second shadow scale. */
+  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.05), 0 1px 1px rgba(15, 23, 42, 0.04);
+  --shadow-md: 0 4px 10px rgba(15, 23, 42, 0.07), 0 1px 3px rgba(15, 23, 42, 0.06);
+  --shadow-lg: 0 12px 32px rgba(15, 23, 42, 0.14), 0 2px 6px rgba(15, 23, 42, 0.08);
+}
+
+:root {
+  color-scheme: light;
+}
+
+@layer base {
+  /* The hidden attribute must win over any other display rule on the same element --
+     otherwise an ID/class selector setting `display` (e.g. #auth-screen, .modal-backdrop)
+     silently overrides the browser's default [hidden] { display: none } at equal specificity. */
+  [hidden] {
+    display: none !important;
+  }
+
+  body {
+    @apply m-0 font-sans bg-bg text-text;
+  }
+
+  h1, h2 {
+    @apply m-0 mb-2 tracking-[-0.01em];
+  }
+
+  input, select, textarea {
+    font: inherit;
+    @apply px-[0.6rem] py-[0.45rem] border border-border rounded-md w-full bg-panel text-text transition-colors;
+  }
+  input:focus-visible, select:focus-visible, textarea:focus-visible {
+    @apply outline-none border-primary shadow-[0_0_0_3px_rgba(67,56,202,0.15)];
+  }
+  input[type="checkbox"] {
+    appearance: none;
+    @apply w-[17px] h-[17px] shrink-0 border-[1.5px] border-border rounded-[5px] relative m-0 cursor-pointer transition-colors;
+  }
+  input[type="checkbox"]:hover {
+    @apply border-primary;
+  }
+  input[type="checkbox"]:checked {
+    @apply bg-primary border-primary;
+  }
+  input[type="checkbox"]:checked::after {
+    content: "";
+    position: absolute;
+    left: 5px;
+    top: 2px;
+    width: 4px;
+    height: 8px;
+    border: solid white;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg) scale(0);
+    animation: check-pop 0.16s 0.02s ease forwards;
+  }
+  @keyframes check-pop {
+    to { transform: rotate(45deg) scale(1); }
+  }
+  input[type="checkbox"]:focus-visible {
+    @apply outline-none shadow-[0_0_0_3px_rgba(67,56,202,0.25)];
+  }
+
+  label {
+    @apply block mb-3 text-[0.9rem] text-text-muted;
+  }
+}
+
+@layer components {
+  /* ---- buttons ---- */
+  .btn {
+    font: inherit;
+    @apply px-[0.9rem] py-[0.45rem] rounded-md border border-border bg-panel text-text cursor-pointer whitespace-nowrap transition-colors;
+  }
+  .btn:hover {
+    @apply bg-[#eef0f4];
+  }
+  .btn:active {
+    @apply translate-y-px;
+  }
+  .btn:focus-visible {
+    @apply outline-none shadow-[0_0_0_3px_rgba(67,56,202,0.2)];
+  }
+  .btn-primary {
+    @apply bg-primary text-white border-primary shadow-sm;
+  }
+  .btn-primary:hover {
+    @apply bg-primary-hover;
+  }
+  .btn-danger {
+    @apply bg-danger text-white border-danger;
+  }
+  .btn-ghost {
+    @apply bg-transparent border-transparent;
+  }
+  .btn-ghost:hover {
+    @apply bg-[rgba(26,29,35,0.06)];
+  }
+  .btn-icon {
+    @apply inline-flex items-center justify-center p-[0.4rem];
+  }
+  .btn-header {
+    @apply inline-flex items-center gap-[0.4rem];
+  }
+
+  /* ---- config warning ---- */
+  #config-warning {
+    @apply flex items-center justify-center min-h-screen p-8;
+  }
+  .config-warning-box {
+    @apply max-w-[480px] bg-warning-bg border border-warning-border rounded-[10px] p-6 shadow-md;
+  }
+
+  /* ---- auth screen ---- */
+  #auth-screen {
+    @apply flex items-center justify-center min-h-screen;
+  }
+  .auth-box {
+    @apply w-full max-w-[380px] bg-panel border border-border rounded-xl p-8 shadow-lg;
+  }
+  .auth-actions {
+    @apply flex gap-2;
+  }
+  .auth-divider {
+    @apply text-center text-text-muted text-[0.85rem] my-5;
+  }
+  .auth-error {
+    @apply bg-danger-bg text-danger px-3 py-[0.6rem] rounded-md mb-4 text-[0.9rem];
+  }
+  .auth-status {
+    @apply text-[0.85rem] text-text-muted;
+  }
+
+  /* ---- app shell ---- */
+  .brand {
+    @apply flex items-center gap-[0.55rem];
+  }
+  .brand-mark {
+    @apply w-[26px] h-[26px] rounded-[7px] bg-primary text-white flex items-center justify-center shrink-0 shadow-sm;
+  }
+  .brand-mark svg {
+    @apply w-[15px] h-[15px];
+  }
+
+  .app-header {
+    @apply flex items-center justify-between px-5 py-3 bg-panel border-b border-border shadow-sm relative z-2;
+  }
+  .app-header h1 {
+    @apply text-[1.05rem] m-0;
+  }
+  .header-right {
+    /* flex-wrap here is a safety net, not just a mobile-only concession: without it, adding a
+       header button later (or a long user email) can overflow the page horizontally at any width
+       between the icon-only mobile breakpoint and a comfortably wide desktop. */
+    @apply flex items-center gap-3 flex-wrap justify-end gap-y-[0.35rem];
+  }
+  .save-status {
+    @apply text-[0.8rem] text-text-muted min-w-[3.5rem] text-right transition-opacity inline-flex items-center justify-end gap-[0.3rem];
+  }
+  .save-status-saved {
+    @apply text-success;
+  }
+  .save-status-error {
+    @apply text-danger font-semibold;
+  }
+
+  .toolbar {
+    @apply flex items-center gap-[0.6rem] px-5 py-3 bg-panel border-b border-border flex-wrap;
+  }
+  .toolbar-spacer {
+    @apply flex-1;
+  }
+  .view-toggle {
+    @apply flex;
+  }
+  .view-toggle-btn {
+    @apply rounded-none;
+  }
+  .view-toggle-btn:first-child {
+    border-radius: 6px 0 0 6px;
+  }
+  .view-toggle-btn:last-child {
+    border-radius: 0 6px 6px 0;
+    @apply -ml-px;
+  }
+  .view-toggle-btn.active {
+    @apply bg-primary text-white border-primary z-1;
+  }
+  .list-filter-wrap label {
+    @apply m-0 flex items-center gap-[0.4rem];
+  }
+  .list-filter-wrap select {
+    @apply w-auto;
+  }
+
+  .app-body {
+    @apply flex min-h-[calc(100vh-108px)] max-w-[1680px] mx-auto;
+  }
+  .sidebar {
+    @apply w-[260px] shrink-0 bg-panel border-r border-border p-4 overflow-y-auto;
+  }
+  .sidebar h2 {
+    @apply text-[0.8rem] uppercase text-text-muted tracking-[0.06em] font-bold;
+  }
+  .client-search {
+    @apply mb-3 text-[0.85rem] px-[0.6rem] py-[0.4rem];
+  }
+  .view-container {
+    @apply flex-1 p-5 overflow-y-auto;
+    animation: fade-in 0.15s ease;
+  }
+
+  @keyframes fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  .empty-hint {
+    @apply text-text-muted text-[0.9rem] py-2;
+  }
+  .empty-state {
+    @apply flex flex-col items-center text-center px-6 py-10 text-text-muted;
+    animation: fade-in 0.2s ease;
+  }
+  .empty-state-badge {
+    @apply w-[52px] h-[52px] rounded-full flex items-center justify-center mb-[0.9rem];
+  }
+  .empty-state-badge-primary {
+    @apply bg-[rgba(67,56,202,0.1)] text-primary;
+  }
+  .empty-state-badge-success {
+    @apply bg-[rgba(22,163,74,0.1)] text-success;
+  }
+  .empty-state h3 {
+    @apply m-0 mb-1 text-text text-base;
+  }
+  .empty-state p {
+    @apply m-0 text-[0.85rem] max-w-[26rem];
+  }
+  .loading-hint {
+    @apply text-text-muted text-[0.9rem] flex items-center gap-2 py-4;
+  }
+  .spinner {
+    @apply w-[14px] h-[14px] rounded-full border-2 border-border shrink-0;
+    border-top-color: var(--color-primary);
+    animation: spin 0.7s linear infinite;
+  }
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
+  .client-row {
+    @apply flex items-center gap-2 px-[0.4rem] py-[0.45rem] rounded-md transition-colors;
+    cursor: default;
+  }
+  .client-row:hover {
+    @apply bg-[#eef0f4];
+  }
+  .client-row-active {
+    @apply bg-[rgba(67,56,202,0.08)];
+  }
+  .client-dot {
+    @apply w-[10px] h-[10px] rounded-full shrink-0;
+  }
+  .client-name {
+    @apply flex-1 cursor-pointer text-[0.9rem];
+  }
+  .client-actions {
+    @apply hidden gap-[0.15rem];
+  }
+  .client-row:hover .client-actions {
+    @apply flex;
+  }
+  .icon-btn {
+    @apply border-0 bg-transparent cursor-pointer p-[0.3rem] rounded-[5px] inline-flex items-center justify-center text-text-muted transition-colors;
+  }
+  .icon-btn:hover {
+    @apply bg-border text-text;
+  }
+
+  .client-row-archived {
+    @apply opacity-60;
+  }
+  .client-archived-tag {
+    @apply text-[0.65rem] font-bold uppercase tracking-[0.03em] text-text-muted bg-border px-[0.35rem] py-[0.05rem] rounded-full;
+  }
+  .client-progress {
+    @apply text-[0.7rem] font-bold px-[0.4rem] py-[0.05rem] rounded-full shrink-0;
+  }
+  .client-progress-ok {
+    @apply bg-[rgba(22,163,74,0.12)] text-success;
+  }
+  .client-progress-behind {
+    @apply bg-[rgba(220,38,38,0.12)] text-danger;
+  }
+  .client-row:hover .client-progress {
+    @apply hidden;
+  }
+
+  .show-archived-toggle {
+    @apply flex items-center gap-[0.4rem] text-[0.8rem] text-text-muted pt-2 pb-[0.1rem] px-[0.4rem] cursor-pointer;
+  }
+  .show-archived-toggle input {
+    @apply w-auto;
+  }
+
+  /* ---- calendar ---- */
+  .cal-header {
+    @apply flex items-center gap-2 mb-3;
+  }
+  .cal-title {
+    font: inherit;
+    @apply font-bold min-w-[10rem] text-left bg-transparent border-0 text-text cursor-pointer rounded-md px-[0.4rem] py-[0.2rem] -my-[0.2rem] -mx-[0.4rem] transition-colors;
+  }
+  .cal-title:hover {
+    @apply bg-[#eef0f4];
+  }
+  .cal-title:focus-visible {
+    @apply outline-none shadow-[0_0_0_3px_rgba(67,56,202,0.2)];
+  }
+  .cal-colormode {
+    @apply ml-auto text-[0.85rem] text-text-muted flex items-center gap-[0.4rem];
+  }
+  .cal-colormode select {
+    @apply w-auto;
+  }
+
+  .cal-grid {
+    @apply grid grid-cols-7 gap-[6px];
+  }
+  .cal-grid-head {
+    @apply mb-[2px];
+  }
+  .cal-weekday {
+    @apply text-center text-[0.75rem] font-semibold text-text-muted p-1 uppercase tracking-[0.04em];
+  }
+
+  .cal-cell {
+    @apply bg-panel border border-border rounded-lg min-h-[90px] p-[0.45rem] cursor-pointer transition-all;
+  }
+  .cal-cell:hover {
+    @apply border-primary shadow-sm -translate-y-px;
+  }
+  .cal-cell-empty {
+    @apply bg-transparent border-transparent;
+    cursor: default;
+  }
+  .cal-cell-empty:hover {
+    @apply shadow-none translate-y-0;
+  }
+  .cal-cell-weekend {
+    @apply bg-weekend-bg;
+  }
+  .cal-cell-today {
+    @apply border-primary border-[1.5px] shadow-[0_0_0_1px_var(--color-primary)];
+  }
+  .cal-cell-num {
+    @apply text-[0.85rem] text-text-muted mb-[0.35rem] flex items-center justify-between;
+  }
+  .cal-today-badge {
+    @apply bg-primary text-white text-[0.62rem] font-bold tracking-[0.03em] px-[0.35rem] py-[0.1rem] rounded-full uppercase;
+  }
+  .cal-cell-dots {
+    @apply flex flex-wrap gap-[3px] items-center;
+  }
+  .cal-dot {
+    @apply w-[9px] h-[9px] rounded-full inline-block;
+  }
+  .cal-dot-done {
+    @apply opacity-35;
+  }
+  .cal-dot-overdue {
+    box-shadow: 0 0 0 2px var(--color-danger);
+  }
+  .cal-more {
+    @apply text-[0.65rem] font-bold text-text-muted bg-border px-[0.35rem] py-[0.05rem] rounded-full;
+  }
+
+  .cal-legend {
+    @apply flex flex-wrap gap-x-4 gap-y-2 mt-[0.85rem] pt-3 border-t border-border;
+  }
+  .cal-legend-item {
+    @apply flex items-center gap-[0.35rem] text-[0.78rem] text-text-muted;
+  }
+  .cal-legend-dot {
+    @apply w-2 h-2 rounded-full shrink-0;
+  }
+
+  .cal-agenda {
+    @apply mb-[0.85rem] pb-[0.85rem] border-b border-border;
+  }
+  .cal-agenda-title {
+    @apply text-[0.75rem] font-bold uppercase tracking-[0.04em] text-text-muted mb-2;
+  }
+  .cal-agenda-strip {
+    @apply grid grid-cols-7 gap-[6px];
+  }
+  .cal-agenda-day {
+    @apply bg-panel border border-border rounded-md p-[0.4rem] cursor-pointer min-h-[74px] transition-colors;
+  }
+  .cal-agenda-day:hover {
+    @apply border-primary shadow-sm;
+  }
+  .cal-agenda-day-head {
+    @apply text-[0.7rem] font-bold text-text-muted mb-[0.3rem];
+  }
+  .cal-agenda-item {
+    @apply flex items-center gap-[0.3rem] text-[0.72rem] text-text mb-[0.15rem];
+  }
+  .cal-agenda-item-label {
+    @apply overflow-hidden text-ellipsis whitespace-nowrap;
+  }
+  .cal-agenda-dot {
+    @apply w-[6px] h-[6px] rounded-full shrink-0;
+  }
+  .cal-agenda-more {
+    @apply text-[0.68rem] text-text-muted;
+  }
+  .cal-agenda-empty {
+    @apply text-[0.7rem] text-text-muted opacity-70;
+  }
+
+  /* ---- list view ---- */
+  .list-group {
+    @apply mb-5;
+  }
+  .list-group-header {
+    @apply font-bold text-[0.9rem] text-text-muted mb-[0.4rem];
+  }
+  .list-row {
+    @apply flex items-center gap-[0.6rem] px-[0.65rem] py-[0.55rem] bg-panel border border-border rounded-md mb-[0.35rem] cursor-pointer text-[0.9rem] transition-shadow;
+  }
+  .list-row:hover {
+    @apply shadow-sm;
+  }
+  .list-row-done {
+    @apply bg-done-bg;
+  }
+  .list-row-done .list-row-label {
+    @apply line-through text-text-muted;
+  }
+  .list-row-dot {
+    @apply w-[10px] h-[10px] rounded-full shrink-0;
+  }
+  .list-row-client {
+    @apply font-semibold min-w-[8rem];
+  }
+  .list-row-label {
+    @apply flex-1;
+  }
+  .list-row-recurrence {
+    @apply text-text-muted text-[0.8rem];
+  }
+  .list-row-completed-by {
+    @apply text-text-muted text-[0.8rem];
+  }
+
+  .list-group-header-overdue {
+    @apply text-danger;
+  }
+  .list-row-overdue {
+    @apply border-danger bg-danger-bg;
+  }
+  .list-row-overdue-tag {
+    @apply text-danger text-[0.8rem] font-semibold;
+  }
+
+  /* ---- modal ---- */
+  .modal-backdrop {
+    @apply fixed inset-0 bg-[rgba(15,23,42,0.45)] flex items-start justify-center px-4 py-12 overflow-y-auto z-50;
+    animation: backdrop-in 0.15s ease;
+  }
+  @keyframes backdrop-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  .modal-content {
+    @apply bg-panel rounded-xl p-6 w-full max-w-[480px] shadow-lg;
+    animation: modal-in 0.16s cubic-bezier(0.2, 0.8, 0.3, 1);
+  }
+  @keyframes modal-in {
+    from { opacity: 0; transform: translateY(6px) scale(0.98); }
+    to { opacity: 1; transform: none; }
+  }
+  .modal-actions {
+    @apply flex gap-2 justify-end mt-4;
+  }
+  .confirm-checkbox {
+    @apply flex items-center gap-2;
+  }
+
+  .category-list {
+    @apply list-none p-0 m-0 mb-4;
+  }
+  .category-list li {
+    @apply flex justify-between items-center py-[0.35rem] border-b border-border text-[0.9rem];
+  }
+
+  #add-category-form {
+    @apply flex gap-2;
+  }
+
+  .recurrence-history-note {
+    @apply text-[0.85rem] text-text-muted bg-bg px-3 py-2 rounded-md mb-4;
+  }
+  #item-form small {
+    @apply block mt-1 text-[0.78rem] leading-[1.4];
+  }
+
+  .bulk-clients-section {
+    @apply mb-3;
+  }
+  .bulk-clients-header {
+    @apply flex justify-between items-center text-[0.85rem] text-text-muted mb-[0.4rem];
+  }
+  .bulk-select-all-label {
+    @apply flex items-center gap-[0.35rem] text-[0.85rem] text-text-muted;
+  }
+  .bulk-clients-list {
+    @apply max-h-[220px] overflow-y-auto border border-border rounded-md px-[0.6rem] py-[0.4rem];
+  }
+  .bulk-client-row {
+    @apply flex items-center gap-2 py-[0.3rem] text-[0.9rem] cursor-pointer;
+  }
+  .bulk-excluded-note {
+    @apply text-[0.8rem] text-text-muted pt-[0.4rem];
+  }
+
+  /* ---- responsive ----
+     Hand-written @media blocks (not Tailwind's max-md:/max-[…]: variant shorthand) on purpose:
+     Tailwind's max-* variants compile to an *exclusive* `width < Npx` query, but this app's
+     breakpoints were tuned and verified as *inclusive* `max-width: Npx` (a viewport exactly at
+     768px or 480px must still get the narrow layout). Keeping these as literal media queries,
+     structurally matching the original hand-written stylesheet, avoids an off-by-one-pixel
+     regression at the exact boundary. */
+  @media (max-width: 768px) {
+    .app-header {
+      @apply flex-wrap gap-y-2 px-[0.85rem] py-[0.6rem];
+    }
+    .user-email {
+      @apply hidden;
+    }
+    .header-right {
+      @apply gap-2;
+    }
+    /* Text labels would blow past the viewport at this width (three buttons' worth of text is
+       wider than a phone screen) -- collapse to icon-only, relying on the button's title
+       attribute for the accessible name/tooltip, same as the icon-only buttons elsewhere. */
+    .btn-header-label {
+      @apply hidden;
+    }
+    .btn-header {
+      @apply p-[0.45rem];
+    }
+
+    .toolbar {
+      @apply px-3 py-[0.6rem] gap-2;
+    }
+    /* A zero-height, full-width flex item forces everything after it onto its own row, so the
+       "Add" actions don't get visually squeezed against the filters on a narrow screen. */
+    .toolbar-spacer {
+      @apply basis-full h-0;
+    }
+    /* The category <select>'s width:auto (above) sizes to its longest option text, which is
+       wider than a phone screen -- cap it and let the closed control's text truncate instead. */
+    .list-filter-wrap select {
+      @apply max-w-[46vw] overflow-hidden text-ellipsis;
+    }
+    .list-filter-wrap label {
+      @apply min-w-0;
+    }
+
+    .app-body {
+      @apply flex-col min-h-0;
+    }
+    .sidebar {
+      @apply w-full max-h-[220px] border-r-0 border-b border-border;
+    }
+    .view-container {
+      @apply p-[0.85rem];
+    }
+
+    .cal-header {
+      @apply flex-wrap gap-y-[0.4rem];
+    }
+    .cal-title {
+      @apply min-w-0 text-[0.95rem];
+    }
+    .cal-colormode {
+      @apply ml-0;
+    }
+    .cal-cell {
+      @apply min-h-[56px] p-[0.3rem];
+    }
+    .cal-cell-num {
+      @apply text-[0.75rem];
+    }
+    /* today's already outlined; the badge text won't fit at this size */
+    .cal-today-badge {
+      @apply hidden;
+    }
+    .cal-weekday {
+      @apply text-[0.65rem] p-[0.15rem];
+    }
+    .cal-grid {
+      @apply gap-[3px];
+    }
+
+    .cal-agenda-strip {
+      @apply flex overflow-x-auto -mx-[0.85rem] px-[0.85rem];
+    }
+    .cal-agenda-day {
+      @apply min-w-[108px] shrink-0;
+    }
+
+    /* The row's own <label> uses an inline style (see list-view.js), which beats any stylesheet
+       rule except !important -- needed here to let its contents wrap on narrow screens. */
+    .list-row > label {
+      @apply flex-wrap! gap-y-1;
+    }
+    .list-row-client {
+      @apply min-w-0 basis-full;
+    }
+
+    .modal-backdrop {
+      @apply px-2 py-4 items-center;
+    }
+    .modal-content {
+      @apply p-5;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .cal-cell {
+      @apply min-h-[42px];
+    }
+    .cal-more {
+      @apply hidden;
+    }
+  }
+}
