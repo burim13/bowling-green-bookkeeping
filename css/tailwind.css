@@ -13,8 +13,9 @@
   --color-border: #e2e5eb;
   --color-text: #1a1d23;
   --color-text-muted: #64748b;
-  --color-primary: #4338ca;
-  --color-primary-hover: #3730a3;
+  /* Tailwind's default "blue" scale: blue-600 / blue-700 */
+  --color-primary: #2563eb;
+  --color-primary-hover: #1d4ed8;
   --color-danger: #dc2626;
   --color-danger-bg: #fef2f2;
   --color-success: #16a34a;
@@ -57,7 +58,7 @@
     @apply px-[0.6rem] py-[0.45rem] border border-border rounded-md w-full bg-panel text-text transition-colors;
   }
   input:focus-visible, select:focus-visible, textarea:focus-visible {
-    @apply outline-none border-primary shadow-[0_0_0_3px_rgba(67,56,202,0.15)];
+    @apply outline-none border-primary shadow-[0_0_0_3px_rgba(37,99,235,0.15)];
   }
   input[type="checkbox"] {
     appearance: none;
@@ -85,7 +86,7 @@
     to { transform: rotate(45deg) scale(1); }
   }
   input[type="checkbox"]:focus-visible {
-    @apply outline-none shadow-[0_0_0_3px_rgba(67,56,202,0.25)];
+    @apply outline-none shadow-[0_0_0_3px_rgba(37,99,235,0.25)];
   }
 
   label {
@@ -106,7 +107,7 @@
     @apply translate-y-px;
   }
   .btn:focus-visible {
-    @apply outline-none shadow-[0_0_0_3px_rgba(67,56,202,0.2)];
+    @apply outline-none shadow-[0_0_0_3px_rgba(37,99,235,0.2)];
   }
   .btn-primary {
     @apply bg-primary text-white border-primary shadow-sm;
@@ -253,7 +254,7 @@
     @apply w-[52px] h-[52px] rounded-full flex items-center justify-center mb-[0.9rem];
   }
   .empty-state-badge-primary {
-    @apply bg-[rgba(67,56,202,0.1)] text-primary;
+    @apply bg-[rgba(37,99,235,0.1)] text-primary;
   }
   .empty-state-badge-success {
     @apply bg-[rgba(22,163,74,0.1)] text-success;
@@ -284,7 +285,7 @@
     @apply bg-[#eef0f4];
   }
   .client-row-active {
-    @apply bg-[rgba(67,56,202,0.08)];
+    @apply bg-[rgba(37,99,235,0.08)];
   }
   .client-dot {
     @apply w-[10px] h-[10px] rounded-full shrink-0;
@@ -343,7 +344,7 @@
     @apply bg-[#eef0f4];
   }
   .cal-title:focus-visible {
-    @apply outline-none shadow-[0_0_0_3px_rgba(67,56,202,0.2)];
+    @apply outline-none shadow-[0_0_0_3px_rgba(37,99,235,0.2)];
   }
   .cal-colormode {
     @apply ml-auto text-[0.85rem] text-text-muted flex items-center gap-[0.4rem];
