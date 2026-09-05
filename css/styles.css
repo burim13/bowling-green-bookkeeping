@@ -13,6 +13,11 @@
 
 * { box-sizing: border-box; }
 
+/* The hidden attribute must win over any other display rule on the same element --
+   otherwise an ID/class selector setting `display` (e.g. #auth-screen, .modal-backdrop)
+   silently overrides the browser's default [hidden] { display: none } at equal specificity. */
+[hidden] { display: none !important; }
+
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
