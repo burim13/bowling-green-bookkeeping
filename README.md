@@ -131,12 +131,20 @@ No code changes needed. Either:
 Every signed-in user currently has full read/write access to all data (see "Roles" below) -- there
 is no invite-only gate beyond "has a login in this Firebase project."
 
-### Roles (not enforced yet, but the field exists)
+### Roles
 
-Each user gets a `users/{uid}` document with a `role` field (defaults to `"staff"`). Nothing reads
-this field yet -- it's there so that if you want an admin/staff distinction later (e.g. only admins
-can delete clients), that can be added purely as a Firestore Security Rules change plus setting
-each user's `role` value, without touching the data model or migrating data.
+Each user gets a `users/{uid}` document with a `role` field, either `"admin"` or `"staff"`. The
+very first person to ever sign in (when the `users` collection is empty) becomes `admin`
+automatically; everyone after that starts as `staff`.
+
+The only thing role currently gates is **deleting a client outright** -- that's the one action
+that's irreversible and cascades (removes all its items and completion history), so it's
+admin-only, enforced in [`firestore.rules`](firestore.rules) (not just hidden in the UI). Staff can
+still do everything else: add/edit/remove items, mark things complete, add clients, manage
+categories.
+
+To promote someone to admin later, edit their `role` field to `"admin"` directly in the Firestore
+console (**Firestore Database -> Data -> users -> their document**).
 
 ---
 

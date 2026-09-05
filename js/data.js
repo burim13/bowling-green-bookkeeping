@@ -23,6 +23,7 @@ const state = {
   items: new Map(), // itemId -> { id, clientId, category, customLabel, startDate, recurrenceType, recurrenceInterval, recurrenceDayOfMonth }
   completions: new Map(), // itemId -> Map(periodKey -> { completedOn, completedBy })
   categories: [],
+  currentUserRole: null, // "admin" | "staff" | null, for the signed-in user
 };
 
 const dataListeners = new Set();
@@ -50,6 +51,17 @@ export function subscribeToSaveStatus(callback) {
 
 export function startSync() {
   stopSync();
+
+  unsubscribers.push(
+    onSnapshot(
+      doc(db, "users", auth.currentUser.uid),
+      (snap) => {
+        state.currentUserRole = snap.exists() ? snap.data().role : null;
+        notifyData();
+      },
+      (err) => setSaveStatus("error", err.message)
+    )
+  );
 
   unsubscribers.push(
     onSnapshot(

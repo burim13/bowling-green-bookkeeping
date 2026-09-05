@@ -45,13 +45,20 @@ const DEFAULT_CATEGORIES = [
 ];
 
 const els = {};
-let latestState = { clients: new Map(), items: new Map(), completions: new Map(), categories: [] };
+let latestState = {
+  clients: new Map(),
+  items: new Map(),
+  completions: new Map(),
+  categories: [],
+  currentUserRole: null,
+};
 let viewState = {
   view: localStorage.getItem("cct_view") || "calendar",
   year: new Date().getFullYear(),
   month: new Date().getMonth(),
   colorMode: localStorage.getItem("cct_colormode") || "client",
   clientFilter: null,
+  clientSearch: "",
 };
 
 function qs(id) {
@@ -65,6 +72,7 @@ function init() {
   els.saveStatus = qs("save-status");
   els.viewContainer = qs("view-container");
   els.clientList = qs("client-list");
+  els.clientSearch = qs("client-search");
   els.viewToggleCalendar = qs("view-toggle-calendar");
   els.viewToggleList = qs("view-toggle-list");
   els.listFilterClient = qs("list-filter-client");
@@ -174,6 +182,11 @@ function wireToolbar() {
     renderCurrentView();
   });
 
+  els.clientSearch.addEventListener("input", (e) => {
+    viewState.clientSearch = e.target.value;
+    renderClientList();
+  });
+
   qs("add-client-btn").addEventListener("click", () => openClientModal());
   qs("manage-categories-btn").addEventListener("click", () => openCategoriesModal());
   qs("export-btn").addEventListener("click", openExportInfo);
@@ -251,26 +264,35 @@ async function handleToggleComplete(clientId, itemId, periodKey, checked) {
 // ---- client sidebar ---------------------------------------------------------
 
 function renderClientList() {
-  const clients = [...latestState.clients.values()].sort((a, b) => a.name.localeCompare(b.name));
+  const allClients = [...latestState.clients.values()].sort((a, b) => a.name.localeCompare(b.name));
+  const query = viewState.clientSearch.trim().toLowerCase();
+  const clients = query ? allClients.filter((c) => c.name.toLowerCase().includes(query)) : allClients;
+  const isAdmin = latestState.currentUserRole === "admin";
 
-  els.clientList.innerHTML = clients
-    .map(
-      (c) => `
-      <div class="client-row ${viewState.clientFilter === c.id ? "client-row-active" : ""}" data-client-id="${c.id}">
-        <span class="client-dot" style="background:${colorFor(c.id)}"></span>
-        <span class="client-name" data-action="filter">${c.name}</span>
-        <span class="client-actions">
-          <button class="icon-btn" data-action="add-item" title="Add item">+</button>
-          <button class="icon-btn" data-action="edit" title="Edit client">✎</button>
-          <button class="icon-btn" data-action="delete" title="Delete client">🗑</button>
-        </span>
-      </div>`
-    )
-    .join("") || `<div class="empty-hint">No clients yet. Click "Add Client" above.</div>`;
+  if (allClients.length === 0) {
+    els.clientList.innerHTML = `<div class="empty-hint">No clients yet. Click "Add Client" above.</div>`;
+  } else if (clients.length === 0) {
+    els.clientList.innerHTML = `<div class="empty-hint">No clients match "${escapeHtml(viewState.clientSearch)}".</div>`;
+  } else {
+    els.clientList.innerHTML = clients
+      .map(
+        (c) => `
+        <div class="client-row ${viewState.clientFilter === c.id ? "client-row-active" : ""}" data-client-id="${c.id}">
+          <span class="client-dot" style="background:${colorFor(c.id)}"></span>
+          <span class="client-name" data-action="filter">${c.name}</span>
+          <span class="client-actions">
+            <button class="icon-btn" data-action="add-item" title="Add item">+</button>
+            <button class="icon-btn" data-action="edit" title="Edit client">✎</button>
+            ${isAdmin ? `<button class="icon-btn" data-action="delete" title="Delete client">🗑</button>` : ""}
+          </span>
+        </div>`
+      )
+      .join("");
+  }
 
   els.listFilterClient.innerHTML =
     `<option value="">All clients</option>` +
-    clients.map((c) => `<option value="${c.id}">${c.name}</option>`).join("");
+    allClients.map((c) => `<option value="${c.id}">${c.name}</option>`).join("");
   els.listFilterClient.value = viewState.clientFilter || "";
 
   els.clientList.querySelectorAll(".client-row").forEach((row) => {
@@ -282,7 +304,7 @@ function renderClientList() {
     });
     row.querySelector('[data-action="add-item"]').addEventListener("click", () => openItemModal(clientId));
     row.querySelector('[data-action="edit"]').addEventListener("click", () => openClientModal(clientId));
-    row.querySelector('[data-action="delete"]').addEventListener("click", () => confirmDeleteClient(clientId));
+    row.querySelector('[data-action="delete"]')?.addEventListener("click", () => confirmDeleteClient(clientId));
   });
 }
 

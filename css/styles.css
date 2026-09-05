@@ -104,6 +104,7 @@ label { display: block; margin-bottom: 0.75rem; font-size: 0.9rem; color: var(--
   padding: 1rem; overflow-y: auto;
 }
 .sidebar h2 { font-size: 0.85rem; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.04em; }
+.client-search { margin-bottom: 0.75rem; font-size: 0.85rem; padding: 0.35rem 0.5rem; }
 .view-container { flex: 1; padding: 1.25rem; overflow-y: auto; }
 
 .empty-hint { color: var(--text-muted); font-size: 0.9rem; }

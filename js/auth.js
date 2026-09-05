@@ -7,7 +7,14 @@ import {
   isSignInWithEmailLink,
   signOut,
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
-import { doc, setDoc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+import {
+  doc,
+  setDoc,
+  getDoc,
+  getDocs,
+  collection,
+  serverTimestamp,
+} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 import { auth, db } from "./firebase-init.js";
 
 const EMAIL_LINK_STORAGE_KEY = "cct_email_for_signin";
@@ -65,11 +72,15 @@ async function ensureUserDoc() {
   const existing = await getDoc(ref);
   if (existing.exists()) return;
 
-  // role is unused in v1 (every signed-in user has full access) but is stored now so
-  // role-based Security Rules can be added later without a data migration.
+  // The very first person to sign in (an empty users collection) becomes admin
+  // automatically; everyone after that starts as staff. Security Rules use this role
+  // to gate the one action that's admin-only: deleting a client outright.
+  const usersSnap = await getDocs(collection(db, "users"));
+  const role = usersSnap.empty ? "admin" : "staff";
+
   await setDoc(ref, {
     displayName: user.displayName || user.email,
-    role: "staff",
+    role,
     createdAt: serverTimestamp(),
   });
 }
