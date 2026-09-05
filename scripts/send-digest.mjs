@@ -158,11 +158,11 @@ function buildPlainText({ overdue, dueSoon, clientName, dateStr, todayStr }) {
 function buildHtml({ overdue, dueSoon, clientName, dateStr, todayStr }) {
   const rowHtml = (label, dueDateText, badgeText, badgeColor) => `
     <tr>
-      <td style="padding:8px 12px;background:#f7f5f2;border-radius:6px;font-size:13px;color:#2b2926;">
+      <td style="padding:8px 12px;background:#f4f5f7;border-radius:6px;font-size:13px;color:#1a1d23;">
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
-          <td style="font-size:13px;color:#2b2926;">
+          <td style="font-size:13px;color:#1a1d23;">
             ${escapeHtml(label)}<br/>
-            <span style="font-size:12px;color:#7a7369;">Due ${dueDateText}</span>
+            <span style="font-size:12px;color:#64748b;">Due ${dueDateText}</span>
           </td>
           <td align="right" valign="top" style="font-size:12px;font-weight:600;color:${badgeColor};white-space:nowrap;">
             ${badgeText}
@@ -174,7 +174,7 @@ function buildHtml({ overdue, dueSoon, clientName, dateStr, todayStr }) {
 
   const clientBlock = (name, rows) => `
     <div style="margin-bottom:16px;">
-      <div style="font-size:13px;font-weight:700;color:#2b2926;margin-bottom:6px;">${escapeHtml(name)}</div>
+      <div style="font-size:13px;font-weight:700;color:#1a1d23;margin-bottom:6px;">${escapeHtml(name)}</div>
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0">${rows.join("")}</table>
     </div>`;
 
@@ -183,7 +183,7 @@ function buildHtml({ overdue, dueSoon, clientName, dateStr, todayStr }) {
       return `
         <tr><td style="padding:0 28px 20px;">
           <div style="font-size:13px;font-weight:700;color:${titleColor};text-transform:uppercase;letter-spacing:0.03em;margin-bottom:8px;">${title}</div>
-          <div style="font-size:13px;color:#7a7369;">Nothing here -- nice work.</div>
+          <div style="font-size:13px;color:#64748b;">Nothing here -- nice work.</div>
         </td></tr>`;
     }
     const groups = groupByClient(rows, clientName);
@@ -197,36 +197,36 @@ function buildHtml({ overdue, dueSoon, clientName, dateStr, todayStr }) {
       </td></tr>`;
   };
 
-  const overdueSection = section(`Overdue (${overdue.length})`, "#c0392b", overdue, ({ item, occurrence, daysOverdue }) =>
-    rowHtml(labelFor(item), dateStr(occurrence.date), `${daysOverdue}d overdue`, "#c0392b")
+  const overdueSection = section(`Overdue (${overdue.length})`, "#dc2626", overdue, ({ item, occurrence, daysOverdue }) =>
+    rowHtml(labelFor(item), dateStr(occurrence.date), `${daysOverdue}d overdue`, "#dc2626")
   );
-  const dueSoonSection = section(`Due soon (${dueSoon.length})`, "#3d5a80", dueSoon, ({ item, occurrence }) =>
-    rowHtml(labelFor(item), dateStr(occurrence.date), escapeHtml(describeRecurrence(item)), "#7a7369")
+  const dueSoonSection = section(`Due soon (${dueSoon.length})`, "#4338ca", dueSoon, ({ item, occurrence }) =>
+    rowHtml(labelFor(item), dateStr(occurrence.date), escapeHtml(describeRecurrence(item)), "#64748b")
   );
 
   return `
-<div style="background:#f7f5f2;padding:24px 12px;font-family:Arial,Helvetica,sans-serif;">
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;margin:0 auto;background:#ffffff;border-radius:10px;border:1px solid #e2ddd6;">
+<div style="background:#f4f5f7;padding:24px 12px;font-family:Arial,Helvetica,sans-serif;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;margin:0 auto;background:#ffffff;border-radius:10px;border:1px solid #e2e5eb;">
     <tr>
       <td style="padding:24px 28px 4px;">
-        <div style="font-size:18px;font-weight:700;color:#2b2926;">Client Compliance Tracker</div>
-        <div style="font-size:13px;color:#7a7369;margin-top:2px;">${todayStr}</div>
+        <div style="font-size:18px;font-weight:700;color:#1a1d23;">Client Compliance Tracker</div>
+        <div style="font-size:13px;color:#64748b;margin-top:2px;">${todayStr}</div>
       </td>
     </tr>
     <tr>
-      <td style="padding:8px 28px 20px;font-size:14px;color:#2b2926;">
+      <td style="padding:8px 28px 20px;font-size:14px;color:#1a1d23;">
         <strong>${overdue.length}</strong> overdue &middot; <strong>${dueSoon.length}</strong> due soon
       </td>
     </tr>
     ${overdueSection}
     ${dueSoonSection}
     <tr>
-      <td style="padding:16px 28px;border-top:1px solid #e2ddd6;">
-        <a href="${APP_URL}" style="display:inline-block;background:#3d5a80;color:#ffffff;text-decoration:none;padding:10px 18px;border-radius:6px;font-size:14px;font-weight:600;">Open Client Compliance Tracker</a>
+      <td style="padding:16px 28px;border-top:1px solid #e2e5eb;">
+        <a href="${APP_URL}" style="display:inline-block;background:#4338ca;color:#ffffff;text-decoration:none;padding:10px 18px;border-radius:6px;font-size:14px;font-weight:600;">Open Client Compliance Tracker</a>
       </td>
     </tr>
     <tr>
-      <td style="padding:0 28px 20px;font-size:12px;color:#7a7369;">
+      <td style="padding:0 28px 20px;font-size:12px;color:#64748b;">
         Automated daily digest. This address does not accept replies.
       </td>
     </tr>

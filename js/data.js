@@ -14,7 +14,7 @@ import {
   serverTimestamp,
   writeBatch,
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
-import { db, auth } from "./firebase-init.js?v=1788588244177";
+import { db, auth } from "./firebase-init.js?v=1788589036344";
 
 // ---- live store ----------------------------------------------------------
 
