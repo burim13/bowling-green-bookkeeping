@@ -45,7 +45,20 @@ input, select, textarea {
 input:focus-visible, select:focus-visible, textarea:focus-visible {
   outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(61, 90, 128, 0.15);
 }
-input[type="checkbox"] { accent-color: var(--primary); }
+input[type="checkbox"] {
+  appearance: none; -webkit-appearance: none; width: 17px; height: 17px; flex-shrink: 0;
+  border: 1.5px solid var(--border); border-radius: 5px; position: relative; margin: 0;
+  cursor: pointer; transition: background 0.15s ease, border-color 0.15s ease;
+}
+input[type="checkbox"]:hover { border-color: var(--primary); }
+input[type="checkbox"]:checked { background: var(--primary); border-color: var(--primary); }
+input[type="checkbox"]:checked::after {
+  content: ""; position: absolute; left: 5px; top: 2px; width: 4px; height: 8px;
+  border: solid white; border-width: 0 2px 2px 0;
+  transform: rotate(45deg) scale(0); animation: check-pop 0.16s 0.02s ease forwards;
+}
+@keyframes check-pop { to { transform: rotate(45deg) scale(1); } }
+input[type="checkbox"]:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(61, 90, 128, 0.25); }
 
 label { display: block; margin-bottom: 0.75rem; font-size: 0.9rem; color: var(--text-muted); }
 
@@ -107,7 +120,11 @@ label { display: block; margin-bottom: 0.75rem; font-size: 0.9rem; color: var(--
 .app-header h1 { font-size: 1.05rem; margin: 0; }
 .header-right { display: flex; align-items: center; gap: 0.75rem; }
 .user-email { color: var(--text-muted); font-size: 0.85rem; }
-.save-status { font-size: 0.8rem; color: var(--text-muted); min-width: 3.5rem; text-align: right; transition: opacity 0.2s ease; }
+.save-status {
+  font-size: 0.8rem; color: var(--text-muted); min-width: 3.5rem; text-align: right;
+  transition: opacity 0.2s ease; display: inline-flex; align-items: center; justify-content: flex-end; gap: 0.3rem;
+}
+.save-status-saved { color: #2e7d52; }
 .save-status-error { color: var(--danger); font-weight: 600; }
 
 .toolbar {
@@ -135,6 +152,18 @@ label { display: block; margin-bottom: 0.75rem; font-size: 0.9rem; color: var(--
 @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
 
 .empty-hint { color: var(--text-muted); font-size: 0.9rem; padding: 0.5rem 0; }
+.empty-state {
+  display: flex; flex-direction: column; align-items: center; text-align: center;
+  padding: 2.5rem 1.5rem; color: var(--text-muted); animation: fade-in 0.2s ease;
+}
+.empty-state-badge {
+  width: 52px; height: 52px; border-radius: 50%; display: flex; align-items: center;
+  justify-content: center; margin-bottom: 0.9rem;
+}
+.empty-state-badge-primary { background: rgba(61, 90, 128, 0.1); color: var(--primary); }
+.empty-state-badge-success { background: rgba(46, 125, 82, 0.1); color: #2e7d52; }
+.empty-state h3 { margin: 0 0 0.25rem; color: var(--text); font-size: 1rem; }
+.empty-state p { margin: 0; font-size: 0.85rem; max-width: 26rem; }
 .loading-hint { color: var(--text-muted); font-size: 0.9rem; display: flex; align-items: center; gap: 0.5rem; padding: 1rem 0; }
 .spinner {
   width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--border);
@@ -202,7 +231,6 @@ label { display: block; margin-bottom: 0.75rem; font-size: 0.9rem; color: var(--
   transition: box-shadow 0.12s ease, border-color 0.12s ease;
 }
 .list-row:hover { box-shadow: var(--shadow-sm); }
-.list-row input[type="checkbox"] { width: auto; }
 .list-row-done { background: var(--done-bg); }
 .list-row-done .list-row-label { text-decoration: line-through; color: var(--text-muted); }
 .list-row-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
@@ -210,7 +238,6 @@ label { display: block; margin-bottom: 0.75rem; font-size: 0.9rem; color: var(--
 .list-row-label { flex: 1; }
 .list-row-recurrence { color: var(--text-muted); font-size: 0.8rem; }
 .list-row-completed-by { color: var(--text-muted); font-size: 0.8rem; }
-.list-empty { color: var(--text-muted); }
 
 .list-group-header-overdue { color: var(--danger); }
 .list-row-overdue { border-color: var(--danger); background: #fdf1f0; }
@@ -230,7 +257,6 @@ label { display: block; margin-bottom: 0.75rem; font-size: 0.9rem; color: var(--
 @keyframes modal-in { from { opacity: 0; transform: translateY(6px) scale(0.98); } to { opacity: 1; transform: none; } }
 .modal-actions { display: flex; gap: 0.5rem; justify-content: flex-end; margin-top: 1rem; }
 .confirm-checkbox { display: flex; align-items: center; gap: 0.5rem; }
-.confirm-checkbox input { width: auto; }
 
 .category-list { list-style: none; padding: 0; margin: 0 0 1rem; }
 .category-list li { display: flex; justify-content: space-between; align-items: center; padding: 0.35rem 0; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
@@ -240,8 +266,6 @@ label { display: block; margin-bottom: 0.75rem; font-size: 0.9rem; color: var(--
 .bulk-clients-section { margin-bottom: 0.75rem; }
 .bulk-clients-header { display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.4rem; }
 .bulk-select-all-label { display: flex; align-items: center; gap: 0.35rem; font-size: 0.85rem; color: var(--text-muted); }
-.bulk-select-all-label input { width: auto; }
 .bulk-clients-list { max-height: 220px; overflow-y: auto; border: 1px solid var(--border); border-radius: 6px; padding: 0.4rem 0.6rem; }
 .bulk-client-row { display: flex; align-items: center; gap: 0.5rem; padding: 0.3rem 0; font-size: 0.9rem; cursor: pointer; }
-.bulk-client-row input { width: auto; }
 .bulk-excluded-note { font-size: 0.8rem; color: var(--text-muted); padding-top: 0.4rem; }

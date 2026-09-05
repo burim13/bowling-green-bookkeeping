@@ -1,8 +1,8 @@
 // Small hand-rolled inline SVG icon set -- no icon-font/library dependency. Each export is a
 // ready-to-use <svg> string sized to inherit color via currentColor, so it can be dropped
 // straight into a template literal and styled from CSS like any other inline element.
-const svg = (paths, viewBox = "0 0 20 20") =>
-  `<svg viewBox="${viewBox}" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths}</svg>`;
+const svg = (paths, { viewBox = "0 0 20 20", size = 14 } = {}) =>
+  `<svg viewBox="${viewBox}" width="${size}" height="${size}" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths}</svg>`;
 
 export const iconEdit = svg(
   `<path d="M13.5 3.5a1.6 1.6 0 0 1 2.3 2.3L6.8 14.8l-3 .8.8-3z"/>`
@@ -16,3 +16,8 @@ export const iconPlus = svg(`<path d="M10 4.5v11"/><path d="M4.5 10h11"/>`);
 
 export const iconChevronLeft = svg(`<path d="M12 4.5 6.5 10l5.5 5.5"/>`);
 export const iconChevronRight = svg(`<path d="M8 4.5 13.5 10 8 15.5"/>`);
+export const iconCheck = svg(`<path d="M4 10.5 8 14.5 16 5.5"/>`);
+
+// Larger badge-sized versions, for empty states.
+export const iconPlusLarge = svg(`<path d="M10 4.5v11"/><path d="M4.5 10h11"/>`, { size: 22 });
+export const iconCheckLarge = svg(`<path d="M4 10.5 8 14.5 16 5.5"/>`, { size: 22 });

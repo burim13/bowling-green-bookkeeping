@@ -1,6 +1,6 @@
-import { getOccurrencesInRange, getLastDueOccurrence, describeRecurrence, toISODate } from "./recurrence.js?v=1788585457480";
-import { colorFor } from "./colors.js?v=1788585457480";
-import { iconEdit } from "./icons.js?v=1788585457480";
+import { getOccurrencesInRange, getLastDueOccurrence, describeRecurrence, toISODate } from "./recurrence.js?v=1788585922053";
+import { colorFor } from "./colors.js?v=1788585922053";
+import { iconEdit, iconCheckLarge } from "./icons.js?v=1788585922053";
 
 function completionFor(state, itemId, periodKey) {
   const forItem = state.completions.get(itemId);
@@ -54,7 +54,12 @@ export function renderList(container, ctx) {
   ].map(({ item, periodKey }) => ({ clientId: item.clientId, itemId: item.id, periodKey }));
 
   if (rows.length === 0 && overdueRows.length === 0) {
-    container.innerHTML = `<div class="list-empty">Nothing due in this window.</div>`;
+    container.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-state-badge empty-state-badge-success">${iconCheckLarge}</div>
+        <h3>All caught up</h3>
+        <p>Nothing due in this window.</p>
+      </div>`;
     return incompleteRows;
   }
 

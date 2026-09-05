@@ -1,4 +1,4 @@
-import { isFirebaseConfigured, auth } from "./firebase-init.js?v=1788585457480";
+import { isFirebaseConfigured, auth } from "./firebase-init.js?v=1788585922053";
 import {
   watchAuthState,
   signInWithPassword,
@@ -6,7 +6,7 @@ import {
   sendEmailLink,
   completeEmailLinkSignInIfPresent,
   signOutUser,
-} from "./auth.js?v=1788585457480";
+} from "./auth.js?v=1788585922053";
 import {
   startSync,
   stopSync,
@@ -23,13 +23,13 @@ import {
   markComplete,
   unmarkComplete,
   isFullyLoaded,
-} from "./data.js?v=1788585457480";
-import { renderCalendar } from "./calendar-view.js?v=1788585457480";
-import { renderList } from "./list-view.js?v=1788585457480";
-import { describeRecurrence, toISODate } from "./recurrence.js?v=1788585457480";
-import { colorFor } from "./colors.js?v=1788585457480";
-import { githubRepoSlug } from "./firebase-config.js?v=1788585457480";
-import { iconEdit, iconTrash, iconPlus } from "./icons.js?v=1788585457480";
+} from "./data.js?v=1788585922053";
+import { renderCalendar } from "./calendar-view.js?v=1788585922053";
+import { renderList } from "./list-view.js?v=1788585922053";
+import { describeRecurrence, toISODate } from "./recurrence.js?v=1788585922053";
+import { colorFor } from "./colors.js?v=1788585922053";
+import { githubRepoSlug } from "./firebase-config.js?v=1788585922053";
+import { iconEdit, iconTrash, iconPlus, iconPlusLarge, iconCheck } from "./icons.js?v=1788585922053";
 
 const DEFAULT_CATEGORIES = [
   "Payroll",
@@ -119,12 +119,15 @@ function init() {
 
   subscribeToSaveStatus(({ status, message }) => {
     els.saveStatus.className = `save-status save-status-${status}`;
-    els.saveStatus.textContent =
-      status === "saving" ? "Saving…" : status === "saved" ? "Saved" : `Error: ${message}`;
-    if (status === "saved") {
+    if (status === "saving") {
+      els.saveStatus.textContent = "Saving…";
+    } else if (status === "saved") {
+      els.saveStatus.innerHTML = `${iconCheck} Saved`;
       setTimeout(() => {
-        if (els.saveStatus.textContent === "Saved") els.saveStatus.textContent = "";
+        if (els.saveStatus.classList.contains("save-status-saved")) els.saveStatus.innerHTML = "";
       }, 2000);
+    } else {
+      els.saveStatus.textContent = `Error: ${message}`;
     }
   });
 
@@ -313,7 +316,12 @@ function renderClientList() {
   if (!isFullyLoaded()) {
     els.clientList.innerHTML = `<div class="loading-hint"><span class="spinner"></span> Loading…</div>`;
   } else if (allClients.length === 0) {
-    els.clientList.innerHTML = `<div class="empty-hint">No clients yet. Click "Add Client" above.</div>`;
+    els.clientList.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-state-badge empty-state-badge-primary">${iconPlusLarge}</div>
+        <h3>No clients yet</h3>
+        <p>Click "Add Client" above to get started.</p>
+      </div>`;
   } else if (clients.length === 0) {
     els.clientList.innerHTML = `<div class="empty-hint">No clients match "${escapeHtml(viewState.clientSearch)}".</div>`;
   } else {
