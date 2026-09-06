@@ -32,3 +32,11 @@ export const iconUpload = svg(
 export const iconLogout = svg(
   `<path d="M8 4H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3"/><path d="M13 7l3 3-3 3"/><path d="M16 10H8"/>`
 );
+
+// Sidebar nav icons.
+export const iconCalendar = svg(
+  `<rect x="3" y="4" width="14" height="13" rx="2"/><path d="M3 8h14"/><path d="M7 2.5v3"/><path d="M13 2.5v3"/>`
+);
+export const iconListView = svg(
+  `<path d="M7.5 5.5h9"/><path d="M7.5 10h9"/><path d="M7.5 14.5h9"/><path d="M3.5 5.5h.01"/><path d="M3.5 10h.01"/><path d="M3.5 14.5h.01"/>`
+);

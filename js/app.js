@@ -1,11 +1,11 @@
-import { isFirebaseConfigured, auth } from "./firebase-init.js?v=1788631798476";
+import { isFirebaseConfigured, auth } from "./firebase-init.js?v=1788632397168";
 import {
   watchAuthState,
   signInWithPassword,
   sendEmailLink,
   completeEmailLinkSignInIfPresent,
   signOutUser,
-} from "./auth.js?v=1788631798476";
+} from "./auth.js?v=1788632397168";
 import {
   startSync,
   stopSync,
@@ -23,13 +23,13 @@ import {
   markComplete,
   unmarkComplete,
   isFullyLoaded,
-} from "./data.js?v=1788631798476";
-import { renderCalendar } from "./calendar-view.js?v=1788631798476";
-import { renderList } from "./list-view.js?v=1788631798476";
-import { describeRecurrence, describeRecurrenceHistory, getLastDueOccurrence, toISODate } from "./recurrence.js?v=1788631798476";
-import { colorFor } from "./colors.js?v=1788631798476";
-import { githubRepoSlug } from "./firebase-config.js?v=1788631798476";
-import { iconEdit, iconTrash, iconPlus, iconPlusLarge, iconCheck, iconTag, iconUpload, iconLogout } from "./icons.js?v=1788631798476";
+} from "./data.js?v=1788632397168";
+import { renderCalendar } from "./calendar-view.js?v=1788632397168";
+import { renderList } from "./list-view.js?v=1788632397168";
+import { describeRecurrence, describeRecurrenceHistory, getLastDueOccurrence, toISODate } from "./recurrence.js?v=1788632397168";
+import { colorFor } from "./colors.js?v=1788632397168";
+import { githubRepoSlug } from "./firebase-config.js?v=1788632397168";
+import { iconEdit, iconTrash, iconPlus, iconPlusLarge, iconCheck, iconTag, iconUpload, iconLogout, iconCalendar, iconListView } from "./icons.js?v=1788632397168";
 
 const DEFAULT_CATEGORIES = [
   "Payroll",
@@ -97,6 +97,8 @@ function init() {
   qs("manage-categories-btn").innerHTML = `<span class="btn-header-icon">${iconTag}</span><span class="btn-header-label">Manage categories</span>`;
   qs("export-btn").innerHTML = `<span class="btn-header-icon">${iconUpload}</span><span class="btn-header-label">Export to GitHub</span>`;
   qs("sign-out-btn").innerHTML = `<span class="btn-header-icon">${iconLogout}</span><span class="btn-header-label">Sign out</span>`;
+  qs("view-toggle-calendar").innerHTML = `${iconCalendar}<span>Calendar</span>`;
+  qs("view-toggle-list").innerHTML = `${iconListView}<span>List</span>`;
 
   wireAuthForms();
   wireToolbar();
