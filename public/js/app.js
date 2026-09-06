@@ -1,4 +1,4 @@
-import { isFirebaseConfigured, auth } from "./firebase-init.js?v=1788737034368";
+import { isFirebaseConfigured, auth } from "./firebase-init.js?v=1788737242177";
 import {
   watchAuthState,
   signInWithPassword,
@@ -6,7 +6,7 @@ import {
   completeEmailLinkSignInIfPresent,
   signOutUser,
   getOwnProfile,
-} from "./auth.js?v=1788737034368";
+} from "./auth.js?v=1788737242177";
 import {
   startSync,
   stopSync,
@@ -25,13 +25,13 @@ import {
   unmarkComplete,
   isFullyLoaded,
   getClientRecord,
-} from "./data.js?v=1788737034368";
-import { renderCalendar } from "./calendar-view.js?v=1788737034368";
-import { renderList } from "./list-view.js?v=1788737034368";
-import { describeRecurrence, describeRecurrenceHistory, getLastDueOccurrence, toISODate } from "./recurrence.js?v=1788737034368";
-import { colorFor, tintFor } from "./colors.js?v=1788737034368";
-import { githubRepoSlug } from "./firebase-config.js?v=1788737034368";
-import { iconEdit, iconTrash, iconPlus, iconPlusLarge, iconCheck, iconTag, iconUpload, iconLogout, iconCalendar, iconListView, iconFolder, iconFolderLarge, iconHome, iconChevronRight, iconUsers, iconAlertTriangle, iconSignature } from "./icons.js?v=1788737034368";
+} from "./data.js?v=1788737242177";
+import { renderCalendar } from "./calendar-view.js?v=1788737242177";
+import { renderList } from "./list-view.js?v=1788737242177";
+import { describeRecurrence, describeRecurrenceHistory, getLastDueOccurrence, toISODate } from "./recurrence.js?v=1788737242177";
+import { colorFor, tintFor } from "./colors.js?v=1788737242177";
+import { githubRepoSlug } from "./firebase-config.js?v=1788737242177";
+import { iconEdit, iconTrash, iconPlus, iconPlusLarge, iconCheck, iconTag, iconUpload, iconLogout, iconCalendar, iconListView, iconFolder, iconFolderLarge, iconHome, iconChevronRight, iconUsers, iconAlertTriangle, iconSignature } from "./icons.js?v=1788737242177";
 
 const DEFAULT_CATEGORIES = [
   "Payroll",

@@ -204,8 +204,10 @@
     @apply text-danger font-semibold;
   }
 
+  /* Deliberately NOT styled like .app-header (no panel background, no border) -- this is a
+     contextual action row for the content below it, not a second navigation bar. */
   .toolbar {
-    @apply flex items-center gap-[0.6rem] px-5 py-3 bg-panel border-b border-border flex-wrap;
+    @apply flex items-center gap-[0.6rem] px-5 py-2.5 bg-bg flex-wrap;
   }
   .toolbar-spacer {
     @apply flex-1;
