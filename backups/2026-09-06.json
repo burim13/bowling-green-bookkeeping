@@ -1,0 +1,158 @@
+{
+  "clients": {
+    "52eRERsHLTACFyDYIxjJ": {
+      "notes": "",
+      "name": "Cafe Italia, LLC",
+      "createdAt": "2026-09-05T04:25:48.725Z",
+      "_subcollections": {
+        "items": {
+          "J4FFhD78eHR5TDn2qWpt": {
+            "customLabel": null,
+            "recurrenceCustomRule": null,
+            "recurrenceType": "monthly",
+            "category": "Payroll",
+            "recurrenceDayOfMonth": null,
+            "startDate": "2026-09-04",
+            "recurrenceInterval": null,
+            "_subcollections": {
+              "completions": {
+                "2026-09": {
+                  "periodKey": "2026-09",
+                  "completedBy": "bmbkservices@gmail.com",
+                  "completedOn": "2026-09-05T12:57:17.736Z"
+                },
+                "2026-10": {
+                  "completedBy": "bmbkservices@gmail.com",
+                  "periodKey": "2026-10",
+                  "completedOn": "2026-09-05T12:57:34.852Z"
+                }
+              }
+            }
+          },
+          "Toz6br3f4rJ1s3qfitVD": {
+            "recurrenceInterval": null,
+            "recurrenceDayOfMonth": null,
+            "recurrenceCustomRule": null,
+            "customLabel": null,
+            "startDate": "2026-09-20",
+            "category": "Sales Tax Filing",
+            "recurrenceType": "monthly",
+            "_subcollections": {
+              "completions": {
+                "2026-09": {
+                  "periodKey": "2026-09",
+                  "completedBy": "bmbkservices@gmail.com",
+                  "completedOn": "2026-09-05T12:57:27.326Z"
+                },
+                "2026-10": {
+                  "periodKey": "2026-10",
+                  "completedBy": "bmbkservices@gmail.com",
+                  "completedOn": "2026-09-05T12:57:38.869Z"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "pNJsonXxVghgt7e3pH5c": {
+      "name": "Fine Jewelry & Pawn, LLC",
+      "notes": "",
+      "createdAt": "2026-09-05T04:49:19.499Z",
+      "_subcollections": {
+        "items": {
+          "2FfijKSAxInXXt9GLCko": {
+            "category": "Sales Tax Filing",
+            "recurrenceDayOfMonth": null,
+            "recurrenceType": "monthly",
+            "customLabel": null,
+            "recurrenceInterval": null,
+            "startDate": "2026-09-20",
+            "recurrenceCustomRule": null
+          },
+          "6cAMHLzoBQhgHFCz7053": {
+            "recurrenceDayOfMonth": null,
+            "category": "Payroll",
+            "startDate": "2026-09-04",
+            "customLabel": null,
+            "recurrenceType": "monthly",
+            "recurrenceInterval": null,
+            "recurrenceCustomRule": null
+          }
+        }
+      }
+    },
+    "reATM5V5xqeyqFqHyVff": {
+      "notes": "",
+      "name": "ZZZ Save Indicator Test",
+      "createdAt": "2026-09-05T05:26:16.793Z",
+      "archived": true
+    }
+  },
+  "settings": {
+    "allowlist": {
+      "emails": [
+        "bmbkservices@gmail.com",
+        "claude-test@example.com"
+      ]
+    },
+    "categories": {
+      "names": [
+        "Payroll",
+        "Sales Tax Filing",
+        "Quarterly Estimated Taxes",
+        "1099-NEC / 1099-MISC Filing",
+        "W-2 / W-3 Filing",
+        "Annual Report / State Franchise Filing",
+        "Partnership Return (Form 1065)",
+        "Corporate Return (Form 1120/1120-S)",
+        "Personal Return (Form 1040)",
+        "Monthly Bookkeeping Reconciliation",
+        "BOI (Beneficial Ownership Information) Report",
+        "Extension Deadline"
+      ]
+    }
+  },
+  "users": {
+    "GSwTWtDl0NgK6i4bxcmWyKLOfuo2": {
+      "role": "staff",
+      "displayName": "claude-edit-test@example.com",
+      "createdAt": "2026-09-05T04:42:07.833Z"
+    },
+    "HuJ83CqC2te1uxy4Qg6MXYgqLtB2": {
+      "role": "staff",
+      "displayName": "claude-microtest@example.com",
+      "createdAt": "2026-09-05T05:25:00.056Z"
+    },
+    "OfaWRi2X2bZZ2ilFCmGohfKA9nR2": {
+      "role": "staff",
+      "displayName": "claude-reorder-test@example.com",
+      "createdAt": "2026-09-05T05:31:38.552Z"
+    },
+    "P15lRl9Z8lVZdxuo7CpZ2arJXHo1": {
+      "displayName": "claude-aesthetic-test@example.com",
+      "role": "staff",
+      "createdAt": "2026-09-05T05:05:56.931Z"
+    },
+    "c3bX2ISvk9WADws82W2EnNdpU5T2": {
+      "role": "staff",
+      "displayName": "claude-catfilter-test@example.com",
+      "createdAt": "2026-09-05T05:14:06.523Z"
+    },
+    "gbaTKwGIyOPF1QxXaSRJ1cJE6mB3": {
+      "role": "staff",
+      "displayName": "claude-test@example.com",
+      "createdAt": "2026-09-05T06:36:37.300Z"
+    },
+    "nbf70VXbl7Y5PAlHuolerIKfrom2": {
+      "displayName": "bmbkservices@gmail.com",
+      "createdAt": "2026-09-05T03:29:26.143Z",
+      "role": "admin"
+    },
+    "yift01qJ9sZIc3i5o9aY6WiTXqs2": {
+      "displayName": "claude-bulk-test@example.com",
+      "role": "staff",
+      "createdAt": "2026-09-05T04:53:27.945Z"
+    }
+  }
+}
