@@ -198,22 +198,6 @@
   .toolbar-spacer {
     @apply flex-1;
   }
-  .view-toggle {
-    @apply flex;
-  }
-  .view-toggle-btn {
-    @apply rounded-none;
-  }
-  .view-toggle-btn:first-child {
-    border-radius: 6px 0 0 6px;
-  }
-  .view-toggle-btn:last-child {
-    border-radius: 0 6px 6px 0;
-    @apply -ml-px;
-  }
-  .view-toggle-btn.active {
-    @apply bg-primary text-white border-primary z-1;
-  }
   .list-filter-wrap label {
     @apply m-0 flex items-center gap-[0.4rem];
   }
@@ -226,6 +210,19 @@
   }
   .sidebar {
     @apply w-[260px] shrink-0 bg-panel border-r border-border p-4 overflow-y-auto;
+  }
+  .sidebar-nav {
+    @apply flex flex-col gap-1 mb-4 pb-4 border-b border-border;
+  }
+  .sidebar-nav-btn {
+    font: inherit;
+    @apply flex items-center gap-2 w-full px-3 py-2 rounded-md border-0 bg-transparent text-left text-text-muted font-medium text-[0.9rem] cursor-pointer transition-colors;
+  }
+  .sidebar-nav-btn:hover {
+    @apply bg-[#eef0f4] text-text;
+  }
+  .sidebar-nav-btn.active {
+    @apply bg-primary text-white;
   }
   .sidebar h2 {
     @apply text-[0.8rem] uppercase text-text-muted tracking-[0.06em] font-bold;
