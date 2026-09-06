@@ -43,3 +43,7 @@ export const iconListView = svg(
 const FOLDER_PATH = `<path d="M3 6a1 1 0 0 1 1-1h4l1.5 2H16a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V6z"/>`;
 export const iconFolder = svg(FOLDER_PATH);
 export const iconFolderLarge = svg(FOLDER_PATH, { size: 22 });
+
+export const iconHome = svg(
+  `<path d="M4 9.5 10 4l6 5.5"/><path d="M5.5 8.5V16h9V8.5"/>`
+);

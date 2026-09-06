@@ -1,4 +1,4 @@
-import { isFirebaseConfigured, auth } from "./firebase-init.js?v=1788734871664";
+import { isFirebaseConfigured, auth } from "./firebase-init.js?v=1788735615697";
 import {
   watchAuthState,
   signInWithPassword,
@@ -6,7 +6,7 @@ import {
   completeEmailLinkSignInIfPresent,
   signOutUser,
   getOwnProfile,
-} from "./auth.js?v=1788734871664";
+} from "./auth.js?v=1788735615697";
 import {
   startSync,
   stopSync,
@@ -25,13 +25,13 @@ import {
   unmarkComplete,
   isFullyLoaded,
   getClientRecord,
-} from "./data.js?v=1788734871664";
-import { renderCalendar } from "./calendar-view.js?v=1788734871664";
-import { renderList } from "./list-view.js?v=1788734871664";
-import { describeRecurrence, describeRecurrenceHistory, getLastDueOccurrence, toISODate } from "./recurrence.js?v=1788734871664";
-import { colorFor } from "./colors.js?v=1788734871664";
-import { githubRepoSlug } from "./firebase-config.js?v=1788734871664";
-import { iconEdit, iconTrash, iconPlus, iconPlusLarge, iconCheck, iconTag, iconUpload, iconLogout, iconCalendar, iconListView, iconFolder, iconFolderLarge } from "./icons.js?v=1788734871664";
+} from "./data.js?v=1788735615697";
+import { renderCalendar } from "./calendar-view.js?v=1788735615697";
+import { renderList } from "./list-view.js?v=1788735615697";
+import { describeRecurrence, describeRecurrenceHistory, getLastDueOccurrence, toISODate } from "./recurrence.js?v=1788735615697";
+import { colorFor } from "./colors.js?v=1788735615697";
+import { githubRepoSlug } from "./firebase-config.js?v=1788735615697";
+import { iconEdit, iconTrash, iconPlus, iconPlusLarge, iconCheck, iconTag, iconUpload, iconLogout, iconCalendar, iconListView, iconFolder, iconFolderLarge, iconHome, iconChevronRight } from "./icons.js?v=1788735615697";
 
 const DEFAULT_CATEGORIES = [
   "Payroll",
@@ -57,7 +57,7 @@ let latestState = {
   currentUserRole: null,
 };
 let viewState = {
-  view: localStorage.getItem("cct_view") || "calendar",
+  view: localStorage.getItem("cct_view") || "overview",
   year: new Date().getFullYear(),
   month: new Date().getMonth(),
   colorMode: localStorage.getItem("cct_colormode") || "client",
@@ -81,6 +81,7 @@ function init() {
   els.viewContainer = qs("view-container");
   els.clientList = qs("client-list");
   els.clientSearch = qs("client-search");
+  els.viewToggleOverview = qs("view-toggle-overview");
   els.viewToggleCalendar = qs("view-toggle-calendar");
   els.viewToggleList = qs("view-toggle-list");
   els.viewToggleClientHub = qs("view-toggle-clienthub");
@@ -102,6 +103,7 @@ function init() {
   qs("manage-categories-btn").innerHTML = `<span class="btn-header-icon">${iconTag}</span><span class="btn-header-label">Manage categories</span>`;
   qs("export-btn").innerHTML = `<span class="btn-header-icon">${iconUpload}</span><span class="btn-header-label">Export to GitHub</span>`;
   qs("sign-out-btn").innerHTML = `<span class="btn-header-icon">${iconLogout}</span><span class="btn-header-label">Sign out</span>`;
+  qs("view-toggle-overview").innerHTML = `${iconHome}<span>Overview</span>`;
   qs("view-toggle-calendar").innerHTML = `${iconCalendar}<span>Calendar</span>`;
   qs("view-toggle-list").innerHTML = `${iconListView}<span>List</span>`;
   qs("view-toggle-clienthub").innerHTML = `${iconFolder}<span>Client Hub</span>`;
@@ -213,6 +215,7 @@ function showAuthError(message) {
 // ---- toolbar / view switching ----------------------------------------------
 
 function wireToolbar() {
+  els.viewToggleOverview.addEventListener("click", () => setActiveView("overview"));
   els.viewToggleCalendar.addEventListener("click", () => setActiveView("calendar"));
   els.viewToggleList.addEventListener("click", () => setActiveView("list"));
   els.viewToggleClientHub.addEventListener("click", () => setActiveView("clienthub"));
@@ -243,6 +246,7 @@ function wireToolbar() {
 function setActiveView(view) {
   viewState.view = view;
   localStorage.setItem("cct_view", view);
+  els.viewToggleOverview.classList.toggle("active", view === "overview");
   els.viewToggleCalendar.classList.toggle("active", view === "calendar");
   els.viewToggleList.classList.toggle("active", view === "list");
   els.viewToggleClientHub.classList.toggle("active", view === "clienthub");
@@ -252,12 +256,16 @@ function setActiveView(view) {
 }
 
 function renderCurrentView() {
-  if (viewState.view === "clienthub") {
-    renderClientHubStaffView();
-    return;
-  }
   if (!isFullyLoaded()) {
     els.viewContainer.innerHTML = `<div class="loading-hint"><span class="spinner"></span> Loading…</div>`;
+    return;
+  }
+  if (viewState.view === "overview") {
+    renderOverviewView();
+    return;
+  }
+  if (viewState.view === "clienthub") {
+    renderClientHubStaffView();
     return;
   }
   if (viewState.view === "calendar") {
@@ -301,18 +309,185 @@ function renderCurrentView() {
   }
 }
 
-// ---- client hub (staff-side placeholder; document review lands in Milestone 2) --------------
+// ---- overview (firm-wide dashboard) -----------------------------------------------------
+
+// Each item's most recent due-by-today occurrence, if it's still unchecked -- same definition
+// list-view.js uses for its "Overdue" group, computed here across every client at once.
+function computeOverdueItems() {
+  const today = new Date(new Date().setHours(0, 0, 0, 0));
+  const rows = [];
+  for (const item of latestState.items.values()) {
+    const client = latestState.clients.get(item.clientId);
+    if (!client || client.archived) continue;
+    const occ = getLastDueOccurrence(item, today);
+    if (!occ || occ.date >= today) continue;
+    const forItem = latestState.completions.get(item.id);
+    if (forItem && forItem.has(occ.periodKey)) continue;
+    rows.push({ client, item, occ });
+  }
+  rows.sort((a, b) => a.occ.date - b.occ.date);
+  return rows;
+}
+
+function renderOverviewView() {
+  const activeClients = [...latestState.clients.values()].filter((c) => !c.archived);
+  const overdue = computeOverdueItems();
+
+  els.viewContainer.innerHTML = `
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="stat-card-label">Active clients</div>
+        <div class="stat-card-value">${activeClients.length}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-label">Overdue items</div>
+        <div class="${overdue.length ? "stat-card-value" : "stat-card-value-muted"}">${overdue.length}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-label">Awaiting signature</div>
+        <div class="stat-card-value-muted">0</div>
+        <div class="stat-card-label">Coming in Milestone 4</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-label">New uploads</div>
+        <div class="stat-card-value-muted">0</div>
+        <div class="stat-card-label">Coming in Milestone 2</div>
+      </div>
+    </div>
+    <h2 style="font-size:0.9rem; font-weight:600; margin:0 0 0.6rem;">Needs attention</h2>
+    <div id="attention-list"></div>
+  `;
+
+  const list = qs("attention-list");
+  if (overdue.length === 0) {
+    list.innerHTML = `<div class="empty-hint">Nothing overdue. Nice.</div>`;
+    return;
+  }
+  overdue.slice(0, 15).forEach(({ client, item, occ }) => {
+    const label = item.customLabel || item.category;
+    const row = document.createElement("button");
+    row.className = "attention-row";
+    row.innerHTML = `
+      <span class="client-dot" style="background:${colorFor(client.id)}"></span>
+      <span style="flex:1;">${escapeHtml(client.name)} <span class="text-text-muted">-- ${escapeHtml(label)}</span></span>
+      <span class="attention-badge">Due ${occ.date.toLocaleDateString(undefined, { month: "short", day: "numeric" })}</span>
+    `;
+    row.addEventListener("click", () => openItemModal(client.id, item.id));
+    list.appendChild(row);
+  });
+}
+
+// ---- client hub (per-client tabs: compliance is real, documents/signatures/letters are
+// placeholders until Milestones 2-5) ------------------------------------------------------
+
+const CLIENT_HUB_TABS = [
+  { id: "overview", label: "Overview" },
+  { id: "compliance", label: "Compliance" },
+  { id: "documents", label: "Documents" },
+  { id: "signatures", label: "Signatures" },
+  { id: "letters", label: "Letters" },
+];
+
+let clientHubExpandedId = null;
+let clientHubActiveTab = "overview";
 
 function renderClientHubStaffView() {
-  els.viewContainer.innerHTML = `
-    <div class="empty-state">
-      <div class="empty-state-badge empty-state-badge-primary">${iconFolderLarge}</div>
-      <h3>Client Hub</h3>
-      <p>Document intake, e-signature, and engagement letters land here in Milestones 2-5.
-      For now, give a client Client Hub access by creating their Firebase Auth account and a
-      matching <code>/users/{uid}</code> document with <code>role: "client"</code> and
-      <code>clientId</code> set to their client record's ID -- see the README.</p>
-    </div>`;
+  const clients = [...latestState.clients.values()]
+    .filter((c) => !c.archived)
+    .sort((a, b) => a.name.localeCompare(b.name));
+
+  if (clients.length === 0) {
+    els.viewContainer.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-state-badge empty-state-badge-primary">${iconFolderLarge}</div>
+        <h3>No clients yet</h3>
+        <p>Add a client first, then open them here to manage their Client Hub.</p>
+      </div>`;
+    return;
+  }
+
+  els.viewContainer.innerHTML = `<div class="client-accordion" id="client-accordion"></div>`;
+  const accordion = qs("client-accordion");
+
+  clients.forEach((client) => {
+    const isOpen = clientHubExpandedId === client.id;
+    const item = document.createElement("div");
+    item.className = "client-accordion-item";
+
+    const head = document.createElement("button");
+    head.className = "client-accordion-row";
+    head.innerHTML = `
+      <span class="client-accordion-chevron${isOpen ? " client-accordion-chevron-open" : ""}">${iconChevronRight}</span>
+      <span class="client-dot" style="background:${colorFor(client.id)}"></span>
+      <span style="flex:1;">${escapeHtml(client.name)}</span>
+    `;
+    head.addEventListener("click", () => {
+      clientHubExpandedId = isOpen ? null : client.id;
+      clientHubActiveTab = "overview";
+      renderCurrentView();
+    });
+    item.appendChild(head);
+
+    if (isOpen) {
+      const body = document.createElement("div");
+      body.className = "client-accordion-body";
+
+      const tabBar = document.createElement("div");
+      tabBar.className = "client-tab-bar";
+      CLIENT_HUB_TABS.forEach((tab) => {
+        const btn = document.createElement("button");
+        btn.className = `client-tab-btn${clientHubActiveTab === tab.id ? " client-tab-btn-active" : ""}`;
+        btn.textContent = tab.label;
+        btn.addEventListener("click", () => {
+          clientHubActiveTab = tab.id;
+          renderCurrentView();
+        });
+        tabBar.appendChild(btn);
+      });
+      body.appendChild(tabBar);
+
+      const content = document.createElement("div");
+      renderClientHubTabContent(content, client, clientHubActiveTab);
+      body.appendChild(content);
+
+      item.appendChild(body);
+    }
+
+    accordion.appendChild(item);
+  });
+}
+
+const CLIENT_HUB_PLACEHOLDER_COPY = {
+  documents: "Document upload lands here in Milestone 2, once Firebase Storage is enabled.",
+  signatures: "Signature requests land here in Milestones 3-4.",
+  letters: "Auto-generated engagement letters land here in Milestone 5.",
+};
+
+function renderClientHubTabContent(container, client, tab) {
+  if (tab === "compliance") {
+    const now = new Date();
+    const rangeStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const rangeEnd = new Date(now.getFullYear(), now.getMonth() + 4, 0);
+    renderList(container, {
+      state: latestState,
+      clientFilter: client.id,
+      categoryFilter: null,
+      showArchived: false,
+      rangeStart,
+      rangeEnd,
+      onToggleComplete: handleToggleComplete,
+      onEditItem: (clientId, itemId) => openItemModal(clientId, itemId),
+    });
+    return;
+  }
+  if (tab === "overview") {
+    const stats = clientCompletionStats(client.id);
+    container.innerHTML = `<p class="client-tab-content">${
+      stats ? `${stats.current} of ${stats.total} compliance items on track.` : "No compliance items yet."
+    }</p>`;
+    return;
+  }
+  container.innerHTML = `<p class="client-tab-content">${CLIENT_HUB_PLACEHOLDER_COPY[tab]}</p>`;
 }
 
 // ---- client hub (client-facing screen) --------------------------------------------------

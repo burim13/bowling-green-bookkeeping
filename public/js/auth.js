@@ -7,7 +7,7 @@ import {
   signOut,
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 import { doc, setDoc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
-import { auth, db } from "./firebase-init.js?v=1788734871664";
+import { auth, db } from "./firebase-init.js?v=1788735615697";
 
 const EMAIL_LINK_STORAGE_KEY = "cct_email_for_signin";
 

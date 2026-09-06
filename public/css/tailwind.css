@@ -270,6 +270,72 @@
     border-top-color: var(--color-primary);
     animation: spin 0.7s linear infinite;
   }
+
+  /* ---- overview view ---- */
+  .stat-grid {
+    @apply grid gap-3 mb-6;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  }
+  .stat-card {
+    @apply bg-panel border border-border rounded-xl p-4;
+  }
+  .stat-card-label {
+    @apply text-[0.8rem] text-text-muted;
+  }
+  .stat-card-value {
+    @apply text-[1.5rem] font-semibold mt-1 text-text;
+  }
+  .stat-card-value-muted {
+    @apply text-[1.5rem] font-semibold mt-1 text-text-muted;
+  }
+  .attention-row {
+    @apply flex items-center gap-3 px-3 py-2 rounded-md border-0 bg-transparent w-full text-left cursor-pointer;
+  }
+  .attention-row:hover {
+    @apply bg-[#eef0f4];
+  }
+  .attention-badge {
+    @apply text-[0.75rem] px-2 py-[2px] rounded-md bg-warning-bg text-warning shrink-0;
+  }
+
+  /* ---- client hub accordion ---- */
+  .client-accordion {
+    @apply border border-border rounded-xl overflow-hidden;
+  }
+  .client-accordion-item {
+    @apply border-b border-border;
+  }
+  .client-accordion-item:last-child {
+    @apply border-b-0;
+  }
+  .client-accordion-row {
+    @apply w-full flex items-center gap-3 px-3 py-2.5 bg-transparent border-0 cursor-pointer text-left;
+  }
+  .client-accordion-row:hover {
+    @apply bg-[#eef0f4];
+  }
+  .client-accordion-chevron {
+    @apply inline-flex transition-transform text-text-muted;
+  }
+  .client-accordion-chevron-open {
+    @apply rotate-90;
+  }
+  .client-accordion-body {
+    @apply px-3 pb-4;
+    padding-left: 2.7rem;
+  }
+  .client-tab-bar {
+    @apply flex gap-1 flex-wrap mb-3;
+  }
+  .client-tab-btn {
+    @apply text-[0.8rem] px-2.5 py-1 rounded-md border-0 bg-transparent cursor-pointer text-text-muted;
+  }
+  .client-tab-btn-active {
+    @apply bg-[#eef0f4] text-text;
+  }
+  .client-tab-content {
+    @apply text-[0.85rem] text-text-muted;
+  }
   @keyframes spin {
     to { transform: rotate(360deg); }
   }
