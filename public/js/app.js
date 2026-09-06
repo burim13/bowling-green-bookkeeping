@@ -1,4 +1,4 @@
-import { isFirebaseConfigured, auth } from "./firebase-init.js?v=1788736754679";
+import { isFirebaseConfigured, auth } from "./firebase-init.js?v=1788737034368";
 import {
   watchAuthState,
   signInWithPassword,
@@ -6,7 +6,7 @@ import {
   completeEmailLinkSignInIfPresent,
   signOutUser,
   getOwnProfile,
-} from "./auth.js?v=1788736754679";
+} from "./auth.js?v=1788737034368";
 import {
   startSync,
   stopSync,
@@ -25,13 +25,13 @@ import {
   unmarkComplete,
   isFullyLoaded,
   getClientRecord,
-} from "./data.js?v=1788736754679";
-import { renderCalendar } from "./calendar-view.js?v=1788736754679";
-import { renderList } from "./list-view.js?v=1788736754679";
-import { describeRecurrence, describeRecurrenceHistory, getLastDueOccurrence, toISODate } from "./recurrence.js?v=1788736754679";
-import { colorFor, tintFor } from "./colors.js?v=1788736754679";
-import { githubRepoSlug } from "./firebase-config.js?v=1788736754679";
-import { iconEdit, iconTrash, iconPlus, iconPlusLarge, iconCheck, iconTag, iconUpload, iconLogout, iconCalendar, iconListView, iconFolder, iconFolderLarge, iconHome, iconChevronRight, iconUsers, iconAlertTriangle, iconSignature } from "./icons.js?v=1788736754679";
+} from "./data.js?v=1788737034368";
+import { renderCalendar } from "./calendar-view.js?v=1788737034368";
+import { renderList } from "./list-view.js?v=1788737034368";
+import { describeRecurrence, describeRecurrenceHistory, getLastDueOccurrence, toISODate } from "./recurrence.js?v=1788737034368";
+import { colorFor, tintFor } from "./colors.js?v=1788737034368";
+import { githubRepoSlug } from "./firebase-config.js?v=1788737034368";
+import { iconEdit, iconTrash, iconPlus, iconPlusLarge, iconCheck, iconTag, iconUpload, iconLogout, iconCalendar, iconListView, iconFolder, iconFolderLarge, iconHome, iconChevronRight, iconUsers, iconAlertTriangle, iconSignature } from "./icons.js?v=1788737034368";
 
 const DEFAULT_CATEGORIES = [
   "Payroll",
@@ -103,7 +103,7 @@ function init() {
 
   // Icon + label markup so these can collapse to icon-only on narrow screens (see .btn-header
   // in styles.css) without duplicating the icon set into static HTML.
-  qs("manage-categories-btn").innerHTML = `<span class="btn-header-icon">${iconTag}</span><span class="btn-header-label">Manage categories</span>`;
+  qs("manage-categories-btn").innerHTML = iconTag;
   qs("export-btn").innerHTML = `<span class="btn-header-icon">${iconUpload}</span><span class="btn-header-label">Export to GitHub</span>`;
   qs("sign-out-btn").innerHTML = `<span class="btn-header-icon">${iconLogout}</span><span class="btn-header-label">Sign out</span>`;
   qs("view-toggle-overview").innerHTML = iconHome;

@@ -227,10 +227,12 @@
     @apply w-[260px] shrink-0 bg-panel border-r border-border p-4 overflow-y-auto;
   }
 
-  /* Colored icon-only rail -- one fixed accent per top-level section, reusing hues already in
-     colors.js's client palette so the rail and the client dots read as one family. */
+  /* Colored icon-only nav row, top of the sidebar -- one fixed accent per top-level section,
+     reusing hues already in colors.js's client palette so the rail and the client dots read as
+     one family. Lives inside .sidebar (not a separate column) so the app doesn't read as three
+     disconnected panels. */
   .icon-rail {
-    @apply w-16 shrink-0 bg-panel border-r border-border flex flex-col items-center gap-2 py-4;
+    @apply flex items-center gap-2 mb-4 pb-4 border-b border-border;
   }
   .icon-rail-btn {
     @apply w-10 h-10 rounded-xl border-0 bg-transparent flex items-center justify-center cursor-pointer text-text-muted transition-colors;
@@ -717,9 +719,6 @@
 
     .app-body {
       @apply flex-col min-h-0;
-    }
-    .icon-rail {
-      @apply w-full h-auto flex-row justify-center border-r-0 border-b border-border py-2;
     }
     .sidebar {
       @apply w-full max-h-[220px] border-r-0 border-b border-border;

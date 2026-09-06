@@ -6,7 +6,7 @@
   <title>Bowling Green Bookkeeping &amp; Taxes — Client Hub</title>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" />
-  <link rel="stylesheet" href="css/styles.css?v=1788736754679" />
+  <link rel="stylesheet" href="css/styles.css?v=1788737034368" />
 </head>
 <body>
 
@@ -63,7 +63,7 @@
     <div class="toolbar">
       <div id="category-filter-wrap" class="list-filter-wrap">
         <label>Category <select id="filter-category"></select></label>
-        <button id="manage-categories-btn" class="btn btn-ghost" title="Manage categories">Manage categories</button>
+        <button id="manage-categories-btn" class="icon-btn" title="Manage categories" aria-label="Manage categories"></button>
       </div>
       <div id="list-filter-wrap" class="list-filter-wrap" hidden>
         <label>Client filter <select id="list-filter-client"></select></label>
@@ -76,13 +76,13 @@
     </div>
 
     <div class="app-body">
-      <nav class="icon-rail">
-        <button id="view-toggle-overview" class="icon-rail-btn icon-rail-btn-overview" title="Overview" aria-label="Overview"></button>
-        <button id="view-toggle-calendar" class="icon-rail-btn icon-rail-btn-calendar" title="Calendar view" aria-label="Calendar view"></button>
-        <button id="view-toggle-list" class="icon-rail-btn icon-rail-btn-list" title="List view" aria-label="List view"></button>
-        <button id="view-toggle-clienthub" class="icon-rail-btn icon-rail-btn-clienthub" title="Client Hub" aria-label="Client Hub"></button>
-      </nav>
       <aside class="sidebar">
+        <nav class="icon-rail">
+          <button id="view-toggle-overview" class="icon-rail-btn icon-rail-btn-overview" title="Overview" aria-label="Overview"></button>
+          <button id="view-toggle-calendar" class="icon-rail-btn icon-rail-btn-calendar" title="Calendar view" aria-label="Calendar view"></button>
+          <button id="view-toggle-list" class="icon-rail-btn icon-rail-btn-list" title="List view" aria-label="List view"></button>
+          <button id="view-toggle-clienthub" class="icon-rail-btn icon-rail-btn-clienthub" title="Client Hub" aria-label="Client Hub"></button>
+        </nav>
         <h2>Clients</h2>
         <input type="text" id="client-search" class="client-search" placeholder="Search clients..." />
         <div id="client-list"></div>
@@ -115,6 +115,6 @@
     </main>
   </div>
 
-  <script type="module" src="js/app.js?v=1788736754679"></script>
+  <script type="module" src="js/app.js?v=1788737034368"></script>
 </body>
 </html>
