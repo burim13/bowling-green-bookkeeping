@@ -20,3 +20,12 @@ function hash(str) {
 export function colorFor(key) {
   return PALETTE[hash(String(key)) % PALETTE.length];
 }
+
+// A soft tint of a palette color for badge/avatar backgrounds (paired with the solid color as
+// the foreground) -- same light-fill-plus-solid-text pattern as .empty-state-badge-primary.
+export function tintFor(hex, alpha = 0.14) {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}

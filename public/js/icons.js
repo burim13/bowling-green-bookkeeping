@@ -47,3 +47,14 @@ export const iconFolderLarge = svg(FOLDER_PATH, { size: 22 });
 export const iconHome = svg(
   `<path d="M4 9.5 10 4l6 5.5"/><path d="M5.5 8.5V16h9V8.5"/>`
 );
+
+// Overview stat-card icons.
+export const iconUsers = svg(
+  `<circle cx="7" cy="7" r="2.4"/><path d="M2.5 16v-1.2A3.3 3.3 0 0 1 5.8 11.5h2.4A3.3 3.3 0 0 1 11.5 14.8V16"/><circle cx="14" cy="7.5" r="1.9"/><path d="M12.7 16v-0.9a2.8 2.8 0 0 1 2.8-2.8h.2"/>`
+);
+export const iconAlertTriangle = svg(
+  `<path d="M10 3.2 17.3 15.8H2.7z"/><path d="M10 8v3.2"/><circle cx="10" cy="13.6" r="0.6" fill="currentColor" stroke="none"/>`
+);
+export const iconSignature = svg(
+  `<path d="M2.5 15c2-0.8 3-3.6 4-5.6s1.8-1.8 2.3 0 .3 3 1.8 1 2-2.8 3.4-2.8 1.5 1.8 2 2.8"/><path d="M2.5 17h15"/>`
+);

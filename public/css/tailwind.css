@@ -211,19 +211,39 @@
   .sidebar {
     @apply w-[260px] shrink-0 bg-panel border-r border-border p-4 overflow-y-auto;
   }
-  .sidebar-nav {
-    @apply flex flex-col gap-1 mb-4 pb-4 border-b border-border;
+
+  /* Colored icon-only rail -- one fixed accent per top-level section, reusing hues already in
+     colors.js's client palette so the rail and the client dots read as one family. */
+  .icon-rail {
+    @apply w-16 shrink-0 bg-panel border-r border-border flex flex-col items-center gap-2 py-4;
   }
-  .sidebar-nav-btn {
-    font: inherit;
-    @apply flex items-center gap-2 w-full px-3 py-2 rounded-md border-0 bg-transparent text-left text-text-muted font-medium text-[0.9rem] cursor-pointer transition-colors;
+  .icon-rail-btn {
+    @apply w-10 h-10 rounded-xl border-0 bg-transparent flex items-center justify-center cursor-pointer text-text-muted transition-colors;
   }
-  .sidebar-nav-btn:hover {
+  .icon-rail-btn svg {
+    width: 18px;
+    height: 18px;
+  }
+  .icon-rail-btn:hover {
     @apply bg-[#eef0f4] text-text;
   }
-  .sidebar-nav-btn.active {
-    @apply bg-primary text-white;
+  .icon-rail-btn-overview.active {
+    background: #2563eb;
+    color: #fff;
   }
+  .icon-rail-btn-calendar.active {
+    background: #7c3aed;
+    color: #fff;
+  }
+  .icon-rail-btn-list.active {
+    background: #0d9488;
+    color: #fff;
+  }
+  .icon-rail-btn-clienthub.active {
+    background: #d97706;
+    color: #fff;
+  }
+
   .sidebar h2 {
     @apply text-[0.8rem] uppercase text-text-muted tracking-[0.06em] font-bold;
   }
@@ -296,6 +316,25 @@
   }
   .attention-badge {
     @apply text-[0.75rem] px-2 py-[2px] rounded-md bg-warning-bg text-warning shrink-0;
+  }
+  .stat-card-header {
+    @apply flex items-center gap-2 mb-2;
+  }
+  .stat-icon-badge {
+    @apply w-8 h-8 rounded-lg flex items-center justify-center shrink-0;
+  }
+  .stat-icon-badge svg {
+    width: 16px;
+    height: 16px;
+  }
+  .avatar-badge {
+    @apply w-8 h-8 rounded-full flex items-center justify-center text-[0.7rem] font-semibold shrink-0;
+  }
+  .progress-track {
+    @apply h-[6px] rounded-full bg-[#eef0f4] overflow-hidden mt-2;
+  }
+  .progress-fill {
+    @apply h-full rounded-full;
   }
 
   /* ---- client hub accordion ---- */
@@ -663,6 +702,9 @@
 
     .app-body {
       @apply flex-col min-h-0;
+    }
+    .icon-rail {
+      @apply w-full h-auto flex-row justify-center border-r-0 border-b border-border py-2;
     }
     .sidebar {
       @apply w-full max-h-[220px] border-r-0 border-b border-border;

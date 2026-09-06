@@ -6,7 +6,7 @@
   <title>Bowling Green Bookkeeping &amp; Taxes — Client Hub</title>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" />
-  <link rel="stylesheet" href="css/styles.css?v=1788735615697" />
+  <link rel="stylesheet" href="css/styles.css?v=1788736189548" />
 </head>
 <body>
 
@@ -75,13 +75,13 @@
     </div>
 
     <div class="app-body">
+      <nav class="icon-rail">
+        <button id="view-toggle-overview" class="icon-rail-btn icon-rail-btn-overview" title="Overview" aria-label="Overview"></button>
+        <button id="view-toggle-calendar" class="icon-rail-btn icon-rail-btn-calendar" title="Calendar view" aria-label="Calendar view"></button>
+        <button id="view-toggle-list" class="icon-rail-btn icon-rail-btn-list" title="List view" aria-label="List view"></button>
+        <button id="view-toggle-clienthub" class="icon-rail-btn icon-rail-btn-clienthub" title="Client Hub" aria-label="Client Hub"></button>
+      </nav>
       <aside class="sidebar">
-        <nav class="sidebar-nav">
-          <button id="view-toggle-overview" class="sidebar-nav-btn" title="Overview">Overview</button>
-          <button id="view-toggle-calendar" class="sidebar-nav-btn" title="Calendar view">Calendar</button>
-          <button id="view-toggle-list" class="sidebar-nav-btn" title="List view">List</button>
-          <button id="view-toggle-clienthub" class="sidebar-nav-btn" title="Client Hub">Client Hub</button>
-        </nav>
         <h2>Clients</h2>
         <input type="text" id="client-search" class="client-search" placeholder="Search clients..." />
         <div id="client-list"></div>
@@ -114,6 +114,6 @@
     </main>
   </div>
 
-  <script type="module" src="js/app.js?v=1788735615697"></script>
+  <script type="module" src="js/app.js?v=1788736189548"></script>
 </body>
 </html>

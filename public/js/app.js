@@ -1,4 +1,4 @@
-import { isFirebaseConfigured, auth } from "./firebase-init.js?v=1788735615697";
+import { isFirebaseConfigured, auth } from "./firebase-init.js?v=1788736189548";
 import {
   watchAuthState,
   signInWithPassword,
@@ -6,7 +6,7 @@ import {
   completeEmailLinkSignInIfPresent,
   signOutUser,
   getOwnProfile,
-} from "./auth.js?v=1788735615697";
+} from "./auth.js?v=1788736189548";
 import {
   startSync,
   stopSync,
@@ -25,13 +25,13 @@ import {
   unmarkComplete,
   isFullyLoaded,
   getClientRecord,
-} from "./data.js?v=1788735615697";
-import { renderCalendar } from "./calendar-view.js?v=1788735615697";
-import { renderList } from "./list-view.js?v=1788735615697";
-import { describeRecurrence, describeRecurrenceHistory, getLastDueOccurrence, toISODate } from "./recurrence.js?v=1788735615697";
-import { colorFor } from "./colors.js?v=1788735615697";
-import { githubRepoSlug } from "./firebase-config.js?v=1788735615697";
-import { iconEdit, iconTrash, iconPlus, iconPlusLarge, iconCheck, iconTag, iconUpload, iconLogout, iconCalendar, iconListView, iconFolder, iconFolderLarge, iconHome, iconChevronRight } from "./icons.js?v=1788735615697";
+} from "./data.js?v=1788736189548";
+import { renderCalendar } from "./calendar-view.js?v=1788736189548";
+import { renderList } from "./list-view.js?v=1788736189548";
+import { describeRecurrence, describeRecurrenceHistory, getLastDueOccurrence, toISODate } from "./recurrence.js?v=1788736189548";
+import { colorFor, tintFor } from "./colors.js?v=1788736189548";
+import { githubRepoSlug } from "./firebase-config.js?v=1788736189548";
+import { iconEdit, iconTrash, iconPlus, iconPlusLarge, iconCheck, iconTag, iconUpload, iconLogout, iconCalendar, iconListView, iconFolder, iconFolderLarge, iconHome, iconChevronRight, iconUsers, iconAlertTriangle, iconSignature } from "./icons.js?v=1788736189548";
 
 const DEFAULT_CATEGORIES = [
   "Payroll",
@@ -103,10 +103,10 @@ function init() {
   qs("manage-categories-btn").innerHTML = `<span class="btn-header-icon">${iconTag}</span><span class="btn-header-label">Manage categories</span>`;
   qs("export-btn").innerHTML = `<span class="btn-header-icon">${iconUpload}</span><span class="btn-header-label">Export to GitHub</span>`;
   qs("sign-out-btn").innerHTML = `<span class="btn-header-icon">${iconLogout}</span><span class="btn-header-label">Sign out</span>`;
-  qs("view-toggle-overview").innerHTML = `${iconHome}<span>Overview</span>`;
-  qs("view-toggle-calendar").innerHTML = `${iconCalendar}<span>Calendar</span>`;
-  qs("view-toggle-list").innerHTML = `${iconListView}<span>List</span>`;
-  qs("view-toggle-clienthub").innerHTML = `${iconFolder}<span>Client Hub</span>`;
+  qs("view-toggle-overview").innerHTML = iconHome;
+  qs("view-toggle-calendar").innerHTML = iconCalendar;
+  qs("view-toggle-list").innerHTML = iconListView;
+  qs("view-toggle-clienthub").innerHTML = iconFolder;
   qs("client-hub-icon").innerHTML = iconFolderLarge;
 
   wireAuthForms();
@@ -336,20 +336,32 @@ function renderOverviewView() {
   els.viewContainer.innerHTML = `
     <div class="stat-grid">
       <div class="stat-card">
-        <div class="stat-card-label">Active clients</div>
+        <div class="stat-card-header">
+          <span class="stat-icon-badge" style="background:${tintFor("#2563eb")}; color:#2563eb;">${iconUsers}</span>
+          <span class="stat-card-label">Active clients</span>
+        </div>
         <div class="stat-card-value">${activeClients.length}</div>
       </div>
       <div class="stat-card">
-        <div class="stat-card-label">Overdue items</div>
+        <div class="stat-card-header">
+          <span class="stat-icon-badge" style="background:${tintFor("#d97706")}; color:#d97706;">${iconAlertTriangle}</span>
+          <span class="stat-card-label">Overdue items</span>
+        </div>
         <div class="${overdue.length ? "stat-card-value" : "stat-card-value-muted"}">${overdue.length}</div>
       </div>
       <div class="stat-card">
-        <div class="stat-card-label">Awaiting signature</div>
+        <div class="stat-card-header">
+          <span class="stat-icon-badge" style="background:${tintFor("#7c3aed")}; color:#7c3aed;">${iconSignature}</span>
+          <span class="stat-card-label">Awaiting signature</span>
+        </div>
         <div class="stat-card-value-muted">0</div>
         <div class="stat-card-label">Coming in Milestone 4</div>
       </div>
       <div class="stat-card">
-        <div class="stat-card-label">New uploads</div>
+        <div class="stat-card-header">
+          <span class="stat-icon-badge" style="background:${tintFor("#0d9488")}; color:#0d9488;">${iconUpload}</span>
+          <span class="stat-card-label">New uploads</span>
+        </div>
         <div class="stat-card-value-muted">0</div>
         <div class="stat-card-label">Coming in Milestone 2</div>
       </div>
@@ -365,10 +377,11 @@ function renderOverviewView() {
   }
   overdue.slice(0, 15).forEach(({ client, item, occ }) => {
     const label = item.customLabel || item.category;
+    const color = colorFor(client.id);
     const row = document.createElement("button");
     row.className = "attention-row";
     row.innerHTML = `
-      <span class="client-dot" style="background:${colorFor(client.id)}"></span>
+      <span class="avatar-badge" style="background:${tintFor(color)}; color:${color};">${client.name.slice(0, 2).toUpperCase()}</span>
       <span style="flex:1;">${escapeHtml(client.name)} <span class="text-text-muted">-- ${escapeHtml(label)}</span></span>
       <span class="attention-badge">Due ${occ.date.toLocaleDateString(undefined, { month: "short", day: "numeric" })}</span>
     `;
@@ -414,12 +427,24 @@ function renderClientHubStaffView() {
     const item = document.createElement("div");
     item.className = "client-accordion-item";
 
+    const color = colorFor(client.id);
+    const stats = clientCompletionStats(client.id);
+    const pct = stats && stats.total ? Math.round((stats.current / stats.total) * 100) : null;
+
     const head = document.createElement("button");
     head.className = "client-accordion-row";
     head.innerHTML = `
       <span class="client-accordion-chevron${isOpen ? " client-accordion-chevron-open" : ""}">${iconChevronRight}</span>
-      <span class="client-dot" style="background:${colorFor(client.id)}"></span>
-      <span style="flex:1;">${escapeHtml(client.name)}</span>
+      <span class="avatar-badge" style="background:${tintFor(color)}; color:${color};">${client.name.slice(0, 2).toUpperCase()}</span>
+      <span style="flex:1; min-width:0;">
+        <span>${escapeHtml(client.name)}</span>
+        ${
+          pct === null
+            ? ""
+            : `<div class="progress-track" style="max-width:180px;"><div class="progress-fill" style="width:${pct}%; background:${color};"></div></div>`
+        }
+      </span>
+      ${pct === null ? "" : `<span class="text-[0.8rem] text-text-muted shrink-0">${stats.current}/${stats.total}</span>`}
     `;
     head.addEventListener("click", () => {
       clientHubExpandedId = isOpen ? null : client.id;
