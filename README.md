@@ -1,16 +1,33 @@
-# Client Compliance Tracker
+# Bowling Green Bookkeeping & Taxes -- Client Hub
 
-An internal calendar/checklist for a bookkeeping & tax practice to track recurring compliance
-deadlines (payroll, sales tax, quarterly estimates, annual filings, etc.) per client.
+One app, two audiences:
 
-No SSNs, account numbers, or dollar amounts are stored here -- only client names, task/category
-labels, and dates.
+- **Staff** get the original compliance calendar/checklist -- tracking recurring deadlines
+  (payroll, sales tax, quarterly estimates, annual filings, etc.) per client -- plus, from the
+  new "Client Hub" sidebar tab, client-facing tools (document intake, e-signature, engagement
+  letters -- rolling out across Milestones 2-5).
+- **Clients** get a separate, much simpler screen (no calendar, no other clients visible) for
+  the same document/signature tools, once staff creates their account (see "Client Hub roles"
+  below).
 
-**Stack:** static HTML/CSS/JS on GitHub Pages, talking directly to Firebase Authentication + Cloud
-Firestore. There's no build step *at deploy time* -- GitHub Pages serves the committed files
-as-is -- but styling is written in Tailwind CSS and compiled locally to a static, committed
-stylesheet before each push (see "Styling with Tailwind CSS" below); the JS itself still has zero
-tooling. A GitHub Actions workflow backs up the database to JSON daily.
+No SSNs, account numbers, or dollar amounts are stored in Firestore -- only client names,
+task/category labels, dates, and document *metadata*. Actual uploaded files will live in Firebase
+Storage once that's enabled (Milestone 2 -- see "Client Hub roles").
+
+**Stack:** static HTML/CSS/JS on **Firebase Hosting** (`https://bowling-green-bookkeeping.web.app`
+-- not GitHub Pages; the repo is public only for free GitHub Actions minutes, and Pages was
+dropped since it can't host anything under the `client`-role access model without also being
+public in a way that defeats the point), talking directly to Firebase Authentication + Cloud
+Firestore. There's no build step *at deploy time* -- `firebase deploy --only hosting` serves the
+committed `public/` folder as-is -- but styling is written in Tailwind CSS and compiled locally to
+a static, committed stylesheet before each push (see "Styling with Tailwind CSS" below); the JS
+itself still has zero tooling. A GitHub Actions workflow backs up the database to JSON daily.
+
+Deploy with:
+
+```bash
+firebase deploy --only firestore:rules,hosting
+```
 
 ---
 
@@ -40,38 +57,45 @@ tooling. A GitHub Actions workflow backs up the database to JSON daily.
      `firebase use --add` to select this project once), run `firebase deploy --only firestore:rules`
      from this folder any time the rules file changes.
 6. Register a web app: **Project settings (gear icon) -> General -> Your apps -> Add app -> Web**
-   (the `</>` icon). Give it any nickname. You do **not** need Firebase Hosting.
+   (the `</>` icon). Give it any nickname. Do **not** check "set up Firebase Hosting" here --
+   Hosting is enabled separately below, once, from the CLI.
 7. Copy the `firebaseConfig` object it shows you (apiKey, authDomain, projectId, etc.) into
-   [`js/firebase-config.js`](js/firebase-config.js), replacing the `REPLACE_WITH_...` placeholders.
-   This config is public/safe to commit -- it is not a secret. Access control is enforced entirely
-   by Firestore Security Rules, not by hiding this file.
+   [`public/js/firebase-config.js`](public/js/firebase-config.js), replacing the
+   `REPLACE_WITH_...` placeholders. This config is public/safe to commit -- it is not a secret.
+   Access control is enforced entirely by Firestore Security Rules, not by hiding this file.
 8. Create your own login: **Authentication -> Users -> Add user** in the console, using the same
    email you put in the allowlist above. (There's no self-service "Create account" button in the
    app on purpose -- see "Restricting who can sign in" below.)
 
-### 1b. Deploy to GitHub Pages
+### 1b. Deploy to Firebase Hosting
 
-1. Push this repo to GitHub (public repo -- GitHub Pages is free only for public repos on a
-   personal account).
-2. In the repo, go to **Settings -> Pages**. Under **Build and deployment**, set **Source** to
-   "Deploy from a branch", branch `main`, folder `/ (root)`. Save.
-3. GitHub will give you a URL like `https://yourusername.github.io/client-compliance-tracker/`.
+The repo stays public (for free GitHub Actions minutes on the backup/digest workflows), but the
+app itself is served from Firebase Hosting, not GitHub Pages -- Pages would mean either the whole
+site is public with no login wall in front of it at the CDN level, or paying for a private repo
+just to get Pages; Hosting has no such tradeoff and is free on the Spark plan.
 
-**GitHub Pages caches every file for up to 10 minutes per CDN edge, independent of anyone's
-browser cache.** Deploying a change to `index.html`, anything in `css/`, or anything in `js/`
-without accounting for this can mean visitors silently keep running old code for a while after a
-push -- confusing since it looks identical to a real bug. Run `npm run bump-version` before
-committing any such change; it stamps every internal `<script>`/`<link>` reference and
-`import ... from "./x.js"` with the same fresh `?v=<timestamp>`, forcing a real fetch on the next
-deploy instead of relying on a stale cached copy. (It only touches local file references --
-CDN-hosted imports like the Firebase SDK are untouched.)
+1. `npm install -g firebase-tools`, then `firebase login`.
+2. `firebase use --add` from this folder, and pick this project once (writes `.firebaserc`).
+3. If you want a nicer URL than `<project-id>.web.app`, create a named Hosting site once:
+   `firebase hosting:sites:create <your-site-name>`, then point `firebase.json`'s
+   `hosting.target` at it via `firebase target:apply hosting <alias> <your-site-name>`. Otherwise
+   just deploy to the default site -- no extra setup needed.
+4. Deploy: `firebase deploy --only hosting`. Firebase prints the live URL when it finishes.
 
-### 1c. Authorize the GitHub Pages domain in Firebase
+**Firebase Hosting's CDN can still cache briefly after a deploy**, independent of anyone's browser
+cache. Deploying a change to `public/index.html`, anything in `public/css/`, or anything in
+`public/js/` without accounting for this can mean visitors silently keep running old code for a
+short while after a push -- confusing since it looks identical to a real bug. Run
+`npm run bump-version` before committing any such change; it stamps every internal
+`<script>`/`<link>` reference and `import ... from "./x.js"` with the same fresh `?v=<timestamp>`,
+forcing a real fetch on the next deploy instead of relying on a stale cached copy. (It only
+touches local file references -- CDN-hosted imports like the Firebase SDK are untouched.)
 
-This step is easy to miss and causes sign-in to silently fail:
+### 1c. Authorize the Hosting domain in Firebase
 
-1. Firebase Console -> **Authentication -> Settings -> Authorized domains**.
-2. Click **Add domain** and add `yourusername.github.io` (just the domain, no path).
+Firebase Hosting domains (`<project-id>.web.app`, plus any named site's `.web.app` domain) are
+authorized for sign-in automatically -- nothing to do here unless you later add a custom domain,
+in which case: **Authentication -> Settings -> Authorized domains -> Add domain**.
 
 `localhost` is included by default, so local testing works without this step.
 
@@ -144,26 +168,26 @@ All styling is written in Tailwind CSS and compiled locally with the Tailwind CL
 committed CSS file -- there's no server-side/CI build, so the compiled file has to be checked in
 like any other asset, the same spirit as the cache-busting step below.
 
-- **`css/tailwind.css` is the source you edit.** It defines the color palette and other design
-  tokens in an `@theme` block, then rebuilds every one of the app's existing class names (`.btn`,
-  `.modal-content`, `.cal-cell`, etc.) using Tailwind's utilities via `@apply` in a
-  `@layer components` block. `index.html` and every `.js` file keep using those same class names
+- **`public/css/tailwind.css` is the source you edit.** It defines the color palette and other
+  design tokens in an `@theme` block, then rebuilds every one of the app's existing class names
+  (`.btn`, `.modal-content`, `.cal-cell`, etc.) using Tailwind's utilities via `@apply` in a
+  `@layer components` block. `public/index.html` and every `.js` file keep using those same class names
   unchanged -- this is Tailwind's own documented pattern for a reused component, not raw
   utility classes sprinkled through markup.
-- **`css/styles.css` is generated -- never hand-edit it.** It's what `index.html` actually loads
-  and what GitHub Pages serves; the next build silently overwrites any manual edit.
+- **`public/css/styles.css` is generated -- never hand-edit it.** It's what `public/index.html`
+  actually loads and what Firebase Hosting serves; the next build silently overwrites any manual edit.
 - One-time: `npm install` (pulls in `tailwindcss` + `@tailwindcss/cli` as dev dependencies).
-- After changing anything in `css/tailwind.css`, run:
+- After changing anything in `public/css/tailwind.css`, run:
   ```bash
   npm run build-css
   ```
   (or `npm run watch-css` to rebuild automatically while iterating locally.)
 - **Order matters before a push:** run `npm run build-css` *first*, then `npm run bump-version`
-  *second* -- bump-version only re-stamps the `?v=` query string on `index.html`'s `<link>`
+  *second* -- bump-version only re-stamps the `?v=` query string on `public/index.html`'s `<link>`
   reference, it doesn't know anything about `styles.css`'s content, so it has to run after the
   content it's versioning has actually changed.
 - The two responsive breakpoints (768px/480px) are written as plain, hand-written `@media` blocks
-  inside `css/tailwind.css` rather than Tailwind's `max-md:`-style variants on purpose: Tailwind's
+  inside `public/css/tailwind.css` rather than Tailwind's `max-md:`-style variants on purpose: Tailwind's
   variants compile to an *exclusive* `width < 768px` query, but this app's breakpoints need to be
   *inclusive* (a viewport at exactly 768px must still get the narrow layout). Keep new
   breakpoint-specific rules inside those same two blocks rather than reaching for `max-md:`.
@@ -194,19 +218,47 @@ the Auth user too (**Authentication -> Users**) if you want the login itself gon
 
 ### Roles
 
-Each user gets a `users/{uid}` document with a `role` field, either `"admin"` or `"staff"`. Every
-new account starts as `staff` -- this is enforced in `firestore.rules` itself (new user docs are
-only accepted with `role: "staff"`), so a user can never grant themselves admin by signing up or
-by editing their own doc.
+Each user gets a `users/{uid}` document with a `role` field: `"admin"`, `"staff"`, or `"client"`.
+Every self-created account starts as `staff` -- this is enforced in `firestore.rules` itself (new
+user docs created by their own owner are only accepted with `role: "staff"`), so a user can never
+grant themselves admin or client access by signing up or by editing their own doc.
 
-The only thing role currently gates is **deleting a client outright** -- that's the one action
-that's irreversible and cascades (removes all its items and completion history), so it's
-admin-only, enforced in [`firestore.rules`](firestore.rules) (not just hidden in the UI). Staff can
-still do everything else: add/edit/remove items, mark things complete, add clients, manage
-categories.
+The only thing role currently gates *between admin and staff* is **deleting a client outright** --
+that's the one action that's irreversible and cascades (removes all its items and completion
+history), so it's admin-only, enforced in [`firestore.rules`](firestore.rules) (not just hidden in
+the UI). Staff can still do everything else: add/edit/remove items, mark things complete, add
+clients, manage categories, and use every Client Hub tool.
 
 To promote someone to admin later, edit their `role` field to `"admin"` directly in the Firestore
 console (**Firestore Database -> Data -> users -> their document**).
+
+### Client Hub roles
+
+A `client`-role account sees a completely different, much simpler screen instead of the staff
+app -- their own Client Hub only, no calendar, no other clients' data reachable (enforced in
+`firestore.rules`, not just hidden in the UI). There's no client self-signup, same as staff: you
+create these accounts by hand, in this order (order matters -- see below):
+
+1. **Add the client as a regular client record first** (if not already), via **Add client** in the
+   app, and note its **client ID** (open it in the Firestore console -- `clients` -> their
+   document -- the doc ID in the URL/breadcrumb).
+2. **Create their Firebase Auth login**: **Authentication -> Users -> Add user**, email +
+   temporary password.
+3. **Before they ever sign in**, create their `users/{uid}` document by hand in the Firestore
+   console (**Firestore Database -> Data -> Start collection** if `users` doesn't already have
+   rows, or just **Add document** into the existing `users` collection): document ID = the UID
+   from step 2, fields: `role` (string) = `client`, `clientId` (string) = the ID from step 1.
+4. Give the client their email + temporary password.
+
+Step 3 has to happen before their first sign-in: the app creates a default `role: "staff"` doc
+automatically the first time *any* new account without one signs in (see `ensureUserDoc` in
+[`public/js/auth.js`](public/js/auth.js)), and a client account should never end up staff. Do
+**not** add a client's email to the staff `allowlist` (Client Hub access doesn't use it at all --
+only the `role`/`clientId` on their user doc controls what they can see).
+
+Note that a client account does **not** need to be on the staff allowlist described above --
+that allowlist only gates the staff-side compliance calendar. Client Hub access is controlled
+entirely by the `role`/`clientId` fields on their `users/{uid}` doc.
 
 ---
 
@@ -232,7 +284,7 @@ the Firebase console (Blaze still has a generous free tier -- you only pay for u
 
 Each item stores a `startDate` and a `recurrenceType` (`monthly`, `quarterly`, `annually`, or
 `custom`). Rather than pre-generating rows for every future month/quarter/year, the app computes
-occurrences on the fly from these fields (see [`js/recurrence.js`](js/recurrence.js)):
+occurrences on the fly from these fields (see [`public/js/recurrence.js`](public/js/recurrence.js)):
 
 - Every recurrence type is really "repeat every **N** months, on day **D**":
   `monthly` = every 1 month, `quarterly` = every 3 months, `annually` = every 12 months, `custom`
@@ -330,27 +382,28 @@ button is for taking a snapshot right before a big change.
 ## 7. Project structure
 
 ```
-index.html                   Single-page app shell
-css/tailwind.css               Tailwind source -- edit this (theme + component classes)
-css/styles.css                 Compiled by Tailwind (`npm run build-css`) -- do not hand-edit
-js/firebase-config.js         Your Firebase web config (edit this)
-js/firebase-init.js           Initializes the Firebase SDK
-js/auth.js                    Sign in/up/out, email-link sign-in
-js/data.js                    Firestore CRUD + live sync (onSnapshot)
-js/recurrence.js              Due-date/period-key computation
-js/calendar-view.js           Month grid rendering
-js/list-view.js               Grouped checklist rendering
-js/colors.js                  Stable color assignment for calendar coding
-js/app.js                     Wiring: view state, modals, event handlers
-firestore.rules                Security rules (deploy via console or Firebase CLI)
-firebase.json                  Points the Firebase CLI at firestore.rules
-scripts/export-backup.mjs      Used by the GitHub Actions backup workflow
-scripts/seed-data.mjs          One-time sample data seeder
-scripts/send-digest.mjs        Used by the GitHub Actions digest workflow
-scripts/bump-cache-version.mjs Cache-busts index.html/js/css references (see below)
-.github/workflows/backup.yml   Daily + manual backup workflow
-.github/workflows/digest.yml   Daily overdue/due-this-week email digest
-backups/                       JSON snapshots land here
+public/index.html                    Single-page app shell (staff app-shell + client-hub-screen)
+public/css/tailwind.css              Tailwind source -- edit this (theme + component classes)
+public/css/styles.css                Compiled by Tailwind (`npm run build-css`) -- do not hand-edit
+public/js/firebase-config.js         Your Firebase web config (edit this)
+public/js/firebase-init.js           Initializes the Firebase SDK
+public/js/auth.js                    Sign in/up/out, email-link sign-in, one-time role lookup
+public/js/data.js                    Firestore CRUD + live sync (onSnapshot)
+public/js/recurrence.js              Due-date/period-key computation
+public/js/calendar-view.js           Month grid rendering
+public/js/list-view.js               Grouped checklist rendering
+public/js/colors.js                  Stable color assignment for calendar coding
+public/js/icons.js                   Inline SVG icon set
+public/js/app.js                     Wiring: view state, modals, event handlers, role branching
+firestore.rules                      Security rules (deploy via console or Firebase CLI)
+firebase.json                        Points the Firebase CLI at firestore.rules + Hosting
+scripts/export-backup.mjs            Used by the GitHub Actions backup workflow
+scripts/seed-data.mjs                One-time sample data seeder
+scripts/send-digest.mjs              Used by the GitHub Actions digest workflow
+scripts/bump-cache-version.mjs       Cache-busts public/index.html/js/css references (see below)
+.github/workflows/backup.yml         Daily + manual backup workflow
+.github/workflows/digest.yml         Daily overdue/due-this-week email digest
+backups/                             JSON snapshots land here
 ```
 
 ## 8. Non-goals for v1

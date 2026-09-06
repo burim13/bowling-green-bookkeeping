@@ -5,6 +5,7 @@ import {
   collection,
   collectionGroup,
   doc,
+  getDoc,
   onSnapshot,
   setDoc,
   addDoc,
@@ -14,7 +15,7 @@ import {
   serverTimestamp,
   writeBatch,
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
-import { db, auth } from "./firebase-init.js?v=1788632397168";
+import { db, auth } from "./firebase-init.js?v=1788734871664";
 
 // ---- live store ----------------------------------------------------------
 
@@ -168,6 +169,14 @@ export function saveCategories(names) {
 }
 
 // ---- clients -----------------------------------------------------------
+
+// One-time (not live) fetch of a single client record -- used by the Client Hub screen, which
+// a client-role account sees instead of the staff app-shell and so never gets this from the
+// collection-wide onSnapshot in startSync().
+export async function getClientRecord(clientId) {
+  const snap = await getDoc(doc(db, "clients", clientId));
+  return snap.exists() ? { id: snap.id, ...snap.data() } : null;
+}
 
 export function addClient(name, notes) {
   return withSaveStatus(() =>

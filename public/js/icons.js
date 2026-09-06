@@ -40,3 +40,6 @@ export const iconCalendar = svg(
 export const iconListView = svg(
   `<path d="M7.5 5.5h9"/><path d="M7.5 10h9"/><path d="M7.5 14.5h9"/><path d="M3.5 5.5h.01"/><path d="M3.5 10h.01"/><path d="M3.5 14.5h.01"/>`
 );
+const FOLDER_PATH = `<path d="M3 6a1 1 0 0 1 1-1h4l1.5 2H16a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V6z"/>`;
+export const iconFolder = svg(FOLDER_PATH);
+export const iconFolderLarge = svg(FOLDER_PATH, { size: 22 });

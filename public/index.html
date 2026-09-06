@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Client Compliance Tracker</title>
+  <title>Bowling Green Bookkeeping &amp; Taxes — Client Hub</title>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" />
-  <link rel="stylesheet" href="css/styles.css?v=1788632397168" />
+  <link rel="stylesheet" href="css/styles.css?v=1788734871664" />
 </head>
 <body>
 
@@ -23,7 +23,7 @@
     <div class="auth-box">
       <div class="brand" style="margin-bottom: 1rem;">
         <span class="brand-mark"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="14" height="13" rx="2"/><path d="M3 8h14"/><path d="M7 2.5v3"/><path d="M13 2.5v3"/><path d="m7 12 2 2 4-4"/></svg></span>
-        <h1 style="margin:0;">Client Compliance Tracker</h1>
+        <h1 style="margin:0;">Bowling Green Bookkeeping &amp; Taxes</h1>
       </div>
 
       <div id="auth-error" class="auth-error" hidden></div>
@@ -50,7 +50,7 @@
     <header class="app-header">
       <div class="brand">
         <span class="brand-mark"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="14" height="13" rx="2"/><path d="M3 8h14"/><path d="M7 2.5v3"/><path d="M13 2.5v3"/><path d="m7 12 2 2 4-4"/></svg></span>
-        <h1>Client Compliance Tracker</h1>
+        <h1>Bowling Green Bookkeeping &amp; Taxes</h1>
       </div>
       <div class="header-right">
         <span id="save-status" class="save-status"></span>
@@ -79,6 +79,7 @@
         <nav class="sidebar-nav">
           <button id="view-toggle-calendar" class="sidebar-nav-btn" title="Calendar view">Calendar</button>
           <button id="view-toggle-list" class="sidebar-nav-btn" title="List view">List</button>
+          <button id="view-toggle-clienthub" class="sidebar-nav-btn" title="Client Hub">Client Hub</button>
         </nav>
         <h2>Clients</h2>
         <input type="text" id="client-search" class="client-search" placeholder="Search clients..." />
@@ -92,6 +93,26 @@
     <div id="modal-content" class="modal-content"></div>
   </div>
 
-  <script type="module" src="js/app.js?v=1788632397168"></script>
+  <!-- Shown instead of #app-shell when the signed-in account has role "client" (see js/app.js). -->
+  <div id="client-hub-screen" hidden>
+    <header class="app-header">
+      <div class="brand">
+        <span class="brand-mark"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="14" height="13" rx="2"/><path d="M3 8h14"/><path d="M7 2.5v3"/><path d="M13 2.5v3"/><path d="m7 12 2 2 4-4"/></svg></span>
+        <h1>Bowling Green Bookkeeping &amp; Taxes</h1>
+      </div>
+      <div class="header-right">
+        <button id="client-hub-signout-btn" class="btn btn-ghost btn-header" title="Sign out">Sign out</button>
+      </div>
+    </header>
+    <main class="view-container">
+      <div class="empty-state">
+        <div class="empty-state-badge empty-state-badge-primary" id="client-hub-icon"></div>
+        <h3>Welcome<span id="client-hub-name"></span></h3>
+        <p>Document upload and e-signature are coming soon. Your accountant will let you know here once there's something for you to do.</p>
+      </div>
+    </main>
+  </div>
+
+  <script type="module" src="js/app.js?v=1788734871664"></script>
 </body>
 </html>

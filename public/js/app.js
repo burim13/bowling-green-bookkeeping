@@ -1,11 +1,12 @@
-import { isFirebaseConfigured, auth } from "./firebase-init.js?v=1788632397168";
+import { isFirebaseConfigured, auth } from "./firebase-init.js?v=1788734871664";
 import {
   watchAuthState,
   signInWithPassword,
   sendEmailLink,
   completeEmailLinkSignInIfPresent,
   signOutUser,
-} from "./auth.js?v=1788632397168";
+  getOwnProfile,
+} from "./auth.js?v=1788734871664";
 import {
   startSync,
   stopSync,
@@ -23,13 +24,14 @@ import {
   markComplete,
   unmarkComplete,
   isFullyLoaded,
-} from "./data.js?v=1788632397168";
-import { renderCalendar } from "./calendar-view.js?v=1788632397168";
-import { renderList } from "./list-view.js?v=1788632397168";
-import { describeRecurrence, describeRecurrenceHistory, getLastDueOccurrence, toISODate } from "./recurrence.js?v=1788632397168";
-import { colorFor } from "./colors.js?v=1788632397168";
-import { githubRepoSlug } from "./firebase-config.js?v=1788632397168";
-import { iconEdit, iconTrash, iconPlus, iconPlusLarge, iconCheck, iconTag, iconUpload, iconLogout, iconCalendar, iconListView } from "./icons.js?v=1788632397168";
+  getClientRecord,
+} from "./data.js?v=1788734871664";
+import { renderCalendar } from "./calendar-view.js?v=1788734871664";
+import { renderList } from "./list-view.js?v=1788734871664";
+import { describeRecurrence, describeRecurrenceHistory, getLastDueOccurrence, toISODate } from "./recurrence.js?v=1788734871664";
+import { colorFor } from "./colors.js?v=1788734871664";
+import { githubRepoSlug } from "./firebase-config.js?v=1788734871664";
+import { iconEdit, iconTrash, iconPlus, iconPlusLarge, iconCheck, iconTag, iconUpload, iconLogout, iconCalendar, iconListView, iconFolder, iconFolderLarge } from "./icons.js?v=1788734871664";
 
 const DEFAULT_CATEGORIES = [
   "Payroll",
@@ -81,10 +83,13 @@ function init() {
   els.clientSearch = qs("client-search");
   els.viewToggleCalendar = qs("view-toggle-calendar");
   els.viewToggleList = qs("view-toggle-list");
+  els.viewToggleClientHub = qs("view-toggle-clienthub");
   els.listFilterClient = qs("list-filter-client");
   els.filterCategory = qs("filter-category");
   els.markAllCompleteBtn = qs("mark-all-complete-btn");
   els.userEmail = qs("user-email");
+  els.clientHubScreen = qs("client-hub-screen");
+  els.clientHubName = qs("client-hub-name");
 
   if (!isFirebaseConfigured) {
     els.configWarning.hidden = false;
@@ -99,23 +104,51 @@ function init() {
   qs("sign-out-btn").innerHTML = `<span class="btn-header-icon">${iconLogout}</span><span class="btn-header-label">Sign out</span>`;
   qs("view-toggle-calendar").innerHTML = `${iconCalendar}<span>Calendar</span>`;
   qs("view-toggle-list").innerHTML = `${iconListView}<span>List</span>`;
+  qs("view-toggle-clienthub").innerHTML = `${iconFolder}<span>Client Hub</span>`;
+  qs("client-hub-icon").innerHTML = iconFolderLarge;
 
   wireAuthForms();
   wireToolbar();
+  wireClientHubScreen();
 
   completeEmailLinkSignInIfPresent().catch((err) => alert("Sign-in link failed: " + err.message));
 
-  watchAuthState((user) => {
-    if (user) {
-      els.authScreen.hidden = true;
+  watchAuthState(async (user) => {
+    if (!user) {
+      els.authScreen.hidden = false;
+      els.appShell.hidden = true;
+      els.clientHubScreen.hidden = true;
+      stopSync();
+      return;
+    }
+
+    // Look up role BEFORE showing either shell -- a client-role account must never trigger the
+    // staff-only listeners in startSync(), which it has no Firestore permission to read.
+    let profile;
+    try {
+      profile = await getOwnProfile();
+    } catch (err) {
+      showAuthError(err.message);
+      await signOutUser();
+      return;
+    }
+    if (!profile) {
+      showAuthError("No profile found for this account. Contact your accountant.");
+      await signOutUser();
+      return;
+    }
+
+    els.authScreen.hidden = true;
+    if (profile.role === "client") {
+      els.appShell.hidden = true;
+      stopSync();
+      await showClientHub(profile);
+    } else {
+      els.clientHubScreen.hidden = true;
       els.appShell.hidden = false;
       els.userEmail.textContent = user.email;
       startSync();
       seedCategoriesIfMissing(DEFAULT_CATEGORIES).catch((err) => console.error(err));
-    } else {
-      els.authScreen.hidden = false;
-      els.appShell.hidden = true;
-      stopSync();
     }
   });
 
@@ -182,6 +215,7 @@ function showAuthError(message) {
 function wireToolbar() {
   els.viewToggleCalendar.addEventListener("click", () => setActiveView("calendar"));
   els.viewToggleList.addEventListener("click", () => setActiveView("list"));
+  els.viewToggleClientHub.addEventListener("click", () => setActiveView("clienthub"));
   els.listFilterClient.addEventListener("change", (e) => {
     viewState.clientFilter = e.target.value || null;
     renderCurrentView();
@@ -211,12 +245,17 @@ function setActiveView(view) {
   localStorage.setItem("cct_view", view);
   els.viewToggleCalendar.classList.toggle("active", view === "calendar");
   els.viewToggleList.classList.toggle("active", view === "list");
+  els.viewToggleClientHub.classList.toggle("active", view === "clienthub");
   qs("list-filter-wrap").hidden = view !== "list";
   els.markAllCompleteBtn.hidden = view !== "list";
   renderCurrentView();
 }
 
 function renderCurrentView() {
+  if (viewState.view === "clienthub") {
+    renderClientHubStaffView();
+    return;
+  }
   if (!isFullyLoaded()) {
     els.viewContainer.innerHTML = `<div class="loading-hint"><span class="spinner"></span> Loading…</div>`;
     return;
@@ -259,6 +298,41 @@ function renderCurrentView() {
       onToggleComplete: handleToggleComplete,
       onEditItem: (clientId, itemId) => openItemModal(clientId, itemId),
     });
+  }
+}
+
+// ---- client hub (staff-side placeholder; document review lands in Milestone 2) --------------
+
+function renderClientHubStaffView() {
+  els.viewContainer.innerHTML = `
+    <div class="empty-state">
+      <div class="empty-state-badge empty-state-badge-primary">${iconFolderLarge}</div>
+      <h3>Client Hub</h3>
+      <p>Document intake, e-signature, and engagement letters land here in Milestones 2-5.
+      For now, give a client Client Hub access by creating their Firebase Auth account and a
+      matching <code>/users/{uid}</code> document with <code>role: "client"</code> and
+      <code>clientId</code> set to their client record's ID -- see the README.</p>
+    </div>`;
+}
+
+// ---- client hub (client-facing screen) --------------------------------------------------
+
+function wireClientHubScreen() {
+  qs("client-hub-signout-btn").addEventListener("click", () => signOutUser());
+}
+
+async function showClientHub(profile) {
+  els.clientHubScreen.hidden = false;
+  els.clientHubName.textContent = "";
+  if (!profile.clientId) {
+    els.clientHubName.textContent = " -- ask your accountant to finish setting up your account (missing clientId).";
+    return;
+  }
+  try {
+    const client = await getClientRecord(profile.clientId);
+    els.clientHubName.textContent = client ? `, ${client.name}` : "";
+  } catch (err) {
+    console.error(err);
   }
 }
 

@@ -17,8 +17,8 @@ const rootDir = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
 const version = Date.now();
 
 const targets = [
-  path.join(rootDir, "index.html"),
-  ...fs.readdirSync(path.join(rootDir, "js")).map((f) => path.join(rootDir, "js", f)),
+  path.join(rootDir, "public", "index.html"),
+  ...fs.readdirSync(path.join(rootDir, "public", "js")).map((f) => path.join(rootDir, "public", "js", f)),
 ];
 
 // Matches a local (non-http) reference to a .js or .css file, with an optional existing

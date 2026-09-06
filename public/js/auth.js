@@ -7,7 +7,7 @@ import {
   signOut,
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 import { doc, setDoc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
-import { auth, db } from "./firebase-init.js?v=1788632397168";
+import { auth, db } from "./firebase-init.js?v=1788734871664";
 
 const EMAIL_LINK_STORAGE_KEY = "cct_email_for_signin";
 
@@ -48,6 +48,17 @@ export async function completeEmailLinkSignInIfPresent() {
 
 export async function signOutUser() {
   await signOut(auth);
+}
+
+// One-time (not live) lookup of the signed-in user's own profile, used right after auth
+// resolves to decide which shell to show *before* anything else runs -- in particular, before
+// the staff-only data listeners in data.js start, which would otherwise throw permission
+// errors for a client-role account.
+export async function getOwnProfile() {
+  const user = auth.currentUser;
+  if (!user) return null;
+  const snap = await getDoc(doc(db, "users", user.uid));
+  return snap.exists() ? snap.data() : null;
 }
 
 async function ensureUserDoc() {

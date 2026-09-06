@@ -25,11 +25,38 @@ service cloud.firestore {
         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
     }
 
+    // Client Hub: a client-role user (created manually by staff via the console, same as the
+    // admin-promotion flow -- there's no client self-signup) can only ever touch their own
+    // client's subtree, identified by the clientId on their own /users/{uid} doc.
+    function isOwningClient(clientId) {
+      return isSignedIn() &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'client' &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.clientId == clientId;
+    }
+
     // Every approved user (owner + any approved staff) can read/write everything except one
     // thing: deleting a client outright is admin-only, since it cascades and can't be undone.
+    // A client-role user may additionally read (never write) their own client record.
     match /clients/{clientId} {
-      allow read, create, update: if isApproved();
+      allow read: if isApproved() || isOwningClient(clientId);
+      allow create, update: if isApproved();
       allow delete: if isAdmin();
+
+      // Client Hub subcollections. Staff manage everything; the owning client can read
+      // everything in their own folder and upload documents, but letters/signature requests
+      // are staff-generated only.
+      match /documents/{docId} {
+        allow read, create: if isApproved() || isOwningClient(clientId);
+        allow update, delete: if isApproved();
+      }
+      match /letters/{letterId} {
+        allow read: if isApproved() || isOwningClient(clientId);
+        allow write: if isApproved();
+      }
+      match /signatureRequests/{requestId} {
+        allow read: if isApproved() || isOwningClient(clientId);
+        allow write: if isApproved();
+      }
     }
 
     // The app loads items/completions across ALL clients at once via collectionGroup()
@@ -54,7 +81,10 @@ service cloud.firestore {
     // bypasses these rules entirely). Without this, any approved user could self-promote to
     // admin with a single client-side write and delete any client.
     match /users/{uid} {
-      allow read: if isApproved();
+      // Anyone signed in can read their own doc -- a client-role user needs this at login to
+      // find out they're a client (and which clientId) before isApproved() would ever be true
+      // for them. Approved staff can still read anyone's doc (nothing sensitive in it).
+      allow read: if isApproved() || request.auth.uid == uid;
       allow create: if isApproved() && request.auth.uid == uid && request.resource.data.role == 'staff';
       allow update: if isApproved() && request.auth.uid == uid && request.resource.data.role == resource.data.role;
     }
