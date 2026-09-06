@@ -6,7 +6,7 @@
   <title>Bowling Green Bookkeeping &amp; Taxes — Client Hub</title>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" />
-  <link rel="stylesheet" href="css/styles.css?v=1788736189548" />
+  <link rel="stylesheet" href="css/styles.css?v=1788736500926" />
 </head>
 <body>
 
@@ -54,15 +54,16 @@
       </div>
       <div class="header-right">
         <span id="save-status" class="save-status"></span>
-        <span id="user-email" class="user-email"></span>
         <button id="manage-categories-btn" class="btn btn-ghost btn-header" title="Manage categories">Manage categories</button>
         <button id="export-btn" class="btn btn-ghost btn-header" title="Export to GitHub">Export to GitHub</button>
+        <span class="header-divider"></span>
+        <span id="user-badge" class="user-badge"></span>
         <button id="sign-out-btn" class="btn btn-ghost btn-header" title="Sign out">Sign out</button>
       </div>
     </header>
 
     <div class="toolbar">
-      <div class="list-filter-wrap">
+      <div id="category-filter-wrap" class="list-filter-wrap">
         <label>Category <select id="filter-category"></select></label>
       </div>
       <div id="list-filter-wrap" class="list-filter-wrap" hidden>
@@ -114,6 +115,6 @@
     </main>
   </div>
 
-  <script type="module" src="js/app.js?v=1788736189548"></script>
+  <script type="module" src="js/app.js?v=1788736500926"></script>
 </body>
 </html>

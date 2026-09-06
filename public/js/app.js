@@ -1,4 +1,4 @@
-import { isFirebaseConfigured, auth } from "./firebase-init.js?v=1788736189548";
+import { isFirebaseConfigured, auth } from "./firebase-init.js?v=1788736500926";
 import {
   watchAuthState,
   signInWithPassword,
@@ -6,7 +6,7 @@ import {
   completeEmailLinkSignInIfPresent,
   signOutUser,
   getOwnProfile,
-} from "./auth.js?v=1788736189548";
+} from "./auth.js?v=1788736500926";
 import {
   startSync,
   stopSync,
@@ -25,13 +25,13 @@ import {
   unmarkComplete,
   isFullyLoaded,
   getClientRecord,
-} from "./data.js?v=1788736189548";
-import { renderCalendar } from "./calendar-view.js?v=1788736189548";
-import { renderList } from "./list-view.js?v=1788736189548";
-import { describeRecurrence, describeRecurrenceHistory, getLastDueOccurrence, toISODate } from "./recurrence.js?v=1788736189548";
-import { colorFor, tintFor } from "./colors.js?v=1788736189548";
-import { githubRepoSlug } from "./firebase-config.js?v=1788736189548";
-import { iconEdit, iconTrash, iconPlus, iconPlusLarge, iconCheck, iconTag, iconUpload, iconLogout, iconCalendar, iconListView, iconFolder, iconFolderLarge, iconHome, iconChevronRight, iconUsers, iconAlertTriangle, iconSignature } from "./icons.js?v=1788736189548";
+} from "./data.js?v=1788736500926";
+import { renderCalendar } from "./calendar-view.js?v=1788736500926";
+import { renderList } from "./list-view.js?v=1788736500926";
+import { describeRecurrence, describeRecurrenceHistory, getLastDueOccurrence, toISODate } from "./recurrence.js?v=1788736500926";
+import { colorFor, tintFor } from "./colors.js?v=1788736500926";
+import { githubRepoSlug } from "./firebase-config.js?v=1788736500926";
+import { iconEdit, iconTrash, iconPlus, iconPlusLarge, iconCheck, iconTag, iconUpload, iconLogout, iconCalendar, iconListView, iconFolder, iconFolderLarge, iconHome, iconChevronRight, iconUsers, iconAlertTriangle, iconSignature } from "./icons.js?v=1788736500926";
 
 const DEFAULT_CATEGORIES = [
   "Payroll",
@@ -87,8 +87,10 @@ function init() {
   els.viewToggleClientHub = qs("view-toggle-clienthub");
   els.listFilterClient = qs("list-filter-client");
   els.filterCategory = qs("filter-category");
+  els.categoryFilterWrap = qs("category-filter-wrap");
+  els.bulkAddItemBtn = qs("bulk-add-item-btn");
   els.markAllCompleteBtn = qs("mark-all-complete-btn");
-  els.userEmail = qs("user-email");
+  els.userBadge = qs("user-badge");
   els.clientHubScreen = qs("client-hub-screen");
   els.clientHubName = qs("client-hub-name");
 
@@ -148,7 +150,11 @@ function init() {
     } else {
       els.clientHubScreen.hidden = true;
       els.appShell.hidden = false;
-      els.userEmail.textContent = user.email;
+      const userColor = colorFor(user.email);
+      els.userBadge.innerHTML = `
+        <span class="avatar-badge" style="background:${tintFor(userColor)}; color:${userColor};">${user.email.slice(0, 2).toUpperCase()}</span>
+        <span class="user-badge-email">${escapeHtml(user.email)}</span>
+      `;
       startSync();
       seedCategoriesIfMissing(DEFAULT_CATEGORIES).catch((err) => console.error(err));
     }
@@ -252,6 +258,11 @@ function setActiveView(view) {
   els.viewToggleClientHub.classList.toggle("active", view === "clienthub");
   qs("list-filter-wrap").hidden = view !== "list";
   els.markAllCompleteBtn.hidden = view !== "list";
+  // Category filtering and bulk item-add only mean anything for the compliance calendar/list --
+  // showing them on Overview or Client Hub reads as unrelated clutter with nothing to act on.
+  const isComplianceView = view === "calendar" || view === "list";
+  els.categoryFilterWrap.hidden = !isComplianceView;
+  els.bulkAddItemBtn.hidden = !isComplianceView;
   renderCurrentView();
 }
 

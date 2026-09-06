@@ -185,6 +185,18 @@
   .save-status {
     @apply text-[0.8rem] text-text-muted min-w-[3.5rem] text-right transition-opacity inline-flex items-center justify-end gap-[0.3rem];
   }
+  .header-divider {
+    @apply w-px h-5 bg-border shrink-0;
+  }
+  .user-badge {
+    @apply flex items-center gap-2;
+  }
+  .user-badge .avatar-badge {
+    @apply w-7 h-7 text-[0.65rem];
+  }
+  .user-badge-email {
+    @apply text-[0.8rem] text-text-muted;
+  }
   .save-status-saved {
     @apply text-success;
   }
@@ -667,7 +679,7 @@
     .app-header {
       @apply flex-wrap gap-y-2 px-[0.85rem] py-[0.6rem];
     }
-    .user-email {
+    .user-badge-email {
       @apply hidden;
     }
     .header-right {
