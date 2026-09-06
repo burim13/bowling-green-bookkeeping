@@ -1,4 +1,4 @@
-import { isFirebaseConfigured, auth } from "./firebase-init.js?v=1788736500926";
+import { isFirebaseConfigured, auth } from "./firebase-init.js?v=1788736754679";
 import {
   watchAuthState,
   signInWithPassword,
@@ -6,7 +6,7 @@ import {
   completeEmailLinkSignInIfPresent,
   signOutUser,
   getOwnProfile,
-} from "./auth.js?v=1788736500926";
+} from "./auth.js?v=1788736754679";
 import {
   startSync,
   stopSync,
@@ -25,13 +25,13 @@ import {
   unmarkComplete,
   isFullyLoaded,
   getClientRecord,
-} from "./data.js?v=1788736500926";
-import { renderCalendar } from "./calendar-view.js?v=1788736500926";
-import { renderList } from "./list-view.js?v=1788736500926";
-import { describeRecurrence, describeRecurrenceHistory, getLastDueOccurrence, toISODate } from "./recurrence.js?v=1788736500926";
-import { colorFor, tintFor } from "./colors.js?v=1788736500926";
-import { githubRepoSlug } from "./firebase-config.js?v=1788736500926";
-import { iconEdit, iconTrash, iconPlus, iconPlusLarge, iconCheck, iconTag, iconUpload, iconLogout, iconCalendar, iconListView, iconFolder, iconFolderLarge, iconHome, iconChevronRight, iconUsers, iconAlertTriangle, iconSignature } from "./icons.js?v=1788736500926";
+} from "./data.js?v=1788736754679";
+import { renderCalendar } from "./calendar-view.js?v=1788736754679";
+import { renderList } from "./list-view.js?v=1788736754679";
+import { describeRecurrence, describeRecurrenceHistory, getLastDueOccurrence, toISODate } from "./recurrence.js?v=1788736754679";
+import { colorFor, tintFor } from "./colors.js?v=1788736754679";
+import { githubRepoSlug } from "./firebase-config.js?v=1788736754679";
+import { iconEdit, iconTrash, iconPlus, iconPlusLarge, iconCheck, iconTag, iconUpload, iconLogout, iconCalendar, iconListView, iconFolder, iconFolderLarge, iconHome, iconChevronRight, iconUsers, iconAlertTriangle, iconSignature } from "./icons.js?v=1788736754679";
 
 const DEFAULT_CATEGORIES = [
   "Payroll",
@@ -89,6 +89,7 @@ function init() {
   els.filterCategory = qs("filter-category");
   els.categoryFilterWrap = qs("category-filter-wrap");
   els.bulkAddItemBtn = qs("bulk-add-item-btn");
+  els.exportBtn = qs("export-btn");
   els.markAllCompleteBtn = qs("mark-all-complete-btn");
   els.userBadge = qs("user-badge");
   els.clientHubScreen = qs("client-hub-screen");
@@ -263,6 +264,7 @@ function setActiveView(view) {
   const isComplianceView = view === "calendar" || view === "list";
   els.categoryFilterWrap.hidden = !isComplianceView;
   els.bulkAddItemBtn.hidden = !isComplianceView;
+  els.exportBtn.hidden = !isComplianceView;
   renderCurrentView();
 }
 

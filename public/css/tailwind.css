@@ -210,6 +210,9 @@
   .toolbar-spacer {
     @apply flex-1;
   }
+  .list-filter-wrap {
+    @apply flex items-center gap-2;
+  }
   .list-filter-wrap label {
     @apply m-0 flex items-center gap-[0.4rem];
   }

@@ -6,7 +6,7 @@
   <title>Bowling Green Bookkeeping &amp; Taxes — Client Hub</title>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" />
-  <link rel="stylesheet" href="css/styles.css?v=1788736500926" />
+  <link rel="stylesheet" href="css/styles.css?v=1788736754679" />
 </head>
 <body>
 
@@ -54,10 +54,8 @@
       </div>
       <div class="header-right">
         <span id="save-status" class="save-status"></span>
-        <button id="manage-categories-btn" class="btn btn-ghost btn-header" title="Manage categories">Manage categories</button>
-        <button id="export-btn" class="btn btn-ghost btn-header" title="Export to GitHub">Export to GitHub</button>
-        <span class="header-divider"></span>
         <span id="user-badge" class="user-badge"></span>
+        <span class="header-divider"></span>
         <button id="sign-out-btn" class="btn btn-ghost btn-header" title="Sign out">Sign out</button>
       </div>
     </header>
@@ -65,12 +63,14 @@
     <div class="toolbar">
       <div id="category-filter-wrap" class="list-filter-wrap">
         <label>Category <select id="filter-category"></select></label>
+        <button id="manage-categories-btn" class="btn btn-ghost" title="Manage categories">Manage categories</button>
       </div>
       <div id="list-filter-wrap" class="list-filter-wrap" hidden>
         <label>Client filter <select id="list-filter-client"></select></label>
       </div>
       <button id="mark-all-complete-btn" class="btn" hidden>Mark all shown complete</button>
       <div class="toolbar-spacer"></div>
+      <button id="export-btn" class="btn btn-ghost" title="Export to GitHub">Export to GitHub</button>
       <button id="bulk-add-item-btn" class="btn btn-primary">Add item to clients...</button>
       <button id="add-client-btn" class="btn btn-primary">Add client</button>
     </div>
@@ -115,6 +115,6 @@
     </main>
   </div>
 
-  <script type="module" src="js/app.js?v=1788736500926"></script>
+  <script type="module" src="js/app.js?v=1788736754679"></script>
 </body>
 </html>
