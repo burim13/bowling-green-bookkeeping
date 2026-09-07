@@ -1,19 +1,19 @@
-import { isFirebaseConfigured, auth } from "./firebase-init.js?v=1788760777224";
-import { escapeHtml } from "./html-safety.js?v=1788760777224";
+import { isFirebaseConfigured, auth } from "./firebase-init.js?v=1788790192341";
+import { escapeHtml } from "./html-safety.js?v=1788790192341";
 import {
   watchAuthState,
   signInWithPassword,
   signOutUser,
   getOwnProfile,
   afterSignIn,
-} from "./auth.js?v=1788760777224";
+} from "./auth.js?v=1788790192341";
 import {
   isMfaEnrolled,
   startMfaEnrollment,
   finishMfaEnrollment,
   getResolver,
   completeMfaSignIn,
-} from "./mfa.js?v=1788760777224";
+} from "./mfa.js?v=1788790192341";
 import {
   startSync,
   stopSync,
@@ -32,12 +32,12 @@ import {
   unmarkComplete,
   isFullyLoaded,
   getClientRecord,
-} from "./data.js?v=1788760777224";
-import { renderCalendar } from "./calendar-view.js?v=1788760777224";
-import { renderList } from "./list-view.js?v=1788760777224";
-import { describeRecurrence, describeRecurrenceHistory, getLastDueOccurrence, toISODate } from "./recurrence.js?v=1788760777224";
-import { colorFor, tintFor } from "./colors.js?v=1788760777224";
-import { githubRepoSlug } from "./firebase-config.js?v=1788760777224";
+} from "./data.js?v=1788790192341";
+import { renderCalendar } from "./calendar-view.js?v=1788790192341";
+import { renderList } from "./list-view.js?v=1788790192341";
+import { describeRecurrence, describeRecurrenceHistory, getLastDueOccurrence, toISODate } from "./recurrence.js?v=1788790192341";
+import { colorFor, tintFor } from "./colors.js?v=1788790192341";
+import { githubRepoSlug } from "./firebase-config.js?v=1788790192341";
 import {
   DOC_TYPES,
   docTypeLabel,
@@ -46,12 +46,21 @@ import {
   setDocumentReviewed,
   getDocumentDownloadURL,
   deleteDocument,
-} from "./documents.js?v=1788760777224";
-import { createClientInvite, subscribeToInviteStatus } from "./invites.js?v=1788760777224";
-import { subscribeToOwnCompliance } from "./client-compliance.js?v=1788760777224";
-import { subscribeToLetters, sendLetter, signLetter, deleteLetter, getLetterDownloadURL } from "./letters.js?v=1788760777224";
-import { stampSignature, renderTypedSignature, wireSignatureCanvas, fetchPublicIp } from "./pdf-sign.js?v=1788760777224";
-import { iconEdit, iconTrash, iconPlus, iconPlusLarge, iconCheck, iconTag, iconUpload, iconLogout, iconCalendar, iconListView, iconFolder, iconFolderLarge, iconHome, iconChevronRight, iconUsers, iconAlertTriangle, iconSignature, iconFile, iconUploadLarge, iconDownload, iconClock } from "./icons.js?v=1788760777224";
+} from "./documents.js?v=1788790192341";
+import { createClientInvite, subscribeToInviteStatus } from "./invites.js?v=1788790192341";
+import { subscribeToOwnCompliance } from "./client-compliance.js?v=1788790192341";
+import { subscribeToLetters, sendLetter, signLetter, deleteLetter, getLetterDownloadURL } from "./letters.js?v=1788790192341";
+import {
+  stampSignature,
+  stampFields,
+  renderTypedSignature,
+  wireSignatureCanvas,
+  fetchPublicIp,
+  loadPdfDocument,
+  renderPdfPageToCanvas,
+  FIELD_DEFAULT_SIZE,
+} from "./pdf-sign.js?v=1788790192341";
+import { iconEdit, iconTrash, iconPlus, iconPlusLarge, iconCheck, iconTag, iconUpload, iconLogout, iconCalendar, iconListView, iconFolder, iconFolderLarge, iconHome, iconChevronRight, iconUsers, iconAlertTriangle, iconSignature, iconFile, iconUploadLarge, iconDownload, iconClock } from "./icons.js?v=1788790192341";
 
 const DEFAULT_CATEGORIES = [
   "Payroll",
@@ -917,10 +926,18 @@ function wireLetterRowsStaff(container, clientId) {
   });
 }
 
+// Two-step: (1) title + file + the IRS-form guardrail, same as before; (2) place signature/date
+// boxes on the actual rendered document before it goes out. Step 2 needs real width, hence
+// openModal's wide variant.
 function openSendLetterModal(client) {
+  renderSendLetterStep1(client);
+}
+
+function renderSendLetterStep1(client) {
   openModal(`
     <h2>Send letter to ${escapeHtml(client.name)}</h2>
-    <p class="client-tab-content">Upload a PDF -- your client will see it in their Client Hub and can sign it there.</p>
+    <p class="client-tab-content">Upload a PDF, then place signature/date boxes on it -- your
+    client will see the real document with those boxes and sign it there.</p>
     <form id="send-letter-form">
       <label>Title<br/><input type="text" id="letter-title-input" placeholder="2025 Engagement Letter" required /></label>
       <label style="display:block; margin-top:0.75rem;">PDF file<br/><input type="file" id="letter-file-input" accept="application/pdf" required /></label>
@@ -937,7 +954,7 @@ function openSendLetterModal(client) {
       <div id="send-letter-error" class="auth-error" hidden></div>
       <div class="modal-actions">
         <button type="button" class="btn" data-action="close">Cancel</button>
-        <button type="submit" class="btn btn-primary" id="send-letter-btn">Send</button>
+        <button type="submit" class="btn btn-primary" id="send-letter-continue-btn">Continue</button>
       </div>
     </form>
   `);
@@ -954,11 +971,127 @@ function openSendLetterModal(client) {
       errEl.hidden = false;
       return;
     }
-    const btn = qs("send-letter-btn");
+    const btn = qs("send-letter-continue-btn");
+    btn.disabled = true;
+    btn.textContent = "Loading…";
+    try {
+      const pdfBytes = await file.arrayBuffer();
+      const pdfDoc = await loadPdfDocument(new Uint8Array(pdfBytes));
+      renderFieldPlacementStep(client, { file, title, pdfDoc });
+    } catch (err) {
+      errEl.textContent = "Could not open that PDF: " + err.message;
+      errEl.hidden = false;
+      btn.disabled = false;
+      btn.textContent = "Continue";
+    }
+  });
+}
+
+async function renderFieldPlacementStep(client, { file, title, pdfDoc }) {
+  let fields = [];
+  let armedType = null;
+
+  openModal(
+    `
+    <h2>Place signature fields</h2>
+    <p class="field-placement-hint">Click "Add signature box" or "Add date box", then click on
+    the document below to drop it there. At least one signature box is required.</p>
+    <div class="field-toolbar">
+      <button type="button" class="btn" id="add-signature-field-btn">+ Signature box</button>
+      <button type="button" class="btn" id="add-date-field-btn">+ Date box</button>
+    </div>
+    <div class="pdf-pages-scroll" id="field-pages-container"></div>
+    <div id="field-placement-error" class="auth-error" style="margin-top:0.75rem;" hidden></div>
+    <div class="modal-actions">
+      <button type="button" class="btn" id="field-placement-back-btn">Back</button>
+      <button type="button" class="btn btn-primary" id="field-placement-send-btn">Send</button>
+    </div>
+  `,
+    { wide: true }
+  );
+
+  const pagesContainer = qs("field-pages-container");
+  const addSigBtn = qs("add-signature-field-btn");
+  const addDateBtn = qs("add-date-field-btn");
+
+  function setArmed(type) {
+    armedType = armedType === type ? null : type;
+    pagesContainer
+      .querySelectorAll(".pdf-page-wrap")
+      .forEach((el) => el.classList.toggle("pdf-page-wrap-placing", !!armedType));
+    addSigBtn.classList.toggle("btn-primary", armedType === "signature");
+    addDateBtn.classList.toggle("btn-primary", armedType === "date");
+  }
+
+  function addFieldBox(wrap, field) {
+    const box = document.createElement("div");
+    box.className = `pdf-field-box pdf-field-box-${field.type}`;
+    box.style.left = `${field.xPct * 100}%`;
+    box.style.top = `${field.yPct * 100}%`;
+    box.style.width = `${field.widthPct * 100}%`;
+    box.style.height = `${field.heightPct * 100}%`;
+    box.textContent = field.type === "signature" ? "Signature" : "Date";
+
+    const del = document.createElement("button");
+    del.type = "button";
+    del.className = "pdf-field-delete-btn";
+    del.textContent = "×";
+    del.title = "Remove";
+    del.addEventListener("click", (e) => {
+      e.stopPropagation();
+      fields = fields.filter((f) => f.id !== field.id);
+      box.remove();
+    });
+    box.appendChild(del);
+    wrap.appendChild(box);
+  }
+
+  addSigBtn.addEventListener("click", () => setArmed("signature"));
+  addDateBtn.addEventListener("click", () => setArmed("date"));
+
+  // Fits the rendered page to whatever width the viewer actually has (narrow on mobile, capped
+  // on desktop) -- a fixed width here would either overflow small screens or render needlessly
+  // small on large ones.
+  const targetWidth = Math.min(740, Math.max(260, pagesContainer.clientWidth - 24));
+  for (let i = 1; i <= pdfDoc.numPages; i++) {
+    const wrap = document.createElement("div");
+    wrap.className = "pdf-page-wrap";
+    const canvas = document.createElement("canvas");
+    wrap.appendChild(canvas);
+    pagesContainer.appendChild(wrap);
+    const { width, height } = await renderPdfPageToCanvas(pdfDoc, i, canvas, targetWidth);
+    wrap.style.width = `${width}px`;
+    wrap.style.height = `${height}px`;
+
+    const pageIndex = i - 1;
+    wrap.addEventListener("click", (e) => {
+      if (!armedType) return;
+      const rect = wrap.getBoundingClientRect();
+      const size = FIELD_DEFAULT_SIZE[armedType];
+      const xPct = Math.min(Math.max((e.clientX - rect.left) / rect.width, 0), 1 - size.widthPct);
+      const yPct = Math.min(Math.max((e.clientY - rect.top) / rect.height, 0), 1 - size.heightPct);
+      const field = { id: crypto.randomUUID(), type: armedType, page: pageIndex, xPct, yPct, ...size };
+      fields.push(field);
+      addFieldBox(wrap, field);
+      setArmed(null);
+    });
+  }
+
+  qs("field-placement-back-btn").addEventListener("click", () => renderSendLetterStep1(client));
+
+  qs("field-placement-send-btn").addEventListener("click", async () => {
+    const errEl = qs("field-placement-error");
+    errEl.hidden = true;
+    if (!fields.some((f) => f.type === "signature")) {
+      errEl.textContent = "Add at least one signature box before sending.";
+      errEl.hidden = false;
+      return;
+    }
+    const btn = qs("field-placement-send-btn");
     btn.disabled = true;
     btn.textContent = "Sending…";
     try {
-      await sendLetter(client.id, file, title, auth.currentUser.email);
+      await sendLetter(client.id, file, title, auth.currentUser.email, fields);
       closeModal();
     } catch (err) {
       errEl.textContent = err.message;
@@ -1206,7 +1339,214 @@ function wireLetterRowsClient(container, clientId, letters) {
 // and rasterized the same way a drawn signature is -- see pdf-sign.js's renderTypedSignature),
 // then the signature + an audit line get stamped directly onto the PDF client-side before the
 // flattened result is uploaded as the record of record (see letters.js's signLetter).
+// Letters sent with staff-placed fields (the normal case) get the real document viewer below;
+// older letters sent before fields existed fall back to the original single-fixed-spot flow.
 function openSignLetterModal(clientId, letter) {
+  if (letter.fields && letter.fields.length > 0) {
+    openSignLetterModalWithFields(clientId, letter);
+  } else {
+    openSignLetterModalLegacy(clientId, letter);
+  }
+}
+
+// Shows the actual document (rendered page by page) with staff-placed signature/date boxes
+// overlaid at their real positions. The client provides ONE signature; the instant they do, it's
+// stamped into every signature box (and today's date into every date box) as a live preview
+// right there on the document, and only then does Submit unlock -- so "all boxes signed" is
+// always true by construction rather than something tracked per box.
+async function openSignLetterModalWithFields(clientId, letter) {
+  let signMethod = "draw";
+  let canvasControls = null;
+  let signed = false;
+  let capturedSignerName = "";
+  let capturedSignatureImage = "";
+  let originalPdfBytes = null;
+
+  const cleanup = () => {
+    canvasControls?.destroy();
+    canvasControls = null;
+  };
+
+  openModal(
+    `
+    <h2>Sign: ${escapeHtml(letter.title)}</h2>
+    <p class="field-placement-hint">Review the document below, then provide your signature --
+    it'll be placed in every signature box shown.</p>
+    <div class="pdf-pages-scroll" id="sign-pages-container">
+      <div class="loading-hint"><span class="spinner"></span> Loading document…</div>
+    </div>
+
+    <div class="chub-card" style="margin-top:1rem;">
+      <label>Full legal name<br/><input type="text" id="sign-name-input" required placeholder="Jane Smith" /></label>
+      <div class="sign-method-tabs" style="margin-top:1rem;">
+        <button type="button" class="client-tab-btn client-tab-btn-active" data-sign-method="draw">Draw signature</button>
+        <button type="button" class="client-tab-btn" data-sign-method="type">Type signature</button>
+      </div>
+      <div id="sign-draw-panel">
+        <canvas id="sign-canvas" class="sign-canvas" width="480" height="140"></canvas>
+        <button type="button" class="btn btn-ghost btn-sm" id="sign-clear-btn" style="margin-top:0.4rem;">Clear</button>
+      </div>
+      <div id="sign-type-panel" hidden>
+        <div id="sign-type-preview" class="sign-type-preview">Type your name above</div>
+      </div>
+      <div id="sign-error" class="auth-error" hidden style="margin-top:0.75rem;"></div>
+      <button type="button" class="btn btn-primary" id="apply-signature-btn" style="margin-top:0.75rem;">Apply signature to document</button>
+    </div>
+
+    <div class="modal-actions">
+      <button type="button" class="btn" data-action="close">Cancel</button>
+      <button type="button" class="btn btn-primary" id="sign-submit-btn" disabled>Submit signed document</button>
+    </div>
+  `,
+    { wide: true }
+  );
+
+  qs("modal-content").querySelector('[data-action="close"]').addEventListener("click", () => {
+    cleanup();
+    closeModal();
+  });
+
+  canvasControls = wireSignatureCanvas(qs("sign-canvas"));
+  qs("sign-clear-btn").addEventListener("click", () => canvasControls.clear());
+
+  const nameInput = qs("sign-name-input");
+  const updateTypePreview = () => {
+    qs("sign-type-preview").textContent = nameInput.value.trim() || "Type your name above";
+  };
+  nameInput.addEventListener("input", updateTypePreview);
+
+  qs("modal-content").querySelectorAll("[data-sign-method]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      signMethod = btn.dataset.signMethod;
+      qs("modal-content").querySelectorAll("[data-sign-method]").forEach((b) =>
+        b.classList.toggle("client-tab-btn-active", b === btn)
+      );
+      qs("sign-draw-panel").hidden = signMethod !== "draw";
+      qs("sign-type-panel").hidden = signMethod !== "type";
+      if (signMethod === "type") updateTypePreview();
+    });
+  });
+
+  const boxElsByField = new Map(); // field.id -> the overlay element, so applying a signature can find every box
+  const pagesContainer = qs("sign-pages-container");
+  try {
+    const url = await getLetterDownloadURL(letter.storagePath);
+    originalPdfBytes = await fetch(url).then((r) => r.arrayBuffer());
+    const pdfDoc = await loadPdfDocument(new Uint8Array(originalPdfBytes));
+    const fieldsByPage = new Map();
+    for (const f of letter.fields) {
+      if (!fieldsByPage.has(f.page)) fieldsByPage.set(f.page, []);
+      fieldsByPage.get(f.page).push(f);
+    }
+
+    pagesContainer.innerHTML = "";
+    const targetWidth = Math.min(700, Math.max(260, pagesContainer.clientWidth - 24));
+    for (let i = 1; i <= pdfDoc.numPages; i++) {
+      const wrap = document.createElement("div");
+      wrap.className = "pdf-page-wrap";
+      const canvas = document.createElement("canvas");
+      wrap.appendChild(canvas);
+      pagesContainer.appendChild(wrap);
+      const { width, height } = await renderPdfPageToCanvas(pdfDoc, i, canvas, targetWidth);
+      wrap.style.width = `${width}px`;
+      wrap.style.height = `${height}px`;
+
+      for (const field of fieldsByPage.get(i - 1) || []) {
+        const box = document.createElement("div");
+        box.className = `pdf-field-box pdf-field-box-${field.type}`;
+        box.style.left = `${field.xPct * 100}%`;
+        box.style.top = `${field.yPct * 100}%`;
+        box.style.width = `${field.widthPct * 100}%`;
+        box.style.height = `${field.heightPct * 100}%`;
+        box.textContent = field.type === "signature" ? "Sign here" : "Date";
+        wrap.appendChild(box);
+        boxElsByField.set(field.id, box);
+      }
+    }
+  } catch (err) {
+    pagesContainer.innerHTML = `<p class="client-tab-content">Could not load the document: ${escapeHtml(err.message)}</p>`;
+  }
+
+  qs("apply-signature-btn").addEventListener("click", () => {
+    const errEl = qs("sign-error");
+    errEl.hidden = true;
+    const signerName = nameInput.value.trim();
+    if (!signerName) {
+      errEl.textContent = "Enter your full legal name.";
+      errEl.hidden = false;
+      return;
+    }
+    let signatureImage;
+    if (signMethod === "draw") {
+      if (canvasControls.isEmpty()) {
+        errEl.textContent = `Draw your signature, or switch to "Type signature".`;
+        errEl.hidden = false;
+        return;
+      }
+      signatureImage = canvasControls.toDataUrl();
+    } else {
+      signatureImage = renderTypedSignature(signerName);
+    }
+
+    const dateText = new Date().toLocaleDateString();
+    for (const field of letter.fields) {
+      const box = boxElsByField.get(field.id);
+      if (!box) continue;
+      box.classList.add("pdf-field-box-filled");
+      box.textContent = "";
+      if (field.type === "signature") {
+        const img = document.createElement("img");
+        img.src = signatureImage;
+        box.appendChild(img);
+      } else {
+        box.textContent = dateText;
+      }
+    }
+
+    capturedSignerName = signerName;
+    capturedSignatureImage = signatureImage;
+    signed = true;
+    const applyBtn = qs("apply-signature-btn");
+    applyBtn.disabled = true;
+    applyBtn.textContent = "Signature applied";
+    qs("sign-submit-btn").disabled = false;
+  });
+
+  qs("sign-submit-btn").addEventListener("click", async () => {
+    if (!signed || !originalPdfBytes) return;
+    const errEl = qs("sign-error");
+    errEl.hidden = true;
+    const btn = qs("sign-submit-btn");
+    btn.disabled = true;
+    btn.textContent = "Submitting…";
+    try {
+      const ip = await fetchPublicIp();
+      const signedPdfBytes = await stampFields(originalPdfBytes, {
+        fields: letter.fields,
+        signatureImageDataUrl: capturedSignatureImage,
+        signerName: capturedSignerName,
+        ip,
+      });
+      await signLetter(clientId, letter.id, {
+        signedPdfBytes,
+        signerName: capturedSignerName,
+        signMethod,
+        signerIp: ip,
+      });
+      cleanup();
+      closeModal();
+    } catch (err) {
+      errEl.textContent = err.message;
+      errEl.hidden = false;
+      btn.disabled = false;
+      btn.textContent = "Submit signed document";
+    }
+  });
+}
+
+// Fallback for letters sent before staff-placed fields existed -- the original flow: sign once,
+// stamped at a single fixed spot near the bottom of the last page (pdf-sign.js's stampSignature).
+function openSignLetterModalLegacy(clientId, letter) {
   let signMethod = "draw";
   let canvasControls = null;
   const cleanup = () => {
@@ -1500,14 +1840,19 @@ function renderCategoryFilterOptions() {
 
 // ---- modals ------------------------------------------------------------
 
-function openModal(html) {
+// wide: true widens #modal-content for the letter field-placement/signing screens, which embed
+// a rendered PDF page and need real room -- the default 480px max-width (right for every other
+// modal in the app) would make those unusable.
+function openModal(html, { wide } = {}) {
   qs("modal-content").innerHTML = html;
+  qs("modal-content").classList.toggle("modal-content-wide", !!wide);
   qs("modal-backdrop").hidden = false;
 }
 
 function closeModal() {
   qs("modal-backdrop").hidden = true;
   qs("modal-content").innerHTML = "";
+  qs("modal-content").classList.remove("modal-content-wide");
 }
 
 function openClientModal(clientId) {

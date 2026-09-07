@@ -19,7 +19,7 @@ import {
   getDownloadURL,
   deleteObject,
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-storage.js";
-import { db, storage } from "./firebase-init.js?v=1788760777224";
+import { db, storage } from "./firebase-init.js?v=1788790192341";
 
 export function subscribeToLetters(clientId, callback, onError) {
   const q = query(collection(db, "clients", clientId, "letters"), orderBy("sentAt", "desc"));
@@ -30,13 +30,18 @@ export function subscribeToLetters(clientId, callback, onError) {
   );
 }
 
-export async function sendLetter(clientId, file, title, sentBy) {
+// fields: [{ id, type: "signature"|"date", page, xPct, yPct, widthPct, heightPct }, ...], placed
+// by staff on the rendered document before sending (see openSendLetterModal in app.js). Older
+// letters sent before this existed have no fields -- app.js falls back to the single
+// fixed-location stamp (pdf-sign.js's stampSignature) for those.
+export async function sendLetter(clientId, file, title, sentBy, fields) {
   const letterRef = doc(collection(db, "clients", clientId, "letters"));
   const storagePath = `clients/${clientId}/letters/${letterRef.id}/original.pdf`;
   await uploadBytes(ref(storage, storagePath), file, { contentType: "application/pdf" });
   await setDoc(letterRef, {
     title,
     storagePath,
+    fields: fields || [],
     status: "sent",
     sentBy,
     sentAt: serverTimestamp(),
