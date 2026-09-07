@@ -1,7 +1,7 @@
-import { isFirebaseConfigured, auth } from "./firebase-init.js?v=1788795760256";
-import { escapeHtml } from "./html-safety.js?v=1788795760256";
-import { friendlyAuthError } from "./auth-errors.js?v=1788795760256";
-import { getEffectiveTheme, toggleTheme } from "./theme.js?v=1788795760256";
+import { isFirebaseConfigured, auth } from "./firebase-init.js?v=1788796249370";
+import { escapeHtml } from "./html-safety.js?v=1788796249370";
+import { friendlyAuthError } from "./auth-errors.js?v=1788796249370";
+import { getEffectiveTheme, toggleTheme } from "./theme.js?v=1788796249370";
 import {
   watchAuthState,
   signInWithPassword,
@@ -9,14 +9,14 @@ import {
   getOwnProfile,
   afterSignIn,
   updateOwnDisplayName,
-} from "./auth.js?v=1788795760256";
+} from "./auth.js?v=1788796249370";
 import {
   isMfaEnrolled,
   startMfaEnrollment,
   finishMfaEnrollment,
   getResolver,
   completeMfaSignIn,
-} from "./mfa.js?v=1788795760256";
+} from "./mfa.js?v=1788796249370";
 import {
   startSync,
   stopSync,
@@ -35,12 +35,12 @@ import {
   unmarkComplete,
   isFullyLoaded,
   getClientRecord,
-} from "./data.js?v=1788795760256";
-import { renderCalendar } from "./calendar-view.js?v=1788795760256";
-import { renderList } from "./list-view.js?v=1788795760256";
-import { describeRecurrence, describeRecurrenceHistory, getLastDueOccurrence, toISODate } from "./recurrence.js?v=1788795760256";
-import { colorFor, tintFor } from "./colors.js?v=1788795760256";
-import { githubRepoSlug } from "./firebase-config.js?v=1788795760256";
+} from "./data.js?v=1788796249370";
+import { renderCalendar } from "./calendar-view.js?v=1788796249370";
+import { renderList } from "./list-view.js?v=1788796249370";
+import { describeRecurrence, describeRecurrenceHistory, getLastDueOccurrence, toISODate } from "./recurrence.js?v=1788796249370";
+import { colorFor, tintFor } from "./colors.js?v=1788796249370";
+import { githubRepoSlug } from "./firebase-config.js?v=1788796249370";
 import {
   DOC_TYPES,
   docTypeLabel,
@@ -49,10 +49,10 @@ import {
   setDocumentReviewed,
   getDocumentDownloadURL,
   deleteDocument,
-} from "./documents.js?v=1788795760256";
-import { createClientInvite, subscribeToInviteStatus } from "./invites.js?v=1788795760256";
-import { subscribeToOwnCompliance } from "./client-compliance.js?v=1788795760256";
-import { subscribeToLetters, sendLetter, signLetter, deleteLetter, getLetterDownloadURL } from "./letters.js?v=1788795760256";
+} from "./documents.js?v=1788796249370";
+import { createClientInvite, subscribeToInviteStatus } from "./invites.js?v=1788796249370";
+import { subscribeToOwnCompliance } from "./client-compliance.js?v=1788796249370";
+import { subscribeToLetters, sendLetter, signLetter, deleteLetter, getLetterDownloadURL } from "./letters.js?v=1788796249370";
 import {
   stampSignature,
   stampFields,
@@ -62,8 +62,8 @@ import {
   loadPdfDocument,
   renderPdfPageToCanvas,
   FIELD_DEFAULT_SIZE,
-} from "./pdf-sign.js?v=1788795760256";
-import { iconEdit, iconTrash, iconPlus, iconPlusLarge, iconCheck, iconTag, iconUpload, iconLogout, iconCalendar, iconListView, iconFolder, iconFolderLarge, iconHome, iconChevronRight, iconUsers, iconAlertTriangle, iconSignature, iconFile, iconUploadLarge, iconDownload, iconClock, iconSun, iconMoon, iconEllipsis, iconSearch } from "./icons.js?v=1788795760256";
+} from "./pdf-sign.js?v=1788796249370";
+import { iconEdit, iconTrash, iconPlus, iconPlusLarge, iconCheck, iconTag, iconUpload, iconLogout, iconCalendar, iconListView, iconFolder, iconFolderLarge, iconHome, iconChevronRight, iconUsers, iconAlertTriangle, iconSignature, iconFile, iconUploadLarge, iconDownload, iconClock, iconSun, iconMoon, iconSearch } from "./icons.js?v=1788796249370";
 
 const DEFAULT_CATEGORIES = [
   "Payroll",
@@ -127,8 +127,6 @@ function init() {
     els.authScreen.hidden = true;
     return;
   }
-
-  qs("toolbar-actions-btn").innerHTML = iconEllipsis;
 
   wireAuthForms();
   wireMfaScreens();
@@ -464,9 +462,8 @@ function wireToolbar() {
     renderClientList();
   });
 
-  // The sidebar's own +/search pill duplicates two things that already exist elsewhere (the
-  // same actions menu as "...", the same search input as before) rather than being new
-  // functionality -- just a more convenient entry point right next to the client list itself.
+  // The sidebar's + button is the only entry point to the global actions menu now that the
+  // header's "..." button has been removed (it duplicated this one).
   qs("sidebar-add-btn").innerHTML = iconPlus;
   qs("sidebar-add-btn").addEventListener("click", () => openToolbarActionsMenu());
   qs("sidebar-search-btn").innerHTML = iconSearch;
@@ -475,8 +472,6 @@ function wireToolbar() {
     if (!els.clientSearch.hidden) els.clientSearch.focus();
   });
 
-  qs("toolbar-actions-btn").innerHTML = iconEllipsis;
-  qs("toolbar-actions-btn").addEventListener("click", () => openToolbarActionsMenu());
   qs("modal-backdrop").addEventListener("click", (e) => {
     if (e.target.id === "modal-backdrop") closeModal();
   });
@@ -1512,29 +1507,33 @@ async function showClientHub(profile) {
 function renderClientStatGrid() {
   const pending = clientLatestDocuments.filter((d) => !d.reviewed).length;
   const needsSignature = clientLatestLetters.filter((l) => l.status === "sent").length;
-  qs("chub-stat-grid").innerHTML = `
-    <div class="stat-card">
+  const grid = qs("chub-stat-grid");
+  grid.innerHTML = `
+    <button type="button" class="stat-card stat-card-link" data-nav-id="documents">
       <div class="stat-card-header">
         <span class="stat-icon-badge" style="background:${tintFor("#2563eb")}; color:#2563eb;">${iconFile}</span>
         <span class="stat-card-label">Documents uploaded</span>
       </div>
       <div class="stat-card-value">${clientLatestDocuments.length}</div>
-    </div>
-    <div class="stat-card">
+    </button>
+    <button type="button" class="stat-card stat-card-link" data-nav-id="documents">
       <div class="stat-card-header">
         <span class="stat-icon-badge" style="background:${tintFor("#d97706")}; color:#d97706;">${iconClock}</span>
         <span class="stat-card-label">Pending review</span>
       </div>
       <div class="${pending ? "stat-card-value" : "stat-card-value-muted"}">${pending}</div>
-    </div>
-    <div class="stat-card">
+    </button>
+    <button type="button" class="stat-card stat-card-link" data-nav-id="letters">
       <div class="stat-card-header">
         <span class="stat-icon-badge" style="background:${tintFor("#7c3aed")}; color:#7c3aed;">${iconSignature}</span>
         <span class="stat-card-label">Needs your signature</span>
       </div>
       <div class="${needsSignature ? "stat-card-value" : "stat-card-value-muted"}">${needsSignature}</div>
-    </div>
+    </button>
   `;
+  grid.querySelectorAll("[data-nav-id]").forEach((btn) => {
+    btn.addEventListener("click", () => setClientHubTab(btn.dataset.navId));
+  });
 }
 
 // ---- engagement letters (client-facing) --------------------------------------------------

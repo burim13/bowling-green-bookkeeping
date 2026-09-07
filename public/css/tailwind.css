@@ -510,6 +510,15 @@
   .stat-card {
     @apply bg-card border-0 rounded-2xl p-4 shadow-sm;
   }
+  .stat-card-link {
+    @apply text-left w-full cursor-pointer transition-transform;
+  }
+  .stat-card-link:hover {
+    @apply shadow-md;
+  }
+  .stat-card-link:active {
+    transform: scale(0.98);
+  }
   .stat-card-label {
     @apply text-[0.8rem] text-text-muted;
   }
