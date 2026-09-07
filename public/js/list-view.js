@@ -1,7 +1,7 @@
-import { getOccurrencesInRange, getLastDueOccurrence, describeRecurrence, toISODate } from "./recurrence.js?v=1788760294461";
-import { colorFor } from "./colors.js?v=1788760294461";
-import { iconEdit, iconCheckLarge } from "./icons.js?v=1788760294461";
-import { escapeHtml } from "./html-safety.js?v=1788760294461";
+import { getOccurrencesInRange, getLastDueOccurrence, describeRecurrence, toISODate } from "./recurrence.js?v=1788760777224";
+import { colorFor } from "./colors.js?v=1788760777224";
+import { iconEdit, iconCheckLarge } from "./icons.js?v=1788760777224";
+import { escapeHtml } from "./html-safety.js?v=1788760777224";
 
 function completionFor(state, itemId, periodKey) {
   const forItem = state.completions.get(itemId);

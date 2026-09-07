@@ -1,19 +1,19 @@
-import { isFirebaseConfigured, auth } from "./firebase-init.js?v=1788760294461";
-import { escapeHtml } from "./html-safety.js?v=1788760294461";
+import { isFirebaseConfigured, auth } from "./firebase-init.js?v=1788760777224";
+import { escapeHtml } from "./html-safety.js?v=1788760777224";
 import {
   watchAuthState,
   signInWithPassword,
   signOutUser,
   getOwnProfile,
   afterSignIn,
-} from "./auth.js?v=1788760294461";
+} from "./auth.js?v=1788760777224";
 import {
   isMfaEnrolled,
   startMfaEnrollment,
   finishMfaEnrollment,
   getResolver,
   completeMfaSignIn,
-} from "./mfa.js?v=1788760294461";
+} from "./mfa.js?v=1788760777224";
 import {
   startSync,
   stopSync,
@@ -32,12 +32,12 @@ import {
   unmarkComplete,
   isFullyLoaded,
   getClientRecord,
-} from "./data.js?v=1788760294461";
-import { renderCalendar } from "./calendar-view.js?v=1788760294461";
-import { renderList } from "./list-view.js?v=1788760294461";
-import { describeRecurrence, describeRecurrenceHistory, getLastDueOccurrence, toISODate } from "./recurrence.js?v=1788760294461";
-import { colorFor, tintFor } from "./colors.js?v=1788760294461";
-import { githubRepoSlug } from "./firebase-config.js?v=1788760294461";
+} from "./data.js?v=1788760777224";
+import { renderCalendar } from "./calendar-view.js?v=1788760777224";
+import { renderList } from "./list-view.js?v=1788760777224";
+import { describeRecurrence, describeRecurrenceHistory, getLastDueOccurrence, toISODate } from "./recurrence.js?v=1788760777224";
+import { colorFor, tintFor } from "./colors.js?v=1788760777224";
+import { githubRepoSlug } from "./firebase-config.js?v=1788760777224";
 import {
   DOC_TYPES,
   docTypeLabel,
@@ -46,12 +46,12 @@ import {
   setDocumentReviewed,
   getDocumentDownloadURL,
   deleteDocument,
-} from "./documents.js?v=1788760294461";
-import { createClientInvite, subscribeToInviteStatus } from "./invites.js?v=1788760294461";
-import { subscribeToOwnCompliance } from "./client-compliance.js?v=1788760294461";
-import { subscribeToLetters, sendLetter, signLetter, deleteLetter, getLetterDownloadURL } from "./letters.js?v=1788760294461";
-import { stampSignature, renderTypedSignature, wireSignatureCanvas, fetchPublicIp } from "./pdf-sign.js?v=1788760294461";
-import { iconEdit, iconTrash, iconPlus, iconPlusLarge, iconCheck, iconTag, iconUpload, iconLogout, iconCalendar, iconListView, iconFolder, iconFolderLarge, iconHome, iconChevronRight, iconUsers, iconAlertTriangle, iconSignature, iconFile, iconUploadLarge, iconDownload, iconClock } from "./icons.js?v=1788760294461";
+} from "./documents.js?v=1788760777224";
+import { createClientInvite, subscribeToInviteStatus } from "./invites.js?v=1788760777224";
+import { subscribeToOwnCompliance } from "./client-compliance.js?v=1788760777224";
+import { subscribeToLetters, sendLetter, signLetter, deleteLetter, getLetterDownloadURL } from "./letters.js?v=1788760777224";
+import { stampSignature, renderTypedSignature, wireSignatureCanvas, fetchPublicIp } from "./pdf-sign.js?v=1788760777224";
+import { iconEdit, iconTrash, iconPlus, iconPlusLarge, iconCheck, iconTag, iconUpload, iconLogout, iconCalendar, iconListView, iconFolder, iconFolderLarge, iconHome, iconChevronRight, iconUsers, iconAlertTriangle, iconSignature, iconFile, iconUploadLarge, iconDownload, iconClock } from "./icons.js?v=1788760777224";
 
 const DEFAULT_CATEGORIES = [
   "Payroll",
@@ -680,7 +680,11 @@ function renderClientHubTabContent(container, client, tab) {
       <div id="letter-list-staff"></div>
     `;
     container.querySelector('[data-action="send-letter"]').addEventListener("click", () => openSendLetterModal(client));
-    renderLetterListStaff(qs("letter-list-staff"), letters, client.id);
+    // container isn't attached to the document yet at this point (renderClientHubStaffView
+    // appends it to the accordion AFTER this function returns) -- qs()'s
+    // document.getElementById would find nothing here, so this has to search within container
+    // itself instead.
+    renderLetterListStaff(container.querySelector("#letter-list-staff"), letters, client.id);
     return;
   }
 }
