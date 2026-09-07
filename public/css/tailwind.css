@@ -6,25 +6,39 @@
 @source "../js";
 
 @theme {
-  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  /* -apple-system/BlinkMacSystemFont resolve to the OS's actual San Francisco font on any Apple
+     device/browser -- no font file to host, no licensing issue (true SF Pro isn't redistributable
+     for third-party web apps). Everywhere else this falls back to Inter. */
+  --font-sans: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
 
-  --color-bg: #f4f5f7;
+  /* iOS system color palette (light). Dark equivalents are defined below in the
+     prefers-color-scheme block -- same custom property names, so every existing component
+     built on these tokens (buttons, badges, forms, cards) gets dark mode for free. */
+  --color-bg: #f2f2f7;
   --color-panel: #ffffff;
-  --color-border: #e2e5eb;
-  --color-text: #1a1d23;
-  --color-text-muted: #64748b;
-  /* Tailwind's default "blue" scale: blue-600 / blue-700 */
-  --color-primary: #2563eb;
-  --color-primary-hover: #1d4ed8;
-  --color-danger: #dc2626;
-  --color-danger-bg: #fef2f2;
-  --color-success: #16a34a;
-  --color-success-bg: #f0fdf4;
-  --color-warning: #b45309;
-  --color-warning-bg: #fffbeb;
-  --color-warning-border: #fcd34d;
-  --color-done-bg: #f0fdf4;
-  --color-weekend-bg: #eef0f4;
+  --color-card: #ffffff;
+  --color-border: #e5e5ea;
+  --color-text: #1c1c1e;
+  --color-text-muted: #8a8a8e;
+  --color-primary: #007aff;
+  --color-primary-hover: #0062cc;
+  --color-danger: #ff3b30;
+  --color-danger-bg: #ffeded;
+  --color-success: #34c759;
+  --color-success-bg: #e9f9ee;
+  /* iOS system orange (#FF9500) fails text contrast on a white card at small sizes -- darkened
+     for the text/icon use, paired with a light orange-tinted background like every other status
+     color pair here. */
+  --color-warning: #c2680a;
+  --color-warning-bg: #fff3e0;
+  --color-warning-border: #ffd199;
+  --color-done-bg: #e9f9ee;
+  --color-weekend-bg: #f2f2f7;
+
+  /* Translucent bar background + hairline border for .ios-glass-bar/.ios-tab-bar (see below) --
+     paired with backdrop-filter, not usable as a plain background on its own. */
+  --color-glass-bg: rgba(255, 255, 255, 0.72);
+  --color-glass-border: rgba(0, 0, 0, 0.08);
 
   /* Overrides Tailwind's default shadow-sm/md/lg so every `shadow-*` utility below matches this
      app's existing shadow system exactly, instead of introducing a second shadow scale. */
@@ -33,8 +47,34 @@
   --shadow-lg: 0 12px 32px rgba(15, 23, 42, 0.14), 0 2px 6px rgba(15, 23, 42, 0.08);
 }
 
+/* "light dark" (not just "light") lets the browser adapt its OWN chrome -- scrollbars, form
+   control defaults, etc. -- to the system preference too, on top of the token overrides below. */
 :root {
-  color-scheme: light;
+  color-scheme: light dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-bg: #000000;
+    --color-panel: #1c1c1e;
+    --color-card: #1c1c1e;
+    --color-border: #38383a;
+    --color-text: #ffffff;
+    --color-text-muted: #98989d;
+    --color-primary: #0a84ff;
+    --color-primary-hover: #409cff;
+    --color-danger: #ff453a;
+    --color-danger-bg: #3a1210;
+    --color-success: #30d158;
+    --color-success-bg: #0f2a16;
+    --color-warning: #ff9f0a;
+    --color-warning-bg: #3a2705;
+    --color-warning-border: #6b4a0e;
+    --color-done-bg: #0f2a16;
+    --color-weekend-bg: #1c1c1e;
+    --color-glass-bg: rgba(28, 28, 30, 0.72);
+    --color-glass-border: rgba(255, 255, 255, 0.08);
+  }
 }
 
 @layer base {
@@ -178,9 +218,6 @@
   }
 
   /* ---- app shell ---- */
-  .brand {
-    @apply flex items-center gap-[0.55rem];
-  }
   .brand-mark {
     @apply w-[26px] h-[26px] rounded-[7px] bg-primary text-white flex items-center justify-center shrink-0 shadow-sm;
   }
@@ -188,12 +225,94 @@
     @apply w-[15px] h-[15px];
   }
 
-  .app-header {
-    @apply flex items-center justify-between px-5 py-3 bg-panel border-b border-border shadow-sm relative z-2;
+  /* ---- iOS design system: glass bars, bottom tab bar, grouped lists ---- */
+  /* Translucent nav/tab bars -- content scrolls beneath and shows through blurred, the
+     signature iOS look. backdrop-filter has broad support now, but browsers without it just
+     get the solid --color-glass-bg color (still translucent-ish, no blur) as a fallback rather
+     than a broken/invisible bar. */
+  .ios-glass-bar {
+    @apply sticky z-20;
+    background: var(--color-glass-bg);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    backdrop-filter: blur(20px) saturate(180%);
   }
-  .app-header h1 {
-    @apply text-[1.05rem] m-0;
+  .ios-glass-bar-top {
+    @apply top-0 border-b;
+    border-color: var(--color-glass-border);
   }
+  .ios-glass-bar-bottom {
+    @apply bottom-0 border-t;
+    border-color: var(--color-glass-border);
+    /* env(safe-area-inset-bottom) keeps tab labels clear of the home-indicator area if this is
+       ever added to an iPhone home screen as a PWA -- 0 on every other browser/device. */
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .ios-nav-row {
+    @apply flex items-center justify-between px-4 h-11;
+  }
+  .ios-large-title-wrap {
+    @apply px-4 pt-1 pb-3;
+  }
+  .ios-large-title {
+    @apply text-[1.7rem] font-bold tracking-[-0.02em] m-0 text-text;
+  }
+
+  .ios-tab-bar {
+    @apply flex items-stretch;
+  }
+  .ios-tab-bar-item {
+    @apply flex-1 flex flex-col items-center justify-center gap-[0.15rem] py-1.5 border-0 bg-transparent cursor-pointer text-text-muted transition-colors;
+  }
+  .ios-tab-bar-item svg {
+    width: 24px;
+    height: 24px;
+  }
+  .ios-tab-bar-item-label {
+    @apply text-[0.65rem] font-medium;
+  }
+  .ios-tab-bar-item-active {
+    @apply text-primary;
+  }
+
+  /* Rounded card containing rows -- the "My Work" / "Favorites" grouped-list look. Section
+     header sits OUTSIDE the card (matches the reference), rows go INSIDE it. */
+  .ios-section-header {
+    @apply flex items-center justify-between text-[0.8rem] font-semibold text-text-muted uppercase tracking-[0.02em] px-1 mb-2 mt-5;
+  }
+  .ios-section-header:first-child {
+    @apply mt-0;
+  }
+  .ios-grouped-list {
+    @apply bg-card rounded-[14px] overflow-hidden shadow-sm;
+  }
+  .ios-grouped-list-row {
+    @apply flex items-center gap-3 px-3 py-2.5 border-0 border-b border-border bg-transparent w-full text-left cursor-pointer text-text transition-colors;
+  }
+  .ios-grouped-list-row:last-child {
+    @apply border-b-0;
+  }
+  .ios-grouped-list-row:hover {
+    background: color-mix(in srgb, var(--color-text) 4%, transparent);
+  }
+  .ios-grouped-list-row-icon {
+    @apply w-7 h-7 rounded-[7px] flex items-center justify-center shrink-0 text-white;
+  }
+  .ios-grouped-list-row-icon svg {
+    width: 16px;
+    height: 16px;
+  }
+  .ios-grouped-list-row-label {
+    @apply flex-1 min-w-0 text-[0.9rem];
+  }
+  .ios-grouped-list-row-chevron {
+    @apply text-text-muted shrink-0;
+  }
+  .ios-grouped-list-row-chevron svg {
+    width: 14px;
+    height: 14px;
+  }
+
   .header-right {
     /* flex-wrap here is a safety net, not just a mobile-only concession: without it, adding a
        header button later (or a long user email) can overflow the page horizontally at any width
@@ -240,45 +359,39 @@
     @apply w-auto;
   }
 
+  /* #app-shell is a full-height flex column (header, toolbar, this, bottom tab bar) -- .app-body
+     is the one flexible child, so it just fills whatever's left rather than needing a hardcoded
+     "100vh minus the other bars" height calculation that breaks the moment any bar's height
+     changes. */
+  #app-shell {
+    @apply flex flex-col min-h-screen;
+  }
   .app-body {
-    @apply flex min-h-[calc(100vh-108px)] max-w-[1680px] mx-auto;
+    @apply flex flex-1 min-h-0 max-w-[1680px] mx-auto w-full relative;
   }
   .sidebar {
     @apply w-[260px] shrink-0 bg-panel border-r border-border p-4 overflow-y-auto;
   }
+  /* Compound selector (not just .sidebar-toggle-btn alone) so this reliably beats .icon-btn's
+     own display:inline-flex on specificity regardless of which rule happens to be declared
+     later in the file -- a plain same-specificity class-vs-class tie is fragile to reordering. */
+  .icon-btn.sidebar-toggle-btn {
+    @apply hidden;
+  }
+  .sidebar-backdrop {
+    @apply fixed inset-0 bg-[rgba(0,0,0,0.4)] z-30;
+  }
 
-  /* Colored icon-only nav row, top of the sidebar -- one fixed accent per top-level section,
-     reusing hues already in colors.js's client palette so the rail and the client dots read as
-     one family. Lives inside .sidebar (not a separate column) so the app doesn't read as three
-     disconnected panels. */
-  .icon-rail {
-    @apply flex items-center gap-2 mb-4 pb-4 border-b border-border;
-  }
-  .icon-rail-btn {
-    @apply w-10 h-10 rounded-xl border-0 bg-transparent flex items-center justify-center cursor-pointer text-text-muted transition-colors;
-  }
-  .icon-rail-btn svg {
-    width: 18px;
-    height: 18px;
-  }
-  .icon-rail-btn:hover {
-    @apply bg-[#eef0f4] text-text;
-  }
-  .icon-rail-btn-overview.active {
-    background: #2563eb;
-    color: #fff;
-  }
-  .icon-rail-btn-calendar.active {
-    background: #7c3aed;
-    color: #fff;
-  }
-  .icon-rail-btn-list.active {
-    background: #0d9488;
-    color: #fff;
-  }
-  .icon-rail-btn-clienthub.active {
-    background: #d97706;
-    color: #fff;
+  @media (max-width: 767px) {
+    .icon-btn.sidebar-toggle-btn {
+      @apply flex;
+    }
+    .sidebar {
+      @apply fixed inset-y-0 left-0 z-40 w-[280px] shadow-lg -translate-x-full transition-transform duration-200;
+    }
+    .sidebar-open {
+      @apply translate-x-0;
+    }
   }
 
   .sidebar h2 {
@@ -334,7 +447,7 @@
     grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   }
   .stat-card {
-    @apply bg-panel border border-border rounded-xl p-4;
+    @apply bg-card border-0 rounded-2xl p-4 shadow-sm;
   }
   .stat-card-label {
     @apply text-[0.8rem] text-text-muted;
@@ -417,12 +530,15 @@
   }
 
   /* ---- client hub document intake (client-facing screen + staff Documents tab) ---- */
+  #client-hub-screen {
+    @apply flex flex-col min-h-screen;
+  }
   /* The client-facing screen has no sidebar, so .view-container's default width is the whole
      page -- a left-aligned card with its own max-width just floats in a sea of empty space on
      anything wider than a laptop. Centering the whole content column (not just the card) reads
      as a deliberately designed page instead of a form dropped onto a blank canvas. */
   #client-hub-screen .view-container {
-    @apply max-w-[760px] mx-auto w-full;
+    @apply max-w-[760px] mx-auto w-full flex-1 overflow-y-auto;
   }
   .chub-welcome {
     @apply text-[1.3rem] mb-1;
@@ -841,9 +957,6 @@
      structurally matching the original hand-written stylesheet, avoids an off-by-one-pixel
      regression at the exact boundary. */
   @media (max-width: 768px) {
-    .app-header {
-      @apply flex-wrap gap-y-2 px-[0.85rem] py-[0.6rem];
-    }
     .user-badge-email {
       @apply hidden;
     }

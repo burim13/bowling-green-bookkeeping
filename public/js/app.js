@@ -1,20 +1,20 @@
-import { isFirebaseConfigured, auth } from "./firebase-init.js?v=1788791092687";
-import { escapeHtml } from "./html-safety.js?v=1788791092687";
-import { friendlyAuthError } from "./auth-errors.js?v=1788791092687";
+import { isFirebaseConfigured, auth } from "./firebase-init.js?v=1788792557115";
+import { escapeHtml } from "./html-safety.js?v=1788792557115";
+import { friendlyAuthError } from "./auth-errors.js?v=1788792557115";
 import {
   watchAuthState,
   signInWithPassword,
   signOutUser,
   getOwnProfile,
   afterSignIn,
-} from "./auth.js?v=1788791092687";
+} from "./auth.js?v=1788792557115";
 import {
   isMfaEnrolled,
   startMfaEnrollment,
   finishMfaEnrollment,
   getResolver,
   completeMfaSignIn,
-} from "./mfa.js?v=1788791092687";
+} from "./mfa.js?v=1788792557115";
 import {
   startSync,
   stopSync,
@@ -33,12 +33,12 @@ import {
   unmarkComplete,
   isFullyLoaded,
   getClientRecord,
-} from "./data.js?v=1788791092687";
-import { renderCalendar } from "./calendar-view.js?v=1788791092687";
-import { renderList } from "./list-view.js?v=1788791092687";
-import { describeRecurrence, describeRecurrenceHistory, getLastDueOccurrence, toISODate } from "./recurrence.js?v=1788791092687";
-import { colorFor, tintFor } from "./colors.js?v=1788791092687";
-import { githubRepoSlug } from "./firebase-config.js?v=1788791092687";
+} from "./data.js?v=1788792557115";
+import { renderCalendar } from "./calendar-view.js?v=1788792557115";
+import { renderList } from "./list-view.js?v=1788792557115";
+import { describeRecurrence, describeRecurrenceHistory, getLastDueOccurrence, toISODate } from "./recurrence.js?v=1788792557115";
+import { colorFor, tintFor } from "./colors.js?v=1788792557115";
+import { githubRepoSlug } from "./firebase-config.js?v=1788792557115";
 import {
   DOC_TYPES,
   docTypeLabel,
@@ -47,10 +47,10 @@ import {
   setDocumentReviewed,
   getDocumentDownloadURL,
   deleteDocument,
-} from "./documents.js?v=1788791092687";
-import { createClientInvite, subscribeToInviteStatus } from "./invites.js?v=1788791092687";
-import { subscribeToOwnCompliance } from "./client-compliance.js?v=1788791092687";
-import { subscribeToLetters, sendLetter, signLetter, deleteLetter, getLetterDownloadURL } from "./letters.js?v=1788791092687";
+} from "./documents.js?v=1788792557115";
+import { createClientInvite, subscribeToInviteStatus } from "./invites.js?v=1788792557115";
+import { subscribeToOwnCompliance } from "./client-compliance.js?v=1788792557115";
+import { subscribeToLetters, sendLetter, signLetter, deleteLetter, getLetterDownloadURL } from "./letters.js?v=1788792557115";
 import {
   stampSignature,
   stampFields,
@@ -60,8 +60,8 @@ import {
   loadPdfDocument,
   renderPdfPageToCanvas,
   FIELD_DEFAULT_SIZE,
-} from "./pdf-sign.js?v=1788791092687";
-import { iconEdit, iconTrash, iconPlus, iconPlusLarge, iconCheck, iconTag, iconUpload, iconLogout, iconCalendar, iconListView, iconFolder, iconFolderLarge, iconHome, iconChevronRight, iconUsers, iconAlertTriangle, iconSignature, iconFile, iconUploadLarge, iconDownload, iconClock } from "./icons.js?v=1788791092687";
+} from "./pdf-sign.js?v=1788792557115";
+import { iconEdit, iconTrash, iconPlus, iconPlusLarge, iconCheck, iconTag, iconUpload, iconLogout, iconCalendar, iconListView, iconFolder, iconFolderLarge, iconHome, iconChevronRight, iconUsers, iconAlertTriangle, iconSignature, iconFile, iconUploadLarge, iconDownload, iconClock } from "./icons.js?v=1788792557115";
 
 const DEFAULT_CATEGORIES = [
   "Payroll",
@@ -114,10 +114,6 @@ function init() {
   els.viewContainer = qs("view-container");
   els.clientList = qs("client-list");
   els.clientSearch = qs("client-search");
-  els.viewToggleOverview = qs("view-toggle-overview");
-  els.viewToggleCalendar = qs("view-toggle-calendar");
-  els.viewToggleList = qs("view-toggle-list");
-  els.viewToggleClientHub = qs("view-toggle-clienthub");
   els.listFilterClient = qs("list-filter-client");
   els.filterCategory = qs("filter-category");
   els.categoryFilterWrap = qs("category-filter-wrap");
@@ -141,10 +137,6 @@ function init() {
   qs("manage-categories-btn").innerHTML = iconTag;
   qs("export-btn").innerHTML = `<span class="btn-header-icon">${iconUpload}</span><span class="btn-header-label">Export to GitHub</span>`;
   qs("sign-out-btn").innerHTML = `<span class="btn-header-icon">${iconLogout}</span><span class="btn-header-label">Sign out</span>`;
-  qs("view-toggle-overview").innerHTML = iconHome;
-  qs("view-toggle-calendar").innerHTML = iconCalendar;
-  qs("view-toggle-list").innerHTML = iconListView;
-  qs("view-toggle-clienthub").innerHTML = iconFolder;
 
   wireAuthForms();
   wireMfaScreens();
@@ -352,11 +344,40 @@ function showStaffShell(user) {
 
 // ---- toolbar / view switching ----------------------------------------------
 
+// Single source of truth for the staff bottom tab bar: adding a future module is one entry here
+// (plus, obviously, writing the feature itself) instead of separate edits to index.html, a CSS
+// active-state rule, wireToolbar's listeners, and renderCurrentView's old if/else chain.
+// render() takes no arguments -- calendar/list used to be handled inline in renderCurrentView
+// with a pile of one-off callback wiring; that's now in the wrapper functions below so every
+// entry here has the same shape.
+const STAFF_NAV_ITEMS = [
+  { id: "overview", label: "Overview", icon: iconHome, render: renderOverviewView },
+  { id: "calendar", label: "Calendar", icon: iconCalendar, render: renderCalendarViewWrapper },
+  { id: "list", label: "List", icon: iconListView, render: renderListViewWrapper },
+  { id: "clienthub", label: "Client Hub", icon: iconFolder, render: renderClientHubStaffView },
+];
+
+function renderStaffTabBar() {
+  const bar = qs("staff-tab-bar");
+  bar.innerHTML = STAFF_NAV_ITEMS.map(
+    (item) => `
+    <button type="button" class="ios-tab-bar-item" data-nav-id="${item.id}">
+      ${item.icon}
+      <span class="ios-tab-bar-item-label">${escapeHtml(item.label)}</span>
+    </button>`
+  ).join("");
+  bar.querySelectorAll("[data-nav-id]").forEach((btn) => {
+    btn.addEventListener("click", () => setActiveView(btn.dataset.navId));
+  });
+}
+
 function wireToolbar() {
-  els.viewToggleOverview.addEventListener("click", () => setActiveView("overview"));
-  els.viewToggleCalendar.addEventListener("click", () => setActiveView("calendar"));
-  els.viewToggleList.addEventListener("click", () => setActiveView("list"));
-  els.viewToggleClientHub.addEventListener("click", () => setActiveView("clienthub"));
+  renderStaffTabBar();
+
+  qs("client-list-toggle-btn").innerHTML = iconUsers;
+  qs("client-list-toggle-btn").addEventListener("click", () => setSidebarOpen(true));
+  qs("sidebar-backdrop").addEventListener("click", () => setSidebarOpen(false));
+
   els.listFilterClient.addEventListener("change", (e) => {
     viewState.clientFilter = e.target.value || null;
     renderCurrentView();
@@ -381,13 +402,25 @@ function wireToolbar() {
   });
 }
 
+// Mobile-only: the client list is a filter panel for Calendar/List, not primary navigation, so
+// on a narrow screen it's a slide-over opened from the nav bar rather than permanently eating
+// screen width. No-op (CSS-hidden) on wide screens where the sidebar is already always visible.
+function setSidebarOpen(open) {
+  qs("client-sidebar").classList.toggle("sidebar-open", open);
+  qs("sidebar-backdrop").hidden = !open;
+}
+
 function setActiveView(view) {
   viewState.view = view;
   localStorage.setItem("cct_view", view);
-  els.viewToggleOverview.classList.toggle("active", view === "overview");
-  els.viewToggleCalendar.classList.toggle("active", view === "calendar");
-  els.viewToggleList.classList.toggle("active", view === "list");
-  els.viewToggleClientHub.classList.toggle("active", view === "clienthub");
+  setSidebarOpen(false);
+
+  const item = STAFF_NAV_ITEMS.find((i) => i.id === view);
+  qs("staff-tab-bar")
+    .querySelectorAll("[data-nav-id]")
+    .forEach((btn) => btn.classList.toggle("ios-tab-bar-item-active", btn.dataset.navId === view));
+  qs("app-large-title").textContent = item?.label || "";
+
   qs("list-filter-wrap").hidden = view !== "list";
   els.markAllCompleteBtn.hidden = view !== "list";
   if (view !== "clienthub") {
@@ -408,53 +441,49 @@ function renderCurrentView() {
     els.viewContainer.innerHTML = `<div class="loading-hint"><span class="spinner"></span> Loading…</div>`;
     return;
   }
-  if (viewState.view === "overview") {
-    renderOverviewView();
-    return;
-  }
-  if (viewState.view === "clienthub") {
-    renderClientHubStaffView();
-    return;
-  }
-  if (viewState.view === "calendar") {
-    renderCalendar(els.viewContainer, {
-      state: latestState,
-      year: viewState.year,
-      month: viewState.month,
-      colorMode: viewState.colorMode,
-      clientFilter: viewState.clientFilter,
-      categoryFilter: viewState.categoryFilter,
-      showArchived: viewState.showArchived,
-      onPrev: () => shiftMonth(-1),
-      onNext: () => shiftMonth(1),
-      onToday: () => {
-        const now = new Date();
-        viewState.year = now.getFullYear();
-        viewState.month = now.getMonth();
-        renderCurrentView();
-      },
-      onColorModeChange: (mode) => {
-        viewState.colorMode = mode;
-        localStorage.setItem("cct_colormode", mode);
-        renderCurrentView();
-      },
-      onJumpToMonth: () => openJumpToMonthModal(),
-      onDayClick: (date, entries) => openDayModal(date, entries),
-    });
-  } else {
-    const rangeStart = new Date(viewState.year, viewState.month - 1, 1);
-    const rangeEnd = new Date(viewState.year, viewState.month + 4, 0);
-    currentListRows = renderList(els.viewContainer, {
-      state: latestState,
-      clientFilter: viewState.clientFilter,
-      categoryFilter: viewState.categoryFilter,
-      showArchived: viewState.showArchived,
-      rangeStart,
-      rangeEnd,
-      onToggleComplete: handleToggleComplete,
-      onEditItem: (clientId, itemId) => openItemModal(clientId, itemId),
-    });
-  }
+  STAFF_NAV_ITEMS.find((i) => i.id === viewState.view)?.render();
+}
+
+function renderCalendarViewWrapper() {
+  renderCalendar(els.viewContainer, {
+    state: latestState,
+    year: viewState.year,
+    month: viewState.month,
+    colorMode: viewState.colorMode,
+    clientFilter: viewState.clientFilter,
+    categoryFilter: viewState.categoryFilter,
+    showArchived: viewState.showArchived,
+    onPrev: () => shiftMonth(-1),
+    onNext: () => shiftMonth(1),
+    onToday: () => {
+      const now = new Date();
+      viewState.year = now.getFullYear();
+      viewState.month = now.getMonth();
+      renderCurrentView();
+    },
+    onColorModeChange: (mode) => {
+      viewState.colorMode = mode;
+      localStorage.setItem("cct_colormode", mode);
+      renderCurrentView();
+    },
+    onJumpToMonth: () => openJumpToMonthModal(),
+    onDayClick: (date, entries) => openDayModal(date, entries),
+  });
+}
+
+function renderListViewWrapper() {
+  const rangeStart = new Date(viewState.year, viewState.month - 1, 1);
+  const rangeEnd = new Date(viewState.year, viewState.month + 4, 0);
+  currentListRows = renderList(els.viewContainer, {
+    state: latestState,
+    clientFilter: viewState.clientFilter,
+    categoryFilter: viewState.categoryFilter,
+    showArchived: viewState.showArchived,
+    rangeStart,
+    rangeEnd,
+    onToggleComplete: handleToggleComplete,
+    onEditItem: (clientId, itemId) => openItemModal(clientId, itemId),
+  });
 }
 
 // ---- overview (firm-wide dashboard) -----------------------------------------------------
@@ -496,35 +525,27 @@ function renderOverviewView() {
     <div class="stat-grid">
       <div class="stat-card">
         <div class="stat-card-header">
-          <span class="stat-icon-badge" style="background:${tintFor("#2563eb")}; color:#2563eb;">${iconUsers}</span>
+          <span class="stat-icon-badge" style="background:${tintFor("#007AFF")}; color:#007AFF;">${iconUsers}</span>
           <span class="stat-card-label">Active clients</span>
         </div>
         <div class="stat-card-value">${activeClients.length}</div>
       </div>
       <div class="stat-card">
         <div class="stat-card-header">
-          <span class="stat-icon-badge" style="background:${tintFor("#d97706")}; color:#d97706;">${iconAlertTriangle}</span>
+          <span class="stat-icon-badge" style="background:${tintFor("#FF9500")}; color:#FF9500;">${iconAlertTriangle}</span>
           <span class="stat-card-label">Overdue items</span>
         </div>
         <div class="${overdue.length ? "stat-card-value" : "stat-card-value-muted"}">${overdue.length}</div>
       </div>
       <div class="stat-card">
         <div class="stat-card-header">
-          <span class="stat-icon-badge" style="background:${tintFor("#7c3aed")}; color:#7c3aed;">${iconSignature}</span>
+          <span class="stat-icon-badge" style="background:${tintFor("#AF52DE")}; color:#AF52DE;">${iconSignature}</span>
           <span class="stat-card-label">Awaiting signature</span>
         </div>
         <div class="${awaitingSignature ? "stat-card-value" : "stat-card-value-muted"}">${awaitingSignature}</div>
       </div>
-      <div class="stat-card">
-        <div class="stat-card-header">
-          <span class="stat-icon-badge" style="background:${tintFor("#0d9488")}; color:#0d9488;">${iconUpload}</span>
-          <span class="stat-card-label">New uploads</span>
-        </div>
-        <div class="stat-card-value-muted">0</div>
-        <div class="stat-card-label">Coming in Milestone 2</div>
-      </div>
     </div>
-    <h2 style="font-size:0.9rem; font-weight:600; margin:0 0 0.6rem;">Needs attention</h2>
+    <div class="ios-section-header">Needs attention</div>
     <div id="attention-list"></div>
   `;
 
@@ -533,15 +554,20 @@ function renderOverviewView() {
     list.innerHTML = `<div class="empty-hint">Nothing overdue. Nice.</div>`;
     return;
   }
+  list.className = "ios-grouped-list";
   overdue.slice(0, 15).forEach(({ client, item, occ }) => {
     const label = item.customLabel || item.category;
     const color = colorFor(client.id);
     const row = document.createElement("button");
-    row.className = "attention-row";
+    row.type = "button";
+    row.className = "ios-grouped-list-row";
     row.innerHTML = `
-      <span class="avatar-badge" style="background:${tintFor(color)}; color:${color};">${client.name.slice(0, 2).toUpperCase()}</span>
-      <span style="flex:1;">${escapeHtml(client.name)} <span class="text-text-muted">-- ${escapeHtml(label)}</span></span>
-      <span class="attention-badge">Due ${occ.date.toLocaleDateString(undefined, { month: "short", day: "numeric" })}</span>
+      <span class="ios-grouped-list-row-icon" style="background:${color};">${iconAlertTriangle}</span>
+      <span class="ios-grouped-list-row-label">
+        ${escapeHtml(client.name)}
+        <span class="text-text-muted">-- ${escapeHtml(label)}, due ${occ.date.toLocaleDateString(undefined, { month: "short", day: "numeric" })}</span>
+      </span>
+      <span class="ios-grouped-list-row-chevron">${iconChevronRight}</span>
     `;
     row.addEventListener("click", () => openItemModal(client.id, item.id));
     list.appendChild(row);
@@ -1171,14 +1197,34 @@ let clientComplianceUnsub = null;
 let clientLatestDocuments = [];
 let clientLatestLetters = [];
 
+// Same registry pattern as STAFF_NAV_ITEMS above -- a future 4th client-facing tab is one entry
+// here instead of separate edits to index.html, wiring, and setClientHubTab's show/hide list.
+const CLIENT_NAV_ITEMS = [
+  { id: "documents", label: "Documents", icon: iconFile },
+  { id: "letters", label: "Letters", icon: iconSignature },
+  { id: "compliance", label: "Compliance", icon: iconCheck },
+];
+
+function renderClientTabBar() {
+  const bar = qs("client-tab-bar");
+  bar.innerHTML = CLIENT_NAV_ITEMS.map(
+    (item) => `
+    <button type="button" class="ios-tab-bar-item" data-nav-id="${item.id}">
+      ${item.icon}
+      <span class="ios-tab-bar-item-label">${escapeHtml(item.label)}</span>
+    </button>`
+  ).join("");
+  bar.querySelectorAll("[data-nav-id]").forEach((btn) => {
+    btn.addEventListener("click", () => setClientHubTab(btn.dataset.navId));
+  });
+}
+
 function wireClientHubScreen() {
   qs("client-hub-signout-btn").addEventListener("click", () => signOutUser());
   qs("chub-doctype").innerHTML = DOC_TYPES.map((t) => `<option value="${t.id}">${t.label}</option>`).join("");
   qs("chub-dropzone-icon").innerHTML = iconUploadLarge;
 
-  qs("chub-tab-documents").addEventListener("click", () => setClientHubTab("documents"));
-  qs("chub-tab-letters").addEventListener("click", () => setClientHubTab("letters"));
-  qs("chub-tab-compliance").addEventListener("click", () => setClientHubTab("compliance"));
+  renderClientTabBar();
 
   const dropzone = qs("chub-dropzone");
   const fileInput = qs("chub-file-input");
@@ -1207,9 +1253,11 @@ function wireClientHubScreen() {
 }
 
 function setClientHubTab(tab) {
-  qs("chub-tab-documents").classList.toggle("client-tab-btn-active", tab === "documents");
-  qs("chub-tab-letters").classList.toggle("client-tab-btn-active", tab === "letters");
-  qs("chub-tab-compliance").classList.toggle("client-tab-btn-active", tab === "compliance");
+  qs("client-tab-bar")
+    .querySelectorAll("[data-nav-id]")
+    .forEach((btn) => btn.classList.toggle("ios-tab-bar-item-active", btn.dataset.navId === tab));
+  qs("chub-large-title").textContent = CLIENT_NAV_ITEMS.find((i) => i.id === tab)?.label || "";
+
   qs("chub-panel-documents").hidden = tab !== "documents";
   qs("chub-panel-letters").hidden = tab !== "letters";
   qs("chub-panel-compliance").hidden = tab !== "compliance";

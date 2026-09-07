@@ -6,7 +6,7 @@
   <title>Bowling Green Bookkeeping &amp; Taxes — Client Hub</title>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Dancing+Script:wght@600&display=swap" />
-  <link rel="stylesheet" href="css/styles.css?v=1788791092687" />
+  <link rel="stylesheet" href="css/styles.css?v=1788792557115" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
 </head>
@@ -92,16 +92,18 @@
   </div>
 
   <div id="app-shell" hidden>
-    <header class="app-header">
-      <div class="brand">
-        <span class="brand-mark"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="14" height="13" rx="2"/><path d="M3 8h14"/><path d="M7 2.5v3"/><path d="M13 2.5v3"/><path d="m7 12 2 2 4-4"/></svg></span>
-        <h1>Bowling Green Bookkeeping &amp; Taxes</h1>
-      </div>
-      <div class="header-right">
+    <header class="ios-glass-bar ios-glass-bar-top">
+      <div class="ios-nav-row">
+        <button id="client-list-toggle-btn" class="icon-btn sidebar-toggle-btn" title="Clients" aria-label="Show client list"></button>
         <span id="save-status" class="save-status"></span>
-        <span id="user-badge" class="user-badge"></span>
-        <span class="header-divider"></span>
-        <button id="sign-out-btn" class="btn btn-ghost btn-header" title="Sign out">Sign out</button>
+        <div class="header-right">
+          <span id="user-badge" class="user-badge"></span>
+          <span class="header-divider"></span>
+          <button id="sign-out-btn" class="btn btn-ghost btn-header" title="Sign out">Sign out</button>
+        </div>
+      </div>
+      <div class="ios-large-title-wrap">
+        <h1 id="app-large-title" class="ios-large-title">Overview</h1>
       </div>
     </header>
 
@@ -121,19 +123,16 @@
     </div>
 
     <div class="app-body">
-      <aside class="sidebar">
-        <nav class="icon-rail">
-          <button id="view-toggle-overview" class="icon-rail-btn icon-rail-btn-overview" title="Overview" aria-label="Overview"></button>
-          <button id="view-toggle-calendar" class="icon-rail-btn icon-rail-btn-calendar" title="Calendar view" aria-label="Calendar view"></button>
-          <button id="view-toggle-list" class="icon-rail-btn icon-rail-btn-list" title="List view" aria-label="List view"></button>
-          <button id="view-toggle-clienthub" class="icon-rail-btn icon-rail-btn-clienthub" title="Client Hub" aria-label="Client Hub"></button>
-        </nav>
+      <div id="sidebar-backdrop" class="sidebar-backdrop" hidden></div>
+      <aside class="sidebar" id="client-sidebar">
         <h2>Clients</h2>
         <input type="text" id="client-search" class="client-search" placeholder="Search clients..." />
         <div id="client-list"></div>
       </aside>
       <main id="view-container" class="view-container"></main>
     </div>
+
+    <nav class="ios-glass-bar ios-glass-bar-bottom ios-tab-bar" id="staff-tab-bar"></nav>
   </div>
 
   <div id="modal-backdrop" class="modal-backdrop" hidden>
@@ -142,26 +141,19 @@
 
   <!-- Shown instead of #app-shell when the signed-in account has role "client" (see js/app.js). -->
   <div id="client-hub-screen" hidden>
-    <header class="app-header">
-      <div class="brand">
-        <span class="brand-mark"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="14" height="13" rx="2"/><path d="M3 8h14"/><path d="M7 2.5v3"/><path d="M13 2.5v3"/><path d="m7 12 2 2 4-4"/></svg></span>
-        <h1>Bowling Green Bookkeeping &amp; Taxes</h1>
-      </div>
-      <div class="header-right">
+    <header class="ios-glass-bar ios-glass-bar-top">
+      <div class="ios-nav-row">
+        <span></span>
         <button id="client-hub-signout-btn" class="btn btn-ghost btn-header" title="Sign out">Sign out</button>
+      </div>
+      <div class="ios-large-title-wrap">
+        <h1 id="chub-large-title" class="ios-large-title">Documents</h1>
       </div>
     </header>
     <main class="view-container">
-      <h3 class="chub-welcome">Welcome<span id="client-hub-name"></span></h3>
-      <p class="chub-subtitle">Upload your tax documents securely below, or check what's coming due.</p>
+      <p class="chub-subtitle">Welcome<span id="client-hub-name"></span> -- upload your tax documents securely below, or check what's coming due.</p>
 
       <div class="stat-grid" id="chub-stat-grid"></div>
-
-      <nav class="client-tab-bar chub-tab-bar">
-        <button class="client-tab-btn client-tab-btn-active" id="chub-tab-documents" data-tab="documents">Documents</button>
-        <button class="client-tab-btn" id="chub-tab-letters" data-tab="letters">Letters</button>
-        <button class="client-tab-btn" id="chub-tab-compliance" data-tab="compliance">Compliance</button>
-      </nav>
 
       <div id="chub-panel-documents">
         <div class="chub-card">
@@ -189,8 +181,10 @@
 
       <div id="chub-panel-compliance" hidden></div>
     </main>
+
+    <nav class="ios-glass-bar ios-glass-bar-bottom ios-tab-bar" id="client-tab-bar"></nav>
   </div>
 
-  <script type="module" src="js/app.js?v=1788791092687"></script>
+  <script type="module" src="js/app.js?v=1788792557115"></script>
 </body>
 </html>
