@@ -1013,7 +1013,7 @@
 
   /* ---- modal ---- */
   .modal-backdrop {
-    @apply fixed inset-0 bg-[rgba(15,23,42,0.45)] flex items-start justify-center px-4 py-12 overflow-y-auto z-50;
+    @apply fixed inset-0 bg-[rgba(15,23,42,0.45)] flex items-center justify-center px-4 py-12 overflow-y-auto z-50;
     animation: backdrop-in 0.15s ease;
   }
   @keyframes backdrop-in {
@@ -1255,10 +1255,19 @@
     }
 
     .modal-backdrop {
-      @apply px-2 py-4 items-center;
+      @apply px-2 py-4;
     }
     .modal-content {
       @apply p-5;
+    }
+    /* Stacked full-width instead of side-by-side -- reversed so the primary/confirm button lands
+       on top and Cancel/Close on the bottom, the same ordering iOS's own alerts use once their
+       buttons no longer fit in a row. */
+    .modal-actions {
+      @apply flex-col-reverse;
+    }
+    .modal-actions > .btn {
+      @apply w-full;
     }
   }
 
