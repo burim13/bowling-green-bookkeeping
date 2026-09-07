@@ -103,12 +103,13 @@ service cloud.firestore {
       allow update: if isApproved() && request.auth.uid == uid && request.resource.data.role == resource.data.role;
     }
 
-    // Invite links staff sends to clients. Never directly readable (not even by the invitee) --
-    // only ever consulted via get() from inside the users/{uid} create rule above and the
-    // consumption rule below, which is enough; the invite page never needs to read this doc,
-    // it just attempts the account-creation write and lets that succeed or fail.
+    // Invite links staff sends to clients. Not readable by the invitee (the invite page never
+    // needs to read this doc -- it just attempts the account-creation write and lets that
+    // succeed or fail) -- but staff CAN read these, to see whether functions/index.js's
+    // sendClientInvite actually delivered the email (emailSentAt/emailError) or whether it's
+    // still sitting unused.
     match /clientInvites/{token} {
-      allow read: if false;
+      allow read: if isApproved();
       allow create, delete: if isApproved();
 
       // Marking an invite used happens right after the matching user doc was created (see

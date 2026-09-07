@@ -1,10 +1,10 @@
-import { isFirebaseConfigured, auth } from "./firebase-init.js?v=1788750143133";
+import { isFirebaseConfigured, auth } from "./firebase-init.js?v=1788751373741";
 import {
   watchAuthState,
   signInWithPassword,
   signOutUser,
   getOwnProfile,
-} from "./auth.js?v=1788750143133";
+} from "./auth.js?v=1788751373741";
 import {
   startSync,
   stopSync,
@@ -23,12 +23,12 @@ import {
   unmarkComplete,
   isFullyLoaded,
   getClientRecord,
-} from "./data.js?v=1788750143133";
-import { renderCalendar } from "./calendar-view.js?v=1788750143133";
-import { renderList } from "./list-view.js?v=1788750143133";
-import { describeRecurrence, describeRecurrenceHistory, getLastDueOccurrence, toISODate } from "./recurrence.js?v=1788750143133";
-import { colorFor, tintFor } from "./colors.js?v=1788750143133";
-import { githubRepoSlug } from "./firebase-config.js?v=1788750143133";
+} from "./data.js?v=1788751373741";
+import { renderCalendar } from "./calendar-view.js?v=1788751373741";
+import { renderList } from "./list-view.js?v=1788751373741";
+import { describeRecurrence, describeRecurrenceHistory, getLastDueOccurrence, toISODate } from "./recurrence.js?v=1788751373741";
+import { colorFor, tintFor } from "./colors.js?v=1788751373741";
+import { githubRepoSlug } from "./firebase-config.js?v=1788751373741";
 import {
   DOC_TYPES,
   docTypeLabel,
@@ -36,9 +36,9 @@ import {
   uploadDocument,
   setDocumentReviewed,
   getDocumentDownloadURL,
-} from "./documents.js?v=1788750143133";
-import { createClientInvite } from "./invites.js?v=1788750143133";
-import { iconEdit, iconTrash, iconPlus, iconPlusLarge, iconCheck, iconTag, iconUpload, iconLogout, iconCalendar, iconListView, iconFolder, iconFolderLarge, iconHome, iconChevronRight, iconUsers, iconAlertTriangle, iconSignature, iconFile, iconUploadLarge, iconDownload } from "./icons.js?v=1788750143133";
+} from "./documents.js?v=1788751373741";
+import { createClientInvite, subscribeToInviteStatus } from "./invites.js?v=1788751373741";
+import { iconEdit, iconTrash, iconPlus, iconPlusLarge, iconCheck, iconTag, iconUpload, iconLogout, iconCalendar, iconListView, iconFolder, iconFolderLarge, iconHome, iconChevronRight, iconUsers, iconAlertTriangle, iconSignature, iconFile, iconUploadLarge, iconDownload } from "./icons.js?v=1788751373741";
 
 const DEFAULT_CATEGORIES = [
   "Payroll",
@@ -583,11 +583,13 @@ function openInviteClientModal(client) {
     const link = `${window.location.origin}/invite.html?token=${token}&clientId=${client.id}`;
     openModal(`
       <h2>Invite ${escapeHtml(client.name)}</h2>
-      ${
-        email
-          ? `<p class="client-tab-content">Emailing <strong>${escapeHtml(email)}</strong> now -- it may take a minute to arrive.</p>`
-          : `<p class="client-tab-content">No email address given -- share this link with them yourself.</p>`
-      }
+      <p class="client-tab-content" id="invite-status">
+        ${
+          email
+            ? `Emailing <strong>${escapeHtml(email)}</strong> now…`
+            : "No email address given -- share this link with them yourself."
+        }
+      </p>
       <div class="invite-link-row">
         <input type="text" id="invite-link-input" readonly value="${escapeHtml(link)}" />
         <button type="button" class="btn" id="invite-copy-btn">Copy</button>
@@ -606,6 +608,31 @@ function openInviteClientModal(client) {
       }
     });
     qs("modal-content").querySelector('[data-action="close"]').addEventListener("click", closeModal);
+
+    if (email) {
+      let settled = false;
+      const unsub = subscribeToInviteStatus(token, (invite) => {
+        const statusEl = qs("invite-status");
+        if (!statusEl) {
+          unsub();
+          return;
+        }
+        if (invite.emailSentAt) {
+          statusEl.textContent = `Email sent to ${email}.`;
+          settled = true;
+          unsub();
+        } else if (invite.emailError) {
+          statusEl.textContent = `Could not email ${email}: ${invite.emailError} -- share the link below instead.`;
+          settled = true;
+          unsub();
+        }
+      });
+      setTimeout(() => {
+        if (settled) return;
+        const statusEl = qs("invite-status");
+        if (statusEl) statusEl.textContent = `Still sending to ${email} -- check back, or share the link below now.`;
+      }, 12000);
+    }
   });
 }
 

@@ -15,7 +15,7 @@ import {
   uploadBytesResumable,
   getDownloadURL,
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-storage.js";
-import { db, storage } from "./firebase-init.js?v=1788750143133";
+import { db, storage } from "./firebase-init.js?v=1788751373741";
 
 export const DOC_TYPES = [
   { id: "w2", label: "W-2" },
