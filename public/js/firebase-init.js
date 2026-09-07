@@ -7,17 +7,19 @@ import {
   browserLocalPersistence,
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 import { getFirestore } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
-import { firebaseConfig, isFirebaseConfigured } from "./firebase-config.js?v=1788745756106";
+import { getStorage } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-storage.js";
+import { firebaseConfig, isFirebaseConfigured } from "./firebase-config.js?v=1788748809642";
 
 export { isFirebaseConfigured };
 
-let app, auth, db;
+let app, auth, db, storage;
 
 if (isFirebaseConfigured) {
   app = initializeApp(firebaseConfig);
   auth = getAuth(app);
   setPersistence(auth, browserLocalPersistence);
   db = getFirestore(app);
+  storage = getStorage(app);
 }
 
-export { app, auth, db };
+export { app, auth, db, storage };
