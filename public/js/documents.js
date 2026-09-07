@@ -5,6 +5,7 @@ import {
   doc,
   setDoc,
   updateDoc,
+  deleteDoc,
   onSnapshot,
   orderBy,
   query,
@@ -14,8 +15,9 @@ import {
   ref,
   uploadBytesResumable,
   getDownloadURL,
+  deleteObject,
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-storage.js";
-import { db, storage } from "./firebase-init.js?v=1788754530291";
+import { db, storage } from "./firebase-init.js?v=1788754870928";
 
 export const DOC_TYPES = [
   { id: "w2", label: "W-2" },
@@ -81,6 +83,15 @@ export function uploadDocument(clientId, file, docType, uploadedBy, onProgress) 
 
 export function setDocumentReviewed(clientId, docId, reviewed) {
   return updateDoc(doc(db, "clients", clientId, "documents", docId), { reviewed });
+}
+
+// Client-initiated delete (firestore.rules only allows this while reviewed == false -- staff
+// can delete anytime). Firestore doc goes first: if that succeeds but the Storage delete below
+// fails, the result is an orphaned file nobody can see or reach through the app, rather than a
+// Firestore doc pointing at a file that's already gone.
+export async function deleteDocument(clientId, docId, storagePath) {
+  await deleteDoc(doc(db, "clients", clientId, "documents", docId));
+  await deleteObject(ref(storage, storagePath)).catch(() => {});
 }
 
 export function getDocumentDownloadURL(storagePath) {

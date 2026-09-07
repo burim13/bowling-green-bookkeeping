@@ -23,12 +23,17 @@ service firebase.storage {
         request.auth.token.clientId == clientId;
     }
 
-    // Staff manage everything; the owning client can read their own folder and upload new
-    // documents, but can't overwrite or delete what's already there (matches the create-only
-    // client permission on the Firestore documents subcollection in firestore.rules).
+    // Staff manage everything; the owning client can read their own folder, upload new
+    // documents, and delete a document they uploaded -- but only before staff has reviewed it.
+    // `reviewed` isn't something Storage rules can read from the Firestore doc directly (that
+    // cross-service read is what's broken here -- see isApproved() above), so
+    // functions/index.js's syncDocumentReviewedMetadata trigger stamps the same value onto this
+    // object's own custom metadata instead, which resource.metadata reads natively.
     match /clients/{clientId}/documents/{allPaths=**} {
       allow read, create: if isApproved() || isOwningClient(clientId);
-      allow update, delete: if isApproved();
+      allow update: if isApproved();
+      allow delete: if isApproved() ||
+        (isOwningClient(clientId) && resource.metadata.reviewed != 'true');
     }
 
     // Generated engagement letters / signed PDFs -- staff-generated only, client can read theirs.

@@ -47,7 +47,12 @@ service cloud.firestore {
       // are staff-generated only.
       match /documents/{docId} {
         allow read, create: if isApproved() || isOwningClient(clientId);
-        allow update, delete: if isApproved();
+        allow update: if isApproved();
+        // The owning client can delete their own upload, but only before staff has reviewed
+        // it -- fixes an accidental upload without letting a document staff already acted on
+        // quietly disappear. resource.data is the doc as it exists NOW (pre-delete), so this
+        // reads the current reviewed value, not anything the request could try to set.
+        allow delete: if isApproved() || (isOwningClient(clientId) && resource.data.reviewed == false);
       }
       match /letters/{letterId} {
         allow read: if isApproved() || isOwningClient(clientId);

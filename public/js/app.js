@@ -1,10 +1,10 @@
-import { isFirebaseConfigured, auth } from "./firebase-init.js?v=1788754530291";
+import { isFirebaseConfigured, auth } from "./firebase-init.js?v=1788754870928";
 import {
   watchAuthState,
   signInWithPassword,
   signOutUser,
   getOwnProfile,
-} from "./auth.js?v=1788754530291";
+} from "./auth.js?v=1788754870928";
 import {
   startSync,
   stopSync,
@@ -23,12 +23,12 @@ import {
   unmarkComplete,
   isFullyLoaded,
   getClientRecord,
-} from "./data.js?v=1788754530291";
-import { renderCalendar } from "./calendar-view.js?v=1788754530291";
-import { renderList } from "./list-view.js?v=1788754530291";
-import { describeRecurrence, describeRecurrenceHistory, getLastDueOccurrence, toISODate } from "./recurrence.js?v=1788754530291";
-import { colorFor, tintFor } from "./colors.js?v=1788754530291";
-import { githubRepoSlug } from "./firebase-config.js?v=1788754530291";
+} from "./data.js?v=1788754870928";
+import { renderCalendar } from "./calendar-view.js?v=1788754870928";
+import { renderList } from "./list-view.js?v=1788754870928";
+import { describeRecurrence, describeRecurrenceHistory, getLastDueOccurrence, toISODate } from "./recurrence.js?v=1788754870928";
+import { colorFor, tintFor } from "./colors.js?v=1788754870928";
+import { githubRepoSlug } from "./firebase-config.js?v=1788754870928";
 import {
   DOC_TYPES,
   docTypeLabel,
@@ -36,10 +36,11 @@ import {
   uploadDocument,
   setDocumentReviewed,
   getDocumentDownloadURL,
-} from "./documents.js?v=1788754530291";
-import { createClientInvite, subscribeToInviteStatus } from "./invites.js?v=1788754530291";
-import { subscribeToOwnCompliance } from "./client-compliance.js?v=1788754530291";
-import { iconEdit, iconTrash, iconPlus, iconPlusLarge, iconCheck, iconTag, iconUpload, iconLogout, iconCalendar, iconListView, iconFolder, iconFolderLarge, iconHome, iconChevronRight, iconUsers, iconAlertTriangle, iconSignature, iconFile, iconUploadLarge, iconDownload, iconClock } from "./icons.js?v=1788754530291";
+  deleteDocument,
+} from "./documents.js?v=1788754870928";
+import { createClientInvite, subscribeToInviteStatus } from "./invites.js?v=1788754870928";
+import { subscribeToOwnCompliance } from "./client-compliance.js?v=1788754870928";
+import { iconEdit, iconTrash, iconPlus, iconPlusLarge, iconCheck, iconTag, iconUpload, iconLogout, iconCalendar, iconListView, iconFolder, iconFolderLarge, iconHome, iconChevronRight, iconUsers, iconAlertTriangle, iconSignature, iconFile, iconUploadLarge, iconDownload, iconClock } from "./icons.js?v=1788754870928";
 
 const DEFAULT_CATEGORIES = [
   "Payroll",
@@ -655,6 +656,13 @@ function documentRowHtml(d, allowReviewToggle) {
   const statusBadge = allowReviewToggle
     ? `<button class="doc-status-badge ${d.reviewed ? "doc-status-reviewed" : "doc-status-pending"}" data-action="toggle-reviewed" data-doc-id="${d.id}" data-reviewed="${d.reviewed ? "1" : ""}">${d.reviewed ? "Reviewed" : "Mark reviewed"}</button>`
     : `<span class="doc-status-badge ${d.reviewed ? "doc-status-reviewed" : "doc-status-pending"}">${d.reviewed ? "Reviewed" : "Pending review"}</span>`;
+  // Clients can retract their own upload, but only before staff has reviewed it -- once
+  // reviewed, firestore.rules/storage.rules would reject the delete anyway, so there's no
+  // point showing a button that can only fail.
+  const deleteBtn =
+    !allowReviewToggle && !d.reviewed
+      ? `<button class="icon-btn" data-action="delete" data-doc-id="${d.id}" data-storage-path="${escapeHtml(d.storagePath)}" data-file-name="${escapeHtml(d.fileName)}" title="Delete" aria-label="Delete ${escapeHtml(d.fileName)}">${iconTrash}</button>`
+      : "";
   return `
     <div class="doc-row">
       <span class="doc-row-icon">${iconFile}</span>
@@ -664,6 +672,7 @@ function documentRowHtml(d, allowReviewToggle) {
       </span>
       ${statusBadge}
       <button class="icon-btn" data-action="download" data-storage-path="${escapeHtml(d.storagePath)}" title="Download" aria-label="Download ${escapeHtml(d.fileName)}">${iconDownload}</button>
+      ${deleteBtn}
     </div>`;
 }
 
@@ -675,6 +684,18 @@ function wireDocumentRows(container, clientId) {
         window.open(url, "_blank", "noopener");
       } catch (err) {
         alert("Could not open document: " + err.message);
+      }
+    });
+  });
+  container.querySelectorAll('[data-action="delete"]').forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      if (!confirm(`Delete "${btn.dataset.fileName}"? This can't be undone.`)) return;
+      btn.disabled = true;
+      try {
+        await deleteDocument(clientId, btn.dataset.docId, btn.dataset.storagePath);
+      } catch (err) {
+        alert("Could not delete: " + err.message);
+        btn.disabled = false;
       }
     });
   });

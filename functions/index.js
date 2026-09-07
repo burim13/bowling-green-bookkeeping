@@ -9,6 +9,7 @@ const logger = require("firebase-functions/logger");
 const { initializeApp } = require("firebase-admin/app");
 const { getAuth } = require("firebase-admin/auth");
 const { getFirestore, FieldValue } = require("firebase-admin/firestore");
+const { getStorage } = require("firebase-admin/storage");
 
 initializeApp();
 setGlobalOptions({ maxInstances: 5 });
@@ -58,6 +59,30 @@ exports.syncUserClaimsOnAllowlistWrite = onDocumentWritten("settings/allowlist",
   const staffSnap = await db.collection("users").where("role", "in", ["staff", "admin"]).get();
   await Promise.all(staffSnap.docs.map((d) => computeAndSetClaims(d.id)));
 });
+
+// ---- document "reviewed" status -> Storage object metadata --------------------------------
+//
+// A client is allowed to delete a document they uploaded, but only before staff has reviewed
+// it (see storage.rules). Same cross-service problem as above rules out storage.rules reading
+// the Firestore doc directly to check `reviewed` -- so instead, whenever a document's reviewed
+// field changes, this stamps the SAME value onto the Storage object's own custom metadata,
+// which storage.rules can read natively via resource.metadata with no cross-service call.
+exports.syncDocumentReviewedMetadata = onDocumentWritten(
+  "clients/{clientId}/documents/{docId}",
+  async (event) => {
+    const after = event.data.after.exists ? event.data.after.data() : null;
+    if (!after || !after.storagePath) return;
+    try {
+      await getStorage().bucket().file(after.storagePath).setMetadata({
+        metadata: { reviewed: String(!!after.reviewed) },
+      });
+    } catch (err) {
+      // Most likely the object was already deleted (e.g. staff deleted it directly) --
+      // nothing left to stamp metadata onto, not worth failing the function over.
+      logger.warn(`Could not sync reviewed metadata for ${after.storagePath}`, err);
+    }
+  }
+);
 
 const RESEND_API_KEY = defineSecret("RESEND_API_KEY");
 // e.g. "Bowling Green Bookkeeping & Taxes <onboarding@resend.dev>" if you haven't verified a
