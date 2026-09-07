@@ -1,7 +1,7 @@
-import { isFirebaseConfigured, auth } from "./firebase-init.js?v=1788807838470";
-import { escapeHtml } from "./html-safety.js?v=1788807838470";
-import { friendlyAuthError } from "./auth-errors.js?v=1788807838470";
-import { getEffectiveTheme, toggleTheme } from "./theme.js?v=1788807838470";
+import { isFirebaseConfigured, auth } from "./firebase-init.js?v=1788808484451";
+import { escapeHtml } from "./html-safety.js?v=1788808484451";
+import { friendlyAuthError } from "./auth-errors.js?v=1788808484451";
+import { getEffectiveTheme, toggleTheme } from "./theme.js?v=1788808484451";
 import {
   watchAuthState,
   signInWithPassword,
@@ -9,14 +9,14 @@ import {
   getOwnProfile,
   afterSignIn,
   updateOwnDisplayName,
-} from "./auth.js?v=1788807838470";
+} from "./auth.js?v=1788808484451";
 import {
   isMfaEnrolled,
   startMfaEnrollment,
   finishMfaEnrollment,
   getResolver,
   completeMfaSignIn,
-} from "./mfa.js?v=1788807838470";
+} from "./mfa.js?v=1788808484451";
 import {
   startSync,
   stopSync,
@@ -35,12 +35,12 @@ import {
   unmarkComplete,
   isFullyLoaded,
   getClientRecord,
-} from "./data.js?v=1788807838470";
-import { renderCalendar } from "./calendar-view.js?v=1788807838470";
-import { renderList } from "./list-view.js?v=1788807838470";
-import { describeRecurrence, describeRecurrenceHistory, getLastDueOccurrence, toISODate } from "./recurrence.js?v=1788807838470";
-import { colorFor, tintFor } from "./colors.js?v=1788807838470";
-import { githubRepoSlug } from "./firebase-config.js?v=1788807838470";
+} from "./data.js?v=1788808484451";
+import { renderCalendar } from "./calendar-view.js?v=1788808484451";
+import { renderList } from "./list-view.js?v=1788808484451";
+import { describeRecurrence, describeRecurrenceHistory, getLastDueOccurrence, toISODate } from "./recurrence.js?v=1788808484451";
+import { colorFor, tintFor } from "./colors.js?v=1788808484451";
+import { githubRepoSlug } from "./firebase-config.js?v=1788808484451";
 import {
   DOC_TYPES,
   docTypeLabel,
@@ -49,10 +49,10 @@ import {
   setDocumentReviewed,
   getDocumentDownloadURL,
   deleteDocument,
-} from "./documents.js?v=1788807838470";
-import { createClientInvite, subscribeToInviteStatus } from "./invites.js?v=1788807838470";
-import { subscribeToOwnCompliance } from "./client-compliance.js?v=1788807838470";
-import { subscribeToLetters, sendLetter, signLetter, deleteLetter, getLetterDownloadURL } from "./letters.js?v=1788807838470";
+} from "./documents.js?v=1788808484451";
+import { createClientInvite, subscribeToInviteStatus } from "./invites.js?v=1788808484451";
+import { subscribeToOwnCompliance } from "./client-compliance.js?v=1788808484451";
+import { subscribeToLetters, sendLetter, signLetter, deleteLetter, getLetterDownloadURL } from "./letters.js?v=1788808484451";
 import {
   subscribeToFormTemplates,
   uploadFormTemplate,
@@ -62,7 +62,7 @@ import {
   subscribeToSentForms,
   markFormReturned,
   markFormReturnedManually,
-} from "./forms.js?v=1788807838470";
+} from "./forms.js?v=1788808484451";
 import {
   stampSignature,
   stampFields,
@@ -72,8 +72,8 @@ import {
   loadPdfDocument,
   renderPdfPageToCanvas,
   FIELD_DEFAULT_SIZE,
-} from "./pdf-sign.js?v=1788807838470";
-import { iconEdit, iconTrash, iconPlus, iconPlusLarge, iconCheck, iconTag, iconUpload, iconLogout, iconCalendar, iconListView, iconFolder, iconFolderLarge, iconHome, iconChevronRight, iconUsers, iconAlertTriangle, iconSignature, iconFile, iconUploadLarge, iconDownload, iconClock, iconSun, iconMoon, iconSearch, iconClipboard } from "./icons.js?v=1788807838470";
+} from "./pdf-sign.js?v=1788808484451";
+import { iconEdit, iconTrash, iconPlus, iconPlusLarge, iconCheck, iconTag, iconUpload, iconLogout, iconCalendar, iconListView, iconFolder, iconFolderLarge, iconHome, iconChevronRight, iconUsers, iconAlertTriangle, iconSignature, iconFile, iconUploadLarge, iconDownload, iconClock, iconSun, iconMoon, iconSearch, iconClipboard } from "./icons.js?v=1788808484451";
 
 const DEFAULT_CATEGORIES = [
   "Payroll",

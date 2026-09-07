@@ -23,7 +23,7 @@ import {
   deleteObject,
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-storage.js";
 import { httpsCallable } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-functions.js";
-import { db, storage, functions } from "./firebase-init.js?v=1788807838470";
+import { db, storage, functions } from "./firebase-init.js?v=1788808484451";
 
 // ---- the library (firm-wide, staff-only) -------------------------------------------------
 

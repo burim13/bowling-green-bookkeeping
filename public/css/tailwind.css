@@ -1294,6 +1294,19 @@
       @apply flex-wrap gap-y-2;
     }
 
+    /* Now 5 tabs (Overview/Compliance/Documents/Letters/Forms), some carrying a notif-badge --
+       flex-wrap let each button keep its own content-driven width, so the wrapped second row
+       landed at a different left edge than the first and read as jumbled rather than a tab bar.
+       A fixed 3-column grid gives every cell the same width regardless of label/badge length, so
+       both rows line up cleanly instead of wrapping wherever the content happens to run out of
+       room. */
+    .client-tab-bar {
+      @apply grid grid-cols-3 gap-1;
+    }
+    .client-tab-btn {
+      @apply text-center;
+    }
+
     .modal-backdrop {
       @apply px-2 py-4;
     }
