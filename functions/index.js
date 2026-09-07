@@ -84,6 +84,34 @@ exports.syncDocumentReviewedMetadata = onDocumentWritten(
   }
 );
 
+// ---- one-time admin op: enable TOTP as an MFA provider ------------------------------------
+//
+// There is no Firebase Console or Cloud Console UI toggle for TOTP MFA (only SMS shows up in
+// either console) -- Google only exposes it via the Admin SDK / Identity Platform REST API.
+// This function exists solely to flip that project-level config once; delete it right after
+// confirming it worked. It's a callable function (not onRequest) specifically so it never
+// needs a public/unauthenticated invoker -- the Firebase client SDK attaches the caller's own
+// ID token automatically, verified server-side below, same trust boundary as isApproved() in
+// firestore.rules/storage.rules.
+const { onCall, HttpsError } = require("firebase-functions/v2/https");
+
+exports.enableTotpMfa = onCall(async (request) => {
+  if (!request.auth || request.auth.token.approved !== true) {
+    throw new HttpsError("permission-denied", "Approved staff only.");
+  }
+  try {
+    const result = await getAuth().projectConfigManager().updateProjectConfig({
+      multiFactorConfig: {
+        providerConfigs: [{ state: "ENABLED", totpProviderConfig: { adjacentIntervals: 5 } }],
+      },
+    });
+    return { ok: true, multiFactorConfig: result.multiFactorConfig };
+  } catch (err) {
+    logger.error("enableTotpMfa failed", err);
+    throw new HttpsError("internal", String(err.message || err));
+  }
+});
+
 const RESEND_API_KEY = defineSecret("RESEND_API_KEY");
 // e.g. "Bowling Green Bookkeeping & Taxes <onboarding@resend.dev>" if you haven't verified a
 // custom sending domain in Resend yet -- see README for how to set this.

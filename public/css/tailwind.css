@@ -140,7 +140,9 @@
   }
 
   /* ---- auth screen ---- */
-  #auth-screen {
+  #auth-screen,
+  #mfa-challenge-screen,
+  #mfa-enroll-screen {
     @apply flex items-center justify-center min-h-screen p-6;
     background: radial-gradient(circle at 50% 0%, rgba(37, 99, 235, 0.07), transparent 60%), var(--color-bg);
   }
