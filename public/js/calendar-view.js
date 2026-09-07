@@ -1,7 +1,7 @@
-import { getOccurrenceInMonth, getOccurrencesInRange, describeRecurrence, toISODate } from "./recurrence.js?v=1788796898756";
-import { colorFor } from "./colors.js?v=1788796898756";
-import { iconChevronLeft, iconChevronRight } from "./icons.js?v=1788796898756";
-import { escapeHtml } from "./html-safety.js?v=1788796898756";
+import { getOccurrenceInMonth, getOccurrencesInRange, describeRecurrence, toISODate } from "./recurrence.js?v=1788797110972";
+import { colorFor } from "./colors.js?v=1788797110972";
+import { iconChevronLeft, iconChevronRight } from "./icons.js?v=1788797110972";
+import { escapeHtml } from "./html-safety.js?v=1788797110972";
 
 function isDone(state, itemId, periodKey) {
   const forItem = state.completions.get(itemId);

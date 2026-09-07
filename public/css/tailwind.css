@@ -191,6 +191,13 @@
   .btn-danger {
     @apply bg-danger text-white border-danger;
   }
+  .btn-success {
+    @apply text-white border-0 shadow-sm;
+    background: var(--color-success);
+  }
+  .btn-success:hover {
+    @apply opacity-90;
+  }
   .btn-ghost {
     @apply bg-transparent border-transparent;
   }
@@ -850,6 +857,13 @@
   /* ---- list view ---- */
   .list-header {
     @apply flex items-center justify-between gap-3 flex-wrap mb-4;
+  }
+  /* .cal-filters' ml-auto (needed in .cal-header, where it shares a row with left-aligned nav
+     buttons) fights with .list-header's own justify-between here -- both push the filters group
+     rightward, leaving a large empty gap before "Client" instead of the filters sitting flush at
+     the start of the row the way justify-between alone already arranges it. */
+  .list-header .cal-filters {
+    @apply ml-0;
   }
   .list-group {
     @apply mb-5;

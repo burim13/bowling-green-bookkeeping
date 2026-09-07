@@ -1,8 +1,8 @@
-import { getOccurrencesInRange, getLastDueOccurrence, describeRecurrence, toISODate } from "./recurrence.js?v=1788796898756";
-import { colorFor } from "./colors.js?v=1788796898756";
-import { iconEdit, iconCheckLarge } from "./icons.js?v=1788796898756";
-import { escapeHtml } from "./html-safety.js?v=1788796898756";
-import { categoryOptions } from "./calendar-view.js?v=1788796898756";
+import { getOccurrencesInRange, getLastDueOccurrence, describeRecurrence, toISODate } from "./recurrence.js?v=1788797110972";
+import { colorFor } from "./colors.js?v=1788797110972";
+import { iconEdit, iconCheckLarge } from "./icons.js?v=1788797110972";
+import { escapeHtml } from "./html-safety.js?v=1788797110972";
+import { categoryOptions } from "./calendar-view.js?v=1788797110972";
 
 function completionFor(state, itemId, periodKey) {
   const forItem = state.completions.get(itemId);
@@ -88,7 +88,7 @@ export function renderList(container, ctx) {
             </select>
           </label>
         </div>
-        <button type="button" class="btn" data-action="mark-all">Mark all shown complete</button>
+        <button type="button" class="btn btn-success" data-action="mark-all">Mark all shown complete</button>
       </div>`
     : "";
 

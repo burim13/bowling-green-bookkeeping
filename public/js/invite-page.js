@@ -3,8 +3,8 @@
 // that's true: turn a valid invite token into a brand new role:"client" account.
 import { createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 import { doc, setDoc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
-import { auth, db, isFirebaseConfigured } from "./firebase-init.js?v=1788796898756";
-import { friendlyAuthError } from "./auth-errors.js?v=1788796898756";
+import { auth, db, isFirebaseConfigured } from "./firebase-init.js?v=1788797110972";
+import { friendlyAuthError } from "./auth-errors.js?v=1788797110972";
 
 function qs(id) {
   return document.getElementById(id);
