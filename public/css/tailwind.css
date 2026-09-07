@@ -1065,15 +1065,6 @@
     .toolbar-spacer {
       @apply basis-full h-0;
     }
-    /* The category <select>'s width:auto (above) sizes to its longest option text, which is
-       wider than a phone screen -- cap it and let the closed control's text truncate instead. */
-    .list-filter-wrap select {
-      @apply max-w-[46vw] overflow-hidden text-ellipsis;
-    }
-    .list-filter-wrap label {
-      @apply min-w-0;
-    }
-
     .app-body {
       @apply flex-col min-h-0;
     }
@@ -1090,8 +1081,23 @@
     .cal-title {
       @apply min-w-0 text-[0.95rem];
     }
+    /* Two-per-row grid instead of flex-wrap's "each control ends up on its own full-width row"
+       once the header no longer fits on one line -- far more compact than stacked full-width
+       selects. Shared by Calendar's Category/Color-by row and List's Client/Category row. */
     .cal-filters {
-      @apply ml-0;
+      @apply ml-0 w-full grid grid-cols-2 gap-2;
+    }
+    .cal-filter-item {
+      @apply flex-col items-start gap-[0.2rem] min-w-0;
+    }
+    .cal-filter-item select {
+      @apply w-full;
+    }
+    .list-header {
+      @apply flex-col items-stretch;
+    }
+    .list-header > .btn {
+      @apply w-full;
     }
     .cal-cell {
       @apply min-h-[56px] p-[0.3rem];
