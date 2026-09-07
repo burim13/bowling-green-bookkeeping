@@ -82,3 +82,4 @@ export const iconMoon = svg(`<path d="M15.5 12.3A6.5 6.5 0 0 1 7.7 4.5a6.5 6.5 0
 export const iconEllipsis = svg(
   `<circle cx="4.5" cy="10" r="1.1" fill="currentColor" stroke="none"/><circle cx="10" cy="10" r="1.1" fill="currentColor" stroke="none"/><circle cx="15.5" cy="10" r="1.1" fill="currentColor" stroke="none"/>`
 );
+export const iconSearch = svg(`<circle cx="8.7" cy="8.7" r="5.4"/><path d="m16.5 16.5-3.9-3.9"/>`);

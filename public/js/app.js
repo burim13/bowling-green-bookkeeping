@@ -1,7 +1,7 @@
-import { isFirebaseConfigured, auth } from "./firebase-init.js?v=1788795346382";
-import { escapeHtml } from "./html-safety.js?v=1788795346382";
-import { friendlyAuthError } from "./auth-errors.js?v=1788795346382";
-import { getEffectiveTheme, toggleTheme } from "./theme.js?v=1788795346382";
+import { isFirebaseConfigured, auth } from "./firebase-init.js?v=1788795760256";
+import { escapeHtml } from "./html-safety.js?v=1788795760256";
+import { friendlyAuthError } from "./auth-errors.js?v=1788795760256";
+import { getEffectiveTheme, toggleTheme } from "./theme.js?v=1788795760256";
 import {
   watchAuthState,
   signInWithPassword,
@@ -9,14 +9,14 @@ import {
   getOwnProfile,
   afterSignIn,
   updateOwnDisplayName,
-} from "./auth.js?v=1788795346382";
+} from "./auth.js?v=1788795760256";
 import {
   isMfaEnrolled,
   startMfaEnrollment,
   finishMfaEnrollment,
   getResolver,
   completeMfaSignIn,
-} from "./mfa.js?v=1788795346382";
+} from "./mfa.js?v=1788795760256";
 import {
   startSync,
   stopSync,
@@ -35,12 +35,12 @@ import {
   unmarkComplete,
   isFullyLoaded,
   getClientRecord,
-} from "./data.js?v=1788795346382";
-import { renderCalendar } from "./calendar-view.js?v=1788795346382";
-import { renderList } from "./list-view.js?v=1788795346382";
-import { describeRecurrence, describeRecurrenceHistory, getLastDueOccurrence, toISODate } from "./recurrence.js?v=1788795346382";
-import { colorFor, tintFor } from "./colors.js?v=1788795346382";
-import { githubRepoSlug } from "./firebase-config.js?v=1788795346382";
+} from "./data.js?v=1788795760256";
+import { renderCalendar } from "./calendar-view.js?v=1788795760256";
+import { renderList } from "./list-view.js?v=1788795760256";
+import { describeRecurrence, describeRecurrenceHistory, getLastDueOccurrence, toISODate } from "./recurrence.js?v=1788795760256";
+import { colorFor, tintFor } from "./colors.js?v=1788795760256";
+import { githubRepoSlug } from "./firebase-config.js?v=1788795760256";
 import {
   DOC_TYPES,
   docTypeLabel,
@@ -49,10 +49,10 @@ import {
   setDocumentReviewed,
   getDocumentDownloadURL,
   deleteDocument,
-} from "./documents.js?v=1788795346382";
-import { createClientInvite, subscribeToInviteStatus } from "./invites.js?v=1788795346382";
-import { subscribeToOwnCompliance } from "./client-compliance.js?v=1788795346382";
-import { subscribeToLetters, sendLetter, signLetter, deleteLetter, getLetterDownloadURL } from "./letters.js?v=1788795346382";
+} from "./documents.js?v=1788795760256";
+import { createClientInvite, subscribeToInviteStatus } from "./invites.js?v=1788795760256";
+import { subscribeToOwnCompliance } from "./client-compliance.js?v=1788795760256";
+import { subscribeToLetters, sendLetter, signLetter, deleteLetter, getLetterDownloadURL } from "./letters.js?v=1788795760256";
 import {
   stampSignature,
   stampFields,
@@ -62,8 +62,8 @@ import {
   loadPdfDocument,
   renderPdfPageToCanvas,
   FIELD_DEFAULT_SIZE,
-} from "./pdf-sign.js?v=1788795346382";
-import { iconEdit, iconTrash, iconPlus, iconPlusLarge, iconCheck, iconTag, iconUpload, iconLogout, iconCalendar, iconListView, iconFolder, iconFolderLarge, iconHome, iconChevronRight, iconUsers, iconAlertTriangle, iconSignature, iconFile, iconUploadLarge, iconDownload, iconClock, iconSun, iconMoon, iconEllipsis } from "./icons.js?v=1788795346382";
+} from "./pdf-sign.js?v=1788795760256";
+import { iconEdit, iconTrash, iconPlus, iconPlusLarge, iconCheck, iconTag, iconUpload, iconLogout, iconCalendar, iconListView, iconFolder, iconFolderLarge, iconHome, iconChevronRight, iconUsers, iconAlertTriangle, iconSignature, iconFile, iconUploadLarge, iconDownload, iconClock, iconSun, iconMoon, iconEllipsis, iconSearch } from "./icons.js?v=1788795760256";
 
 const DEFAULT_CATEGORIES = [
   "Payroll",
@@ -128,9 +128,6 @@ function init() {
     return;
   }
 
-  // Icon + label markup so these can collapse to icon-only on narrow screens (see .btn-header
-  // in styles.css) without duplicating the icon set into static HTML.
-  qs("sign-out-btn").innerHTML = `<span class="btn-header-icon">${iconLogout}</span><span class="btn-header-label">Sign out</span>`;
   qs("toolbar-actions-btn").innerHTML = iconEllipsis;
 
   wireAuthForms();
@@ -229,8 +226,6 @@ function wireAuthForms() {
       }
     }
   });
-
-  qs("sign-out-btn").addEventListener("click", () => signOutUser());
 }
 
 function showAuthError(message) {
@@ -360,12 +355,40 @@ function renderUserBadge(user, profile) {
 
   els.userBadge.innerHTML = `
     <span class="avatar-badge" style="background:${tintFor(userColor)}; color:${userColor};">${escapeHtml(initials)}</span>
-    <button type="button" id="user-badge-name-btn" class="user-badge-name-btn" title="Edit your name">
+    <button type="button" id="user-badge-name-btn" class="user-badge-name-btn" title="Account">
       <span class="user-badge-name">${escapeHtml(firstName)}</span>
       <span class="user-badge-role">${roleLabel}</span>
     </button>
   `;
-  qs("user-badge-name-btn").addEventListener("click", () => openEditNameModal(user, profile));
+  qs("user-badge-name-btn").addEventListener("click", () => openUserMenu(user, profile));
+}
+
+// Click the name -> a small menu instead of a permanently-visible Sign out button taking up
+// header space at every screen size.
+function openUserMenu(user, profile) {
+  openModal(`
+    <h2>Account</h2>
+    <div class="ios-grouped-list">
+      <button type="button" class="ios-grouped-list-row" id="user-menu-edit-name">
+        <span class="ios-grouped-list-row-icon" style="background:#8E8E93;">${iconEdit}</span>
+        <span class="ios-grouped-list-row-label">Edit name</span>
+      </button>
+      <button type="button" class="ios-grouped-list-row" id="user-menu-sign-out">
+        <span class="ios-grouped-list-row-icon" style="background:#FF3B30;">${iconLogout}</span>
+        <span class="ios-grouped-list-row-label">Sign out</span>
+      </button>
+    </div>
+    <div class="modal-actions"><button type="button" class="btn" data-action="close">Cancel</button></div>
+  `);
+  qs("modal-content").querySelector('[data-action="close"]').addEventListener("click", closeModal);
+  qs("user-menu-edit-name").addEventListener("click", () => {
+    closeModal();
+    openEditNameModal(user, profile);
+  });
+  qs("user-menu-sign-out").addEventListener("click", () => {
+    closeModal();
+    signOutUser();
+  });
 }
 
 function openEditNameModal(user, profile) {
@@ -439,6 +462,17 @@ function wireToolbar() {
   els.clientSearch.addEventListener("input", (e) => {
     viewState.clientSearch = e.target.value;
     renderClientList();
+  });
+
+  // The sidebar's own +/search pill duplicates two things that already exist elsewhere (the
+  // same actions menu as "...", the same search input as before) rather than being new
+  // functionality -- just a more convenient entry point right next to the client list itself.
+  qs("sidebar-add-btn").innerHTML = iconPlus;
+  qs("sidebar-add-btn").addEventListener("click", () => openToolbarActionsMenu());
+  qs("sidebar-search-btn").innerHTML = iconSearch;
+  qs("sidebar-search-btn").addEventListener("click", () => {
+    els.clientSearch.hidden = !els.clientSearch.hidden;
+    if (!els.clientSearch.hidden) els.clientSearch.focus();
   });
 
   qs("toolbar-actions-btn").innerHTML = iconEllipsis;

@@ -273,12 +273,17 @@
     @apply top-0 border-b;
     border-color: var(--color-glass-border);
   }
+  /* Floating pill, not edge-to-edge -- margin on all sides + full rounding + a shadow for depth,
+     matching the current iOS tab-bar treatment rather than the older flush-with-the-edge style.
+     overflow-hidden so the blur/background actually respects the rounded corners instead of the
+     tab items poking past them. */
   .ios-glass-bar-bottom {
-    @apply bottom-0 border-t;
+    @apply mx-3 rounded-[22px] shadow-lg border overflow-hidden;
     border-color: var(--color-glass-border);
-    /* env(safe-area-inset-bottom) keeps tab labels clear of the home-indicator area if this is
-       ever added to an iPhone home screen as a PWA -- 0 on every other browser/device. */
-    padding-bottom: env(safe-area-inset-bottom);
+    /* max(...) so there's always some breathing room even on a device with no safe-area inset,
+       not just "0 margin" -- env() alone evaluates to 0 on everything but an actual notched
+       iPhone. */
+    margin-bottom: max(0.75rem, env(safe-area-inset-bottom));
   }
 
   .ios-nav-row {
@@ -355,7 +360,23 @@
   .save-status {
     @apply text-[0.8rem] text-text-muted min-w-[3.5rem] text-right transition-opacity inline-flex items-center justify-end gap-[0.3rem];
   }
-  .header-divider {
+  /* Floating rounded capsule with icon buttons -- used for the sidebar's +/search control, see
+     the reference screenshot. Reusable anywhere else a compact icon-button cluster fits better
+     than a full toolbar row. */
+  .pill-bar {
+    @apply flex items-center bg-card rounded-full shadow-sm border border-border mb-3 w-fit;
+  }
+  .pill-icon-btn {
+    @apply flex items-center justify-center w-10 h-10 rounded-full border-0 bg-transparent cursor-pointer text-text transition-colors;
+  }
+  .pill-icon-btn:hover {
+    background: color-mix(in srgb, var(--color-text) 6%, transparent);
+  }
+  .pill-icon-btn svg {
+    width: 17px;
+    height: 17px;
+  }
+  .pill-divider {
     @apply w-px h-5 bg-border shrink-0;
   }
   .user-badge {

@@ -18,7 +18,7 @@
   </script>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Dancing+Script:wght@600&display=swap" />
-  <link rel="stylesheet" href="css/styles.css?v=1788795346382" />
+  <link rel="stylesheet" href="css/styles.css?v=1788795760256" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
 </head>
@@ -112,8 +112,6 @@
           <button id="theme-toggle-btn" class="icon-btn" title="Toggle light/dark mode" aria-label="Toggle light/dark mode"></button>
           <button id="toolbar-actions-btn" class="icon-btn" title="Actions" aria-label="Actions"></button>
           <span id="user-badge" class="user-badge"></span>
-          <span class="header-divider"></span>
-          <button id="sign-out-btn" class="btn btn-ghost btn-header" title="Sign out">Sign out</button>
         </div>
       </div>
       <div class="ios-large-title-wrap">
@@ -125,7 +123,12 @@
       <div id="sidebar-backdrop" class="sidebar-backdrop" hidden></div>
       <aside class="sidebar" id="client-sidebar">
         <h2>Clients</h2>
-        <input type="text" id="client-search" class="client-search" placeholder="Search clients..." />
+        <div class="pill-bar">
+          <button type="button" id="sidebar-add-btn" class="pill-icon-btn" title="Actions" aria-label="Actions"></button>
+          <span class="pill-divider"></span>
+          <button type="button" id="sidebar-search-btn" class="pill-icon-btn" title="Search clients" aria-label="Search clients"></button>
+        </div>
+        <input type="text" id="client-search" class="client-search" placeholder="Search clients..." hidden />
         <div id="client-list"></div>
       </aside>
       <main id="view-container" class="view-container"></main>
@@ -187,6 +190,6 @@
     <nav class="ios-glass-bar ios-glass-bar-bottom ios-tab-bar" id="client-tab-bar"></nav>
   </div>
 
-  <script type="module" src="js/app.js?v=1788795346382"></script>
+  <script type="module" src="js/app.js?v=1788795760256"></script>
 </body>
 </html>
