@@ -15,7 +15,7 @@ import {
   serverTimestamp,
   writeBatch,
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
-import { db, auth } from "./firebase-init.js?v=1788806140664";
+import { db, auth } from "./firebase-init.js?v=1788807838470";
 
 // ---- live store ----------------------------------------------------------
 
@@ -30,10 +30,15 @@ const state = {
   // time; the Documents tab itself still uses its own per-client subscription (documents.js) for
   // full list rendering.
   documents: new Map(),
+  // sentFormId -> { id, clientId, templateName, status, ... } -- staff only. Loaded globally
+  // (same reasoning as documents above) so the Client Hub accordion can badge each client's
+  // "awaiting form return" count; the per-client Forms tab uses its own subscription
+  // (forms.js's subscribeToSentForms) for full list rendering.
+  sentForms: new Map(),
   currentUserRole: null, // "admin" | "staff" | null, for the signed-in user
   // Whether each live listener has received its first snapshot yet -- lets the UI show a
   // loading state instead of momentarily flashing "no clients yet" while data is still en route.
-  loaded: { clients: false, items: false, completions: false, categories: false, letters: false, documents: false },
+  loaded: { clients: false, items: false, completions: false, categories: false, letters: false, documents: false, sentForms: false },
 };
 
 export function isFullyLoaded() {
@@ -71,6 +76,7 @@ export function startSync() {
   state.loaded.categories = false;
   state.loaded.letters = false;
   state.loaded.documents = false;
+  state.loaded.sentForms = false;
 
   unsubscribers.push(
     onSnapshot(
@@ -173,6 +179,25 @@ export function startSync() {
           state.documents.set(d.id, { id: d.id, clientId, ...d.data() });
         });
         state.loaded.documents = true;
+        notifyData();
+      },
+      (err) => setSaveStatus("error", err.message)
+    )
+  );
+
+  // Same reasoning as letters above -- lightweight status metadata, loaded globally so the
+  // Client Hub accordion can badge each client's "awaiting form return" count. The per-client
+  // Forms tab uses its own subscription (forms.js's subscribeToSentForms) for full rendering.
+  unsubscribers.push(
+    onSnapshot(
+      collectionGroup(db, "sentForms"),
+      (snap) => {
+        state.sentForms.clear();
+        snap.forEach((d) => {
+          const clientId = d.ref.parent.parent.id;
+          state.sentForms.set(d.id, { id: d.id, clientId, ...d.data() });
+        });
+        state.loaded.sentForms = true;
         notifyData();
       },
       (err) => setSaveStatus("error", err.message)

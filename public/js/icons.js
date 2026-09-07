@@ -73,6 +73,11 @@ export const iconDownload = svg(
 export const iconClock = svg(
   `<circle cx="10" cy="10" r="7"/><path d="M10 6v4l2.6 2.6"/>`
 );
+// Forms library / Forms tab -- deliberately distinct from iconFile (Documents) since the two
+// tabs sit side by side in both tab bars.
+const CLIPBOARD_PATH = `<path d="M7 3.5h6a1 1 0 0 1 1 1V4h1a1 1 0 0 1 1 1v10.5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h1v.5a1 1 0 0 0 1 1z"/><path d="M7.3 2.5h5.4a.7.7 0 0 1 .7.7v.6a.7.7 0 0 1-.7.7H7.3a.7.7 0 0 1-.7-.7v-.6a.7.7 0 0 1 .7-.7z"/><path d="M7 9h6"/><path d="M7 12h6"/><path d="M7 15h3.5"/>`;
+export const iconClipboard = svg(CLIPBOARD_PATH);
+export const iconClipboardLarge = svg(CLIPBOARD_PATH, { size: 22 });
 
 // Theme toggle + toolbar overflow menu icons.
 export const iconSun = svg(

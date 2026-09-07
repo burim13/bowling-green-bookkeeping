@@ -144,6 +144,52 @@ exports.setStorageCors = onCall(async (request) => {
   }
 });
 
+// Forms library: staff picks a blank template and one or more clients (see the "Forms Library"
+// modal in public/js/app.js / public/js/forms.js). Runs server-side rather than having the
+// browser download the template and re-upload it per client -- for a bulk send to many clients
+// that's N round trips of file bytes through the client's own connection for no reason, when the
+// Admin SDK can copy the object bucket-to-bucket directly. Each copy becomes that client's own
+// Storage object (see storage.rules) and their own sentForms doc, which is what
+// functions.sendFormEmail below actually reacts to.
+exports.sendFormToClients = onCall(async (request) => {
+  if (!request.auth || request.auth.token.approved !== true) {
+    throw new HttpsError("permission-denied", "Approved staff only.");
+  }
+  const { templateId, clientIds, note } = request.data || {};
+  if (!templateId || !Array.isArray(clientIds) || clientIds.length === 0) {
+    throw new HttpsError("invalid-argument", "templateId and at least one clientId are required.");
+  }
+
+  const templateSnap = await db.collection("formTemplates").doc(templateId).get();
+  if (!templateSnap.exists) {
+    throw new HttpsError("not-found", "That template no longer exists.");
+  }
+  const template = templateSnap.data();
+  const bucket = getStorage().bucket();
+  const sentBy = request.auth.token.email;
+
+  let sentCount = 0;
+  for (const clientId of clientIds) {
+    const sentFormRef = db.collection("clients").doc(clientId).collection("sentForms").doc();
+    const destPath = `clients/${clientId}/sentForms/${sentFormRef.id}/blank.pdf`;
+    await bucket.file(template.storagePath).copy(bucket.file(destPath));
+    await sentFormRef.set({
+      templateId,
+      templateName: template.name,
+      storagePath: destPath,
+      note: note || null,
+      status: "sent",
+      sentBy,
+      sentAt: FieldValue.serverTimestamp(),
+      returnedAt: null,
+      returnedDocId: null,
+      returnedVia: null,
+    });
+    sentCount++;
+  }
+  return { sentCount };
+});
+
 const RESEND_API_KEY = defineSecret("RESEND_API_KEY");
 // e.g. "Bowling Green Bookkeeping & Taxes <onboarding@resend.dev>" if you haven't verified a
 // custom sending domain in Resend yet -- see README for how to set this.
@@ -267,6 +313,69 @@ exports.notifyStaffOnLetterSigned = onDocumentWritten(
       );
     } catch (err) {
       logger.error(`Failed to notify staff for signed letter ${clientId}`, err);
+    }
+  }
+);
+
+// Client-facing: staff sent a new form (see exports.sendFormToClients above, which is what
+// actually creates this doc). Silently does nothing if their account doesn't exist yet, same as
+// sendLetterEmail's own "nothing to send" case.
+exports.sendFormEmail = onDocumentCreated(
+  { document: "clients/{clientId}/sentForms/{sentFormId}", secrets: [RESEND_API_KEY, MAIL_FROM] },
+  async (event) => {
+    const { clientId, sentFormId } = event.params;
+    const form = event.data.data();
+    const email = await getClientAccountEmail(clientId);
+    if (!email) return;
+
+    const noteText = form.note ? `${form.note}\n\n` : "";
+    const noteHtml = form.note ? `${escapeHtml(form.note)}<br><br>` : "";
+
+    try {
+      await sendEmail({
+        to: email,
+        subject: `A form is ready for you -- ${APP_NAME}`,
+        text: `${noteText}"${form.templateName}" is ready for you to download and fill out in your Client Hub.\n\nSign in to your Client Hub: ${APP_URL}/`,
+        html: buildLetterHtml("A form is ready for you", `${noteHtml}<strong>${escapeHtml(form.templateName)}</strong> is ready for you to download and fill out in your Client Hub.`, "Open Client Hub"),
+      });
+    } catch (err) {
+      logger.error(`Failed to send form-ready email for ${clientId}/${sentFormId}`, err);
+    }
+  }
+);
+
+// Staff-facing: a client's form just came back -- either they uploaded the completed copy
+// themselves (returnedVia "upload") or staff marked it received by some other means, like an
+// emailed-back copy (returnedVia "manual"). Same staff recipient list/pattern as
+// notifyStaffOnLetterSigned above.
+exports.notifyStaffOnFormReturned = onDocumentWritten(
+  { document: "clients/{clientId}/sentForms/{sentFormId}", secrets: [RESEND_API_KEY, MAIL_FROM] },
+  async (event) => {
+    const before = event.data.before.exists ? event.data.before.data() : null;
+    const after = event.data.after.exists ? event.data.after.data() : null;
+    if (!after || after.status !== "returned" || before?.status === "returned") return;
+
+    const { clientId } = event.params;
+    const [staffEmails, clientSnap] = await Promise.all([
+      getStaffEmails(),
+      db.collection("clients").doc(clientId).get(),
+    ]);
+    if (staffEmails.length === 0) return;
+    const clientName = clientSnap.exists ? clientSnap.data().name : "A client";
+
+    try {
+      await Promise.all(
+        staffEmails.map((to) =>
+          sendEmail({
+            to,
+            subject: `${clientName} returned "${after.templateName}" -- ${APP_NAME}`,
+            text: `${clientName} just returned "${after.templateName}".\n\nOpen it in the Client Hub: ${APP_URL}/`,
+            html: buildLetterHtml("Form returned", `<strong>${escapeHtml(clientName)}</strong> just returned <strong>${escapeHtml(after.templateName)}</strong>.`, "Open Client Hub"),
+          })
+        )
+      );
+    } catch (err) {
+      logger.error(`Failed to notify staff for returned form ${clientId}`, err);
     }
   }
 );

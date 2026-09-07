@@ -1285,6 +1285,15 @@
       @apply min-w-0 basis-full;
     }
 
+    /* .doc-row's trailing controls (a status badge plus one or more buttons -- for a forms row,
+       that includes a full text button, not just a small icon button) don't all fit on one line
+       at phone width. Without this they overflow past the edge of the screen instead of wrapping
+       -- .doc-row-name/.doc-row-meta's own min-width:0 already lets the name text itself wrap,
+       but that alone doesn't help the row's fixed-width trailing buttons. */
+    .doc-row {
+      @apply flex-wrap gap-y-2;
+    }
+
     .modal-backdrop {
       @apply px-2 py-4;
     }

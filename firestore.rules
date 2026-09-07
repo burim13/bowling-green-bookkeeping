@@ -85,6 +85,27 @@ service cloud.firestore {
           allow read: if isOwningClient(clientId);
         }
       }
+
+      // Blank form templates staff sent to this client (see public/js/forms.js) -- one doc per
+      // send, each with its own copy of the PDF (functions/index.js's sendFormToClients copies
+      // it server-side at send time). Staff manage everything; the owning client's only write is
+      // the one-way "sent" -> "returned" flip when THEY upload the completed copy back (see
+      // returnedDocId/returnedVia below) -- same one-way-transition shape as letters'
+      // "sent" -> "signed" rule above. A client emailing the completed form back instead isn't
+      // tracked here at all -- staff flips this manually in that case (returnedVia "manual"),
+      // which is just an ordinary staff update, no special rule needed for it.
+      match /sentForms/{sentFormId} {
+        allow read: if isApproved() || isOwningClient(clientId);
+        allow create, delete: if isApproved();
+        allow update: if isApproved() ||
+          (isOwningClient(clientId) &&
+            resource.data.status == 'sent' &&
+            request.resource.data.status == 'returned' &&
+            request.resource.data.diff(resource.data).affectedKeys()
+              .hasOnly(['status', 'returnedAt', 'returnedDocId', 'returnedVia']) &&
+            request.resource.data.returnedDocId is string &&
+            request.resource.data.returnedVia == 'upload');
+      }
     }
 
     // The app loads items/completions across ALL clients at once via collectionGroup()
@@ -113,6 +134,20 @@ service cloud.firestore {
     // documents directly, which the nested rule already allows.
     match /{path=**}/documents/{docId} {
       allow read: if isApproved();
+    }
+    // ADDITIONAL to (not a replacement for) the nested /clients/{clientId}/sentForms/{sentFormId}
+    // rule above -- this only exists so the Client Hub accordion can collectionGroup() across
+    // every client's sent forms at once to badge each one's awaiting-return count (see
+    // public/js/data.js). Clients never need this: they only ever read their own client's sent
+    // forms directly, which the nested rule already allows.
+    match /{path=**}/sentForms/{sentFormId} {
+      allow read: if isApproved();
+    }
+
+    // The shared library of blank PDF templates staff send to clients (see
+    // public/js/forms.js/Forms Library in app.js) -- firm-wide, not scoped to any one client.
+    match /formTemplates/{templateId} {
+      allow read, write: if isApproved();
     }
 
     // The allowlist is the actual security boundary (see isApproved() above) -- letting any

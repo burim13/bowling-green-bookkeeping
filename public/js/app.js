@@ -1,7 +1,7 @@
-import { isFirebaseConfigured, auth } from "./firebase-init.js?v=1788806140664";
-import { escapeHtml } from "./html-safety.js?v=1788806140664";
-import { friendlyAuthError } from "./auth-errors.js?v=1788806140664";
-import { getEffectiveTheme, toggleTheme } from "./theme.js?v=1788806140664";
+import { isFirebaseConfigured, auth } from "./firebase-init.js?v=1788807838470";
+import { escapeHtml } from "./html-safety.js?v=1788807838470";
+import { friendlyAuthError } from "./auth-errors.js?v=1788807838470";
+import { getEffectiveTheme, toggleTheme } from "./theme.js?v=1788807838470";
 import {
   watchAuthState,
   signInWithPassword,
@@ -9,14 +9,14 @@ import {
   getOwnProfile,
   afterSignIn,
   updateOwnDisplayName,
-} from "./auth.js?v=1788806140664";
+} from "./auth.js?v=1788807838470";
 import {
   isMfaEnrolled,
   startMfaEnrollment,
   finishMfaEnrollment,
   getResolver,
   completeMfaSignIn,
-} from "./mfa.js?v=1788806140664";
+} from "./mfa.js?v=1788807838470";
 import {
   startSync,
   stopSync,
@@ -35,12 +35,12 @@ import {
   unmarkComplete,
   isFullyLoaded,
   getClientRecord,
-} from "./data.js?v=1788806140664";
-import { renderCalendar } from "./calendar-view.js?v=1788806140664";
-import { renderList } from "./list-view.js?v=1788806140664";
-import { describeRecurrence, describeRecurrenceHistory, getLastDueOccurrence, toISODate } from "./recurrence.js?v=1788806140664";
-import { colorFor, tintFor } from "./colors.js?v=1788806140664";
-import { githubRepoSlug } from "./firebase-config.js?v=1788806140664";
+} from "./data.js?v=1788807838470";
+import { renderCalendar } from "./calendar-view.js?v=1788807838470";
+import { renderList } from "./list-view.js?v=1788807838470";
+import { describeRecurrence, describeRecurrenceHistory, getLastDueOccurrence, toISODate } from "./recurrence.js?v=1788807838470";
+import { colorFor, tintFor } from "./colors.js?v=1788807838470";
+import { githubRepoSlug } from "./firebase-config.js?v=1788807838470";
 import {
   DOC_TYPES,
   docTypeLabel,
@@ -49,10 +49,20 @@ import {
   setDocumentReviewed,
   getDocumentDownloadURL,
   deleteDocument,
-} from "./documents.js?v=1788806140664";
-import { createClientInvite, subscribeToInviteStatus } from "./invites.js?v=1788806140664";
-import { subscribeToOwnCompliance } from "./client-compliance.js?v=1788806140664";
-import { subscribeToLetters, sendLetter, signLetter, deleteLetter, getLetterDownloadURL } from "./letters.js?v=1788806140664";
+} from "./documents.js?v=1788807838470";
+import { createClientInvite, subscribeToInviteStatus } from "./invites.js?v=1788807838470";
+import { subscribeToOwnCompliance } from "./client-compliance.js?v=1788807838470";
+import { subscribeToLetters, sendLetter, signLetter, deleteLetter, getLetterDownloadURL } from "./letters.js?v=1788807838470";
+import {
+  subscribeToFormTemplates,
+  uploadFormTemplate,
+  deleteFormTemplate,
+  getFormDownloadURL,
+  sendFormToClients,
+  subscribeToSentForms,
+  markFormReturned,
+  markFormReturnedManually,
+} from "./forms.js?v=1788807838470";
 import {
   stampSignature,
   stampFields,
@@ -62,8 +72,8 @@ import {
   loadPdfDocument,
   renderPdfPageToCanvas,
   FIELD_DEFAULT_SIZE,
-} from "./pdf-sign.js?v=1788806140664";
-import { iconEdit, iconTrash, iconPlus, iconPlusLarge, iconCheck, iconTag, iconUpload, iconLogout, iconCalendar, iconListView, iconFolder, iconFolderLarge, iconHome, iconChevronRight, iconUsers, iconAlertTriangle, iconSignature, iconFile, iconUploadLarge, iconDownload, iconClock, iconSun, iconMoon, iconSearch } from "./icons.js?v=1788806140664";
+} from "./pdf-sign.js?v=1788807838470";
+import { iconEdit, iconTrash, iconPlus, iconPlusLarge, iconCheck, iconTag, iconUpload, iconLogout, iconCalendar, iconListView, iconFolder, iconFolderLarge, iconHome, iconChevronRight, iconUsers, iconAlertTriangle, iconSignature, iconFile, iconUploadLarge, iconDownload, iconClock, iconSun, iconMoon, iconSearch, iconClipboard } from "./icons.js?v=1788807838470";
 
 const DEFAULT_CATEGORIES = [
   "Payroll",
@@ -144,6 +154,8 @@ function init() {
       clientDocsUnsub = null;
       clientLettersUnsub?.();
       clientLettersUnsub = null;
+      clientFormsUnsub?.();
+      clientFormsUnsub = null;
       clientComplianceUnsub?.();
       clientComplianceUnsub = null;
       staffDocsUnsub?.();
@@ -498,6 +510,10 @@ function openToolbarActionsMenu() {
         <span class="ios-grouped-list-row-icon" style="background:#007AFF;">${iconPlus}</span>
         <span class="ios-grouped-list-row-label">Add item to clients...</span>
       </button>
+      <button type="button" class="ios-grouped-list-row" id="toolbar-action-forms-library">
+        <span class="ios-grouped-list-row-icon" style="background:#AF52DE;">${iconClipboard}</span>
+        <span class="ios-grouped-list-row-label">Forms library</span>
+      </button>
       <button type="button" class="ios-grouped-list-row" id="toolbar-action-manage-categories">
         <span class="ios-grouped-list-row-icon" style="background:#8E8E93;">${iconTag}</span>
         <span class="ios-grouped-list-row-label">Manage categories</span>
@@ -517,6 +533,10 @@ function openToolbarActionsMenu() {
   qs("toolbar-action-add-item").addEventListener("click", () => {
     closeModal();
     openBulkAddItemModal();
+  });
+  qs("toolbar-action-forms-library").addEventListener("click", () => {
+    closeModal();
+    openFormsLibraryModal();
   });
   qs("toolbar-action-manage-categories").addEventListener("click", () => {
     closeModal();
@@ -764,11 +784,13 @@ const CLIENT_HUB_TABS = [
   { id: "compliance", label: "Compliance" },
   { id: "documents", label: "Documents" },
   { id: "letters", label: "Letters" },
+  { id: "forms", label: "Forms" },
 ];
 
 let clientHubExpandedId = null;
 let clientHubActiveTab = "overview";
 let staffDocsUnsub = null;
+let formsLibraryUnsub = null;
 
 function renderClientHubStaffView() {
   staffDocsUnsub?.();
@@ -832,6 +854,7 @@ function renderClientHubStaffView() {
         compliance: attention.overdue,
         documents: attention.pendingDocs,
         letters: attention.awaitingSignature,
+        forms: attention.awaitingFormReturn,
       };
       const tabBar = document.createElement("div");
       tabBar.className = "client-tab-bar";
@@ -911,6 +934,13 @@ function renderClientHubTabContent(container, client, tab) {
     // document.getElementById would find nothing here, so this has to search within container
     // itself instead.
     renderLetterListStaff(container.querySelector("#letter-list-staff"), letters, client.id);
+    return;
+  }
+  if (tab === "forms") {
+    const sentForms = [...latestState.sentForms.values()]
+      .filter((f) => f.clientId === client.id)
+      .sort((a, b) => (b.sentAt?.toMillis() || 0) - (a.sentAt?.toMillis() || 0));
+    renderSentFormListStaff(container, sentForms, client.id);
     return;
   }
 }
@@ -1137,6 +1167,70 @@ function wireLetterRowsStaff(container, clientId) {
         await deleteLetter(clientId, btn.dataset.letterId, btn.dataset.storagePath);
       } catch (err) {
         alert("Could not delete: " + err.message);
+        btn.disabled = false;
+      }
+    });
+  });
+}
+
+// ---- forms library (staff-facing: this client's own sent-forms history) -------------------
+
+function renderSentFormListStaff(container, sentForms, clientId) {
+  if (sentForms.length === 0) {
+    container.innerHTML = `<div class="empty-hint">No forms sent yet.</div>`;
+    return;
+  }
+  container.innerHTML = `<div class="ios-grouped-list">${sentForms.map(sentFormRowHtmlStaff).join("")}</div>`;
+  wireSentFormRowsStaff(container, clientId);
+}
+
+function sentFormRowHtmlStaff(f) {
+  const sentDate = f.sentAt?.toDate ? f.sentAt.toDate().toLocaleDateString() : "Sending…";
+  const meta =
+    f.status === "returned" && f.returnedAt?.toDate
+      ? `Returned ${f.returnedAt.toDate().toLocaleDateString()}${f.returnedVia === "manual" ? " (marked manually)" : ""}`
+      : `Sent ${sentDate}`;
+  const statusBadge =
+    f.status === "returned"
+      ? `<span class="doc-status-badge doc-status-reviewed">Returned</span>`
+      : `<span class="doc-status-badge doc-status-pending">Awaiting return</span>`;
+  // Covers the client emailing the completed form back instead of uploading it -- the app has
+  // no way to know that happened on its own, so staff flips it by hand here.
+  const returnBtn =
+    f.status === "sent"
+      ? `<button class="icon-btn" data-action="mark-form-returned" data-sent-form-id="${f.id}" title="Mark as returned" aria-label="Mark as returned">${iconCheck}</button>`
+      : "";
+  return `
+    <div class="doc-row">
+      <span class="doc-row-icon" style="background:${tintFor("#AF52DE")}; color:#AF52DE;">${iconClipboard}</span>
+      <span style="flex:1; min-width:0;">
+        <div class="doc-row-name">${escapeHtml(f.templateName)}</div>
+        <div class="doc-row-meta">${escapeHtml(meta)}</div>
+      </span>
+      ${statusBadge}
+      <button class="icon-btn" data-action="download-sent-form" data-storage-path="${escapeHtml(f.storagePath)}" title="Download" aria-label="Download">${iconDownload}</button>
+      ${returnBtn}
+    </div>`;
+}
+
+function wireSentFormRowsStaff(container, clientId) {
+  container.querySelectorAll('[data-action="download-sent-form"]').forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      try {
+        const url = await getFormDownloadURL(btn.dataset.storagePath);
+        window.open(url, "_blank", "noopener");
+      } catch (err) {
+        alert("Could not open document: " + err.message);
+      }
+    });
+  });
+  container.querySelectorAll('[data-action="mark-form-returned"]').forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      btn.disabled = true;
+      try {
+        await markFormReturnedManually(clientId, btn.dataset.sentFormId);
+      } catch (err) {
+        alert("Could not update: " + err.message);
         btn.disabled = false;
       }
     });
@@ -1383,6 +1477,7 @@ let clientHubClientId = null;
 let clientHubClientName = "";
 let clientDocsUnsub = null;
 let clientLettersUnsub = null;
+let clientFormsUnsub = null;
 let clientComplianceUnsub = null;
 let clientLatestDocuments = [];
 let clientLatestLetters = [];
@@ -1392,6 +1487,7 @@ let clientLatestLetters = [];
 const CLIENT_NAV_ITEMS = [
   { id: "documents", label: "Documents", icon: iconFile },
   { id: "letters", label: "Letters", icon: iconSignature },
+  { id: "forms", label: "Forms", icon: iconClipboard },
   { id: "compliance", label: "Compliance", icon: iconCheck },
 ];
 
@@ -1452,6 +1548,7 @@ function setClientHubTab(tab) {
 
   qs("chub-panel-documents").hidden = tab !== "documents";
   qs("chub-panel-letters").hidden = tab !== "letters";
+  qs("chub-panel-forms").hidden = tab !== "forms";
   qs("chub-panel-compliance").hidden = tab !== "compliance";
 
   if (tab === "compliance" && !clientComplianceUnsub && clientHubClientId) {
@@ -1549,6 +1646,13 @@ async function showClientHub(profile) {
     },
     (err) => console.error(err)
   );
+
+  clientFormsUnsub?.();
+  clientFormsUnsub = subscribeToSentForms(
+    profile.clientId,
+    (sentForms) => renderSentFormListClient(qs("chub-forms-list"), sentForms, profile.clientId),
+    (err) => console.error(err)
+  );
 }
 
 function renderClientStatGrid() {
@@ -1634,6 +1738,89 @@ function wireLetterRowsClient(container, clientId, letters) {
       } catch (err) {
         alert("Could not open document: " + err.message);
       }
+    });
+  });
+}
+
+// ---- forms library (client-facing: download a blank form, upload the completed copy back) --
+
+function renderSentFormListClient(container, sentForms, clientId) {
+  if (sentForms.length === 0) {
+    container.innerHTML = `<div class="empty-hint">No forms yet.</div>`;
+    return;
+  }
+  container.innerHTML = `<div class="ios-grouped-list">${sentForms.map(sentFormRowHtmlClient).join("")}</div>`;
+  wireSentFormRowsClient(container, clientId);
+}
+
+function sentFormRowHtmlClient(f) {
+  const meta =
+    f.status === "returned" && f.returnedAt?.toDate
+      ? `Returned ${f.returnedAt.toDate().toLocaleDateString()}`
+      : `Sent ${f.sentAt?.toDate ? f.sentAt.toDate().toLocaleDateString() : "recently"}`;
+  const statusBadge =
+    f.status === "returned"
+      ? `<span class="doc-status-badge doc-status-reviewed">Returned</span>`
+      : `<span class="doc-status-badge doc-status-pending">Awaiting your upload</span>`;
+  // Uploading here reuses the exact same Storage/Firestore write as the regular Documents-tab
+  // upload (see wireSentFormRowsClient below) -- the returned copy shows up in the normal
+  // Documents list too, not just here, since documents.js's subscription (already running for
+  // that tab) picks it up the same as any other upload.
+  const uploadControls =
+    f.status === "sent"
+      ? `<button class="btn btn-primary btn-sm" data-action="upload-form" data-sent-form-id="${f.id}">Upload completed</button>
+         <input type="file" accept=".pdf,.png,.jpg,.jpeg,.heic" data-sent-form-file="${f.id}" hidden />`
+      : "";
+  return `
+    <div class="doc-row">
+      <span class="doc-row-icon" style="background:${tintFor("#AF52DE")}; color:#AF52DE;">${iconClipboard}</span>
+      <span style="flex:1; min-width:0;">
+        <div class="doc-row-name">${escapeHtml(f.templateName)}</div>
+        <div class="doc-row-meta">${escapeHtml(meta)}</div>
+      </span>
+      ${statusBadge}
+      <button class="icon-btn" data-action="download-blank-form" data-storage-path="${escapeHtml(f.storagePath)}" title="Download blank form" aria-label="Download blank form">${iconDownload}</button>
+      ${uploadControls}
+    </div>`;
+}
+
+function wireSentFormRowsClient(container, clientId) {
+  container.querySelectorAll('[data-action="download-blank-form"]').forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      try {
+        const url = await getFormDownloadURL(btn.dataset.storagePath);
+        window.open(url, "_blank", "noopener");
+      } catch (err) {
+        alert("Could not open document: " + err.message);
+      }
+    });
+  });
+  container.querySelectorAll('[data-action="upload-form"]').forEach((btn) => {
+    btn.addEventListener("click", () => {
+      container.querySelector(`[data-sent-form-file="${btn.dataset.sentFormId}"]`).click();
+    });
+  });
+  container.querySelectorAll("[data-sent-form-file]").forEach((input) => {
+    input.addEventListener("change", async () => {
+      const file = input.files[0];
+      if (!file) return;
+      const sentFormId = input.dataset.sentFormFile;
+      const btn = container.querySelector(`[data-action="upload-form"][data-sent-form-id="${sentFormId}"]`);
+      if (btn) {
+        btn.disabled = true;
+        btn.textContent = "Uploading…";
+      }
+      try {
+        const docId = await uploadDocument(clientId, file, "other", auth.currentUser.email);
+        await markFormReturned(clientId, sentFormId, docId);
+      } catch (err) {
+        alert("Could not upload: " + err.message);
+        if (btn) {
+          btn.disabled = false;
+          btn.textContent = "Upload completed";
+        }
+      }
+      input.value = "";
     });
   });
 }
@@ -2070,7 +2257,14 @@ function clientAttentionCounts(clientId, stats) {
   const overdue = stats ? stats.total - stats.current : 0;
   const pendingDocs = [...latestState.documents.values()].filter((d) => d.clientId === clientId && !d.reviewed).length;
   const awaitingSignature = [...latestState.letters.values()].filter((l) => l.clientId === clientId && l.status === "sent").length;
-  return { overdue, pendingDocs, awaitingSignature, total: overdue + pendingDocs + awaitingSignature };
+  const awaitingFormReturn = [...latestState.sentForms.values()].filter((f) => f.clientId === clientId && f.status === "sent").length;
+  return {
+    overdue,
+    pendingDocs,
+    awaitingSignature,
+    awaitingFormReturn,
+    total: overdue + pendingDocs + awaitingSignature + awaitingFormReturn,
+  };
 }
 
 function badgeHtml(count) {
@@ -2525,6 +2719,199 @@ function openBulkAddItemModal() {
   });
 
   qs("modal-content").querySelector('[data-action="cancel"]').addEventListener("click", closeModal);
+}
+
+// ---- forms library (staff: upload/manage blank templates, send to clients) ----------------
+
+function openFormsLibraryModal() {
+  openModal(`
+    <h2>Forms library</h2>
+    <p class="client-tab-content">Upload a blank PDF once, then send it to any client whenever
+    they need it -- e.g. a blank Schedule C worksheet.</p>
+    <div id="forms-library-list"><div class="loading-hint"><span class="spinner"></span> Loading…</div></div>
+    <button type="button" class="btn btn-primary" id="forms-library-add-btn" style="margin-top:0.75rem;">Add template</button>
+    <div class="modal-actions">
+      <button type="button" class="btn" data-action="close">Close</button>
+    </div>
+  `);
+  qs("modal-content").querySelector('[data-action="close"]').addEventListener("click", closeModal);
+  qs("forms-library-add-btn").addEventListener("click", () => openAddFormTemplateModal());
+
+  // Not unsubscribed on every possible way this modal can close (backdrop click, Escape) --
+  // same as how the rest of this app's modal-scoped listeners behave (e.g. staffDocsUnsub is
+  // only cleaned up on specific view transitions, not every dismiss path). The `?.()` guard
+  // below means re-opening this modal always replaces the previous listener rather than
+  // stacking them, which is the part that actually matters.
+  formsLibraryUnsub?.();
+  formsLibraryUnsub = subscribeToFormTemplates(
+    (templates) => renderFormsLibraryList(templates),
+    (err) => {
+      const list = qs("forms-library-list");
+      if (list) list.innerHTML = `<p class="client-tab-content">Could not load templates: ${escapeHtml(err.message)}</p>`;
+    }
+  );
+}
+
+function renderFormsLibraryList(templates) {
+  const list = qs("forms-library-list");
+  if (!list) return; // modal already closed before this snapshot arrived
+  if (templates.length === 0) {
+    list.innerHTML = `<div class="empty-hint">No templates yet -- add one below.</div>`;
+    return;
+  }
+  list.innerHTML = `<div class="ios-grouped-list">${templates
+    .map(
+      (t) => `
+    <div class="doc-row">
+      <span class="doc-row-icon" style="background:${tintFor("#AF52DE")}; color:#AF52DE;">${iconClipboard}</span>
+      <span style="flex:1; min-width:0;">
+        <div class="doc-row-name">${escapeHtml(t.name)}</div>
+        <div class="doc-row-meta">${t.uploadedAt?.toDate ? t.uploadedAt.toDate().toLocaleDateString() : "Uploading…"}</div>
+      </span>
+      <button class="btn btn-sm" data-action="send-form" data-template-id="${t.id}">Send to client(s)</button>
+      <button class="icon-btn" data-action="download-template" data-storage-path="${escapeHtml(t.storagePath)}" title="Download" aria-label="Download ${escapeHtml(t.name)}">${iconDownload}</button>
+      <button class="icon-btn" data-action="delete-template" data-template-id="${t.id}" data-storage-path="${escapeHtml(t.storagePath)}" data-name="${escapeHtml(t.name)}" title="Delete" aria-label="Delete ${escapeHtml(t.name)}">${iconTrash}</button>
+    </div>`
+    )
+    .join("")}</div>`;
+
+  list.querySelectorAll('[data-action="send-form"]').forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const t = templates.find((x) => x.id === btn.dataset.templateId);
+      if (t) openSendFormModal(t);
+    });
+  });
+  list.querySelectorAll('[data-action="download-template"]').forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      try {
+        const url = await getFormDownloadURL(btn.dataset.storagePath);
+        window.open(url, "_blank", "noopener");
+      } catch (err) {
+        alert("Could not open template: " + err.message);
+      }
+    });
+  });
+  list.querySelectorAll('[data-action="delete-template"]').forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      if (!confirm(`Delete "${btn.dataset.name}"? This can't be undone.`)) return;
+      btn.disabled = true;
+      try {
+        await deleteFormTemplate(btn.dataset.templateId, btn.dataset.storagePath);
+      } catch (err) {
+        alert("Could not delete: " + err.message);
+        btn.disabled = false;
+      }
+    });
+  });
+}
+
+function openAddFormTemplateModal() {
+  openModal(`
+    <h2>Add template</h2>
+    <form id="add-template-form">
+      <label>Name<br/><input type="text" id="template-name-input" placeholder="2025 Schedule C Worksheet" required /></label>
+      <label style="display:block; margin-top:0.75rem;">PDF file<br/><input type="file" id="template-file-input" accept="application/pdf" required /></label>
+      <div id="add-template-error" class="auth-error" hidden></div>
+      <div class="modal-actions">
+        <button type="button" class="btn" data-action="back">Back</button>
+        <button type="submit" class="btn btn-primary" id="add-template-submit-btn">Add template</button>
+      </div>
+    </form>
+  `);
+  qs("modal-content").querySelector('[data-action="back"]').addEventListener("click", () => openFormsLibraryModal());
+
+  qs("add-template-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const name = qs("template-name-input").value.trim();
+    const file = qs("template-file-input").files[0];
+    const errEl = qs("add-template-error");
+    errEl.hidden = true;
+    if (!file || file.type !== "application/pdf") {
+      errEl.textContent = "Please choose a PDF file.";
+      errEl.hidden = false;
+      return;
+    }
+    const btn = qs("add-template-submit-btn");
+    btn.disabled = true;
+    try {
+      await uploadFormTemplate(file, name, auth.currentUser.email);
+      openFormsLibraryModal();
+    } catch (err) {
+      errEl.textContent = "Could not upload: " + err.message;
+      errEl.hidden = false;
+      btn.disabled = false;
+    }
+  });
+}
+
+function openSendFormModal(template) {
+  openModal(`
+    <h2>Send "${escapeHtml(template.name)}"</h2>
+    <div id="send-form-error" class="auth-error" hidden></div>
+    <form id="send-form-form">
+      <div class="bulk-clients-section">
+        <div class="bulk-clients-header">
+          <span>Send to which clients?</span>
+          <label class="bulk-select-all-label"><input type="checkbox" id="send-form-select-all" /> Select all</label>
+        </div>
+        <div id="send-form-clients-list" class="bulk-clients-list"></div>
+      </div>
+      <label style="margin-top:0.75rem;">Note (optional)<br/>
+        <textarea id="send-form-note" rows="3" placeholder="Any instructions for the client..."></textarea>
+      </label>
+      <div class="modal-actions">
+        <button type="button" class="btn" data-action="back">Back</button>
+        <button type="submit" class="btn btn-primary" id="send-form-submit-btn">Send</button>
+      </div>
+    </form>
+  `);
+
+  const clients = [...latestState.clients.values()].filter((c) => !c.archived).sort((a, b) => a.name.localeCompare(b.name));
+  const listEl = qs("send-form-clients-list");
+  listEl.innerHTML =
+    clients.length === 0
+      ? `<div class="empty-hint">No clients yet.</div>`
+      : clients
+          .map(
+            (c) => `
+      <label class="bulk-client-row">
+        <input type="checkbox" class="send-form-client-checkbox" value="${c.id}" />
+        <span class="client-dot" style="background:${colorFor(c.id)}"></span>
+        ${escapeHtml(c.name)}
+      </label>`
+          )
+          .join("");
+
+  qs("send-form-select-all").addEventListener("change", (e) => {
+    listEl.querySelectorAll(".send-form-client-checkbox").forEach((cb) => (cb.checked = e.target.checked));
+  });
+
+  qs("modal-content").querySelector('[data-action="back"]').addEventListener("click", () => openFormsLibraryModal());
+
+  qs("send-form-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const selectedClientIds = [...listEl.querySelectorAll(".send-form-client-checkbox:checked")].map((cb) => cb.value);
+    const errEl = qs("send-form-error");
+    errEl.hidden = true;
+    if (selectedClientIds.length === 0) {
+      errEl.textContent = "Select at least one client.";
+      errEl.hidden = false;
+      return;
+    }
+    const note = qs("send-form-note").value.trim();
+    const btn = qs("send-form-submit-btn");
+    btn.disabled = true;
+    btn.textContent = "Sending…";
+    try {
+      await sendFormToClients(template.id, selectedClientIds, note);
+      closeModal();
+    } catch (err) {
+      errEl.textContent = "Could not send: " + err.message;
+      errEl.hidden = false;
+      btn.disabled = false;
+      btn.textContent = "Send";
+    }
+  });
 }
 
 function openDayModal(date, entries) {

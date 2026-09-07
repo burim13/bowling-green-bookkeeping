@@ -9,11 +9,12 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 import { getFirestore } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 import { getStorage } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-storage.js";
-import { firebaseConfig, isFirebaseConfigured, recaptchaSiteKey } from "./firebase-config.js?v=1788806140664";
+import { getFunctions } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-functions.js";
+import { firebaseConfig, isFirebaseConfigured, recaptchaSiteKey } from "./firebase-config.js?v=1788807838470";
 
 export { isFirebaseConfigured };
 
-let app, auth, db, storage;
+let app, auth, db, storage, functionsInstance;
 
 if (isFirebaseConfigured) {
   app = initializeApp(firebaseConfig);
@@ -33,6 +34,7 @@ if (isFirebaseConfigured) {
   setPersistence(auth, browserLocalPersistence);
   db = getFirestore(app);
   storage = getStorage(app);
+  functionsInstance = getFunctions(app);
 }
 
-export { app, auth, db, storage };
+export { app, auth, db, storage, functionsInstance as functions };

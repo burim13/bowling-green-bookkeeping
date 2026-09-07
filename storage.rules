@@ -66,5 +66,19 @@ service firebase.storage {
       allow create: if (isApproved() || isOwningClient(clientId)) && isAllowedPdf();
       allow update, delete: if isApproved();
     }
+
+    // Forms library: the shared blank-template files (firm-wide, staff-only) and each client's
+    // own copy of one once it's sent to them (functions/index.js's sendFormToClients copies it
+    // server-side at send time, via the Admin SDK -- never through these rules, which is why
+    // there's no client-facing "create" path for the client's copy below: it's created for them,
+    // not by them).
+    match /formTemplates/{templateId}/{fileName} {
+      allow read: if isApproved();
+      allow create, update, delete: if isApproved() && isAllowedPdf();
+    }
+    match /clients/{clientId}/sentForms/{sentFormId}/blank.pdf {
+      allow read: if isApproved() || isOwningClient(clientId);
+      allow write: if isApproved();
+    }
   }
 }
