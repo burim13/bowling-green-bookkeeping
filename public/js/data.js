@@ -15,7 +15,7 @@ import {
   serverTimestamp,
   writeBatch,
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
-import { db, auth } from "./firebase-init.js?v=1788808484451";
+import { db, auth } from "./firebase-init.js?v=1788809593179";
 
 // ---- live store ----------------------------------------------------------
 
@@ -35,10 +35,23 @@ const state = {
   // "awaiting form return" count; the per-client Forms tab uses its own subscription
   // (forms.js's subscribeToSentForms) for full list rendering.
   sentForms: new Map(),
+  // clientId -> Map(periodKey -> { amount, updatedAt }) -- nested the same way completions above
+  // is, and for the same reason: every client's January doc shares the id "2025-01", so a flat
+  // map would collide across clients. Staff-only, powers the Fees tab.
+  fees: new Map(),
   currentUserRole: null, // "admin" | "staff" | null, for the signed-in user
   // Whether each live listener has received its first snapshot yet -- lets the UI show a
   // loading state instead of momentarily flashing "no clients yet" while data is still en route.
-  loaded: { clients: false, items: false, completions: false, categories: false, letters: false, documents: false, sentForms: false },
+  loaded: {
+    clients: false,
+    items: false,
+    completions: false,
+    categories: false,
+    letters: false,
+    documents: false,
+    sentForms: false,
+    fees: false,
+  },
 };
 
 export function isFullyLoaded() {
@@ -77,6 +90,7 @@ export function startSync() {
   state.loaded.letters = false;
   state.loaded.documents = false;
   state.loaded.sentForms = false;
+  state.loaded.fees = false;
 
   unsubscribers.push(
     onSnapshot(
@@ -203,6 +217,26 @@ export function startSync() {
       (err) => setSaveStatus("error", err.message)
     )
   );
+
+  // Nested the same way completions is (see state.fees above) -- every client's January doc
+  // shares the id "2025-01", so this can't be a flat map by doc id the way documents/sentForms
+  // above are.
+  unsubscribers.push(
+    onSnapshot(
+      collectionGroup(db, "fees"),
+      (snap) => {
+        state.fees.clear();
+        snap.forEach((d) => {
+          const clientId = d.ref.parent.parent.id;
+          if (!state.fees.has(clientId)) state.fees.set(clientId, new Map());
+          state.fees.get(clientId).set(d.id, d.data());
+        });
+        state.loaded.fees = true;
+        notifyData();
+      },
+      (err) => setSaveStatus("error", err.message)
+    )
+  );
 }
 
 export function stopSync() {
@@ -249,18 +283,48 @@ export async function getClientRecord(clientId) {
   return snap.exists() ? { id: snap.id, ...snap.data() } : null;
 }
 
-export function addClient(name, notes) {
+// isBookkeeping/isTaxClient aren't mutually exclusive -- a client can be both at once.
+// defaultMonthlyFee is the agreed rate ("Payment" in the old spreadsheet); it's a reference value
+// shown read-only in the Fees grid, not what actually gets summed -- see setClientFee below for
+// the real per-month amounts, which can differ from this.
+export function addClient(name, notes, { isBookkeeping, isTaxClient, defaultMonthlyFee } = {}) {
   return withSaveStatus(() =>
-    addDoc(collection(db, "clients"), { name, notes: notes || "", createdAt: serverTimestamp() })
+    addDoc(collection(db, "clients"), {
+      name,
+      notes: notes || "",
+      isBookkeeping: !!isBookkeeping,
+      isTaxClient: !!isTaxClient,
+      defaultMonthlyFee: defaultMonthlyFee ?? null,
+      createdAt: serverTimestamp(),
+    })
   );
 }
 
-export function updateClient(clientId, { name, notes }) {
-  return withSaveStatus(() => updateDoc(doc(db, "clients", clientId), { name, notes: notes || "" }));
+export function updateClient(clientId, { name, notes, isBookkeeping, isTaxClient, defaultMonthlyFee }) {
+  return withSaveStatus(() =>
+    updateDoc(doc(db, "clients", clientId), {
+      name,
+      notes: notes || "",
+      isBookkeeping: !!isBookkeeping,
+      isTaxClient: !!isTaxClient,
+      defaultMonthlyFee: defaultMonthlyFee ?? null,
+    })
+  );
 }
 
 export function setClientArchived(clientId, archived) {
   return withSaveStatus(() => updateDoc(doc(db, "clients", clientId), { archived }));
+}
+
+// One doc per (client, month) actually billed -- no doc at all means that month was never
+// entered (distinct from a real $0), matching the old spreadsheet's blank-vs-zero cells. Clearing
+// a cell back to blank deletes the doc rather than writing amount: 0, so totals only count months
+// that were actually filled in.
+export function setClientFee(clientId, periodKey, amount) {
+  const ref = doc(db, "clients", clientId, "fees", periodKey);
+  return withSaveStatus(() =>
+    amount === null || amount === undefined ? deleteDoc(ref) : setDoc(ref, { amount, updatedAt: serverTimestamp() })
+  );
 }
 
 export async function deleteClientCascade(clientId) {

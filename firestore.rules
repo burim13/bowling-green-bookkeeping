@@ -119,6 +119,14 @@ service cloud.firestore {
     match /{path=**}/completions/{completionId} {
       allow read, write: if isApproved();
     }
+    // Monthly bookkeeping fees (see public/js/data.js's setClientFee, and the "Fees" tab in
+    // app.js). Staff-only, no client-portal exposure at all -- same reasoning as items/
+    // completions above, so no nested rule under /clients/{clientId} either: this is
+    // collectionGroup-queried across every client at once by the Fees grid, and there's no
+    // client-facing read case to carve out here.
+    match /{path=**}/fees/{periodKey} {
+      allow read, write: if isApproved();
+    }
     // ADDITIONAL to (not a replacement for) the nested /clients/{clientId}/letters/{letterId}
     // rule above, which already covers staff writes and both direct-path reads -- this only
     // exists so staff's Overview "awaiting signature" count can collectionGroup() across every

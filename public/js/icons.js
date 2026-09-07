@@ -78,6 +78,10 @@ export const iconClock = svg(
 const CLIPBOARD_PATH = `<path d="M7 3.5h6a1 1 0 0 1 1 1V4h1a1 1 0 0 1 1 1v10.5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h1v.5a1 1 0 0 0 1 1z"/><path d="M7.3 2.5h5.4a.7.7 0 0 1 .7.7v.6a.7.7 0 0 1-.7.7H7.3a.7.7 0 0 1-.7-.7v-.6a.7.7 0 0 1 .7-.7z"/><path d="M7 9h6"/><path d="M7 12h6"/><path d="M7 15h3.5"/>`;
 export const iconClipboard = svg(CLIPBOARD_PATH);
 export const iconClipboardLarge = svg(CLIPBOARD_PATH, { size: 22 });
+// Fees tab.
+export const iconDollar = svg(
+  `<path d="M10 2.5v15"/><path d="M13.5 5.5c0-1.4-1.6-2.3-3.5-2.3s-3.5 1-3.5 2.5c0 3 7 1.5 7 4.5 0 1.5-1.6 2.5-3.5 2.5s-3.5-.9-3.5-2.3"/>`
+);
 
 // Theme toggle + toolbar overflow menu icons.
 export const iconSun = svg(

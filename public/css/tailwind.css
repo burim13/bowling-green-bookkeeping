@@ -805,6 +805,16 @@
   .client-archived-tag {
     @apply text-[0.65rem] font-bold uppercase tracking-[0.03em] text-text-muted bg-border px-[0.35rem] py-[0.05rem] rounded-full;
   }
+  /* Bookkeeping/Tax Return aren't mutually exclusive -- a client can carry both tags at once. */
+  .client-type-tag {
+    @apply text-[0.6rem] font-bold uppercase tracking-[0.03em] px-[0.35rem] py-[0.05rem] rounded-full ml-1 align-middle;
+  }
+  .client-type-tag-bk {
+    @apply bg-[rgba(0,122,255,0.14)] text-primary;
+  }
+  .client-type-tag-tax {
+    @apply bg-[rgba(175,82,222,0.14)] text-[#af52de];
+  }
   .client-progress {
     @apply text-[0.7rem] font-bold px-[0.4rem] py-[0.05rem] rounded-full shrink-0;
   }
@@ -1198,6 +1208,66 @@
   }
   .bulk-excluded-note {
     @apply text-[0.8rem] text-text-muted pt-[0.4rem];
+  }
+
+  /* ---- fees (bookkeeping monthly fee tracker) ----
+     The first real <table> in this app -- the right call specifically here: 15 columns (Name,
+     Payment, 12 months, Total) need native column alignment that faking with flex/grid divs
+     would fight. */
+  .fees-year-nav {
+    @apply flex items-center justify-center gap-3 mb-4;
+  }
+  .fees-year-label {
+    @apply text-[1.1rem] font-bold min-w-[3.5rem] text-center;
+  }
+  /* 15 columns don't fit a phone screen -- horizontal scroll instead of squeezing every column
+     unreadably thin, same pattern .cal-agenda-strip/.pdf-pages-scroll already use. min-width on
+     the table itself is what actually forces the scrollbar to appear rather than the columns
+     just shrinking. */
+  .fees-table-wrap {
+    @apply overflow-x-auto rounded-xl border border-border;
+  }
+  .fees-table {
+    @apply border-collapse text-[0.85rem];
+    min-width: 900px;
+    width: 100%;
+  }
+  .fees-table th,
+  .fees-table td {
+    @apply px-2 py-1.5 text-right border-b border-border whitespace-nowrap;
+  }
+  .fees-table thead th {
+    @apply text-text-muted font-semibold text-[0.7rem] uppercase tracking-[0.02em] bg-card;
+  }
+  /* Frozen first column -- lets staff scroll through months while still seeing which client's
+     row they're on, the same "frozen pane" convention any real spreadsheet app uses. */
+  .fees-name-cell {
+    @apply text-left sticky left-0 bg-card;
+    min-width: 160px;
+  }
+  .fees-payment-cell {
+    @apply text-text-muted;
+  }
+  .fees-total-cell {
+    @apply font-semibold;
+  }
+  .fees-table tfoot th,
+  .fees-table tfoot td {
+    @apply border-b-0 border-t-2 font-bold bg-card;
+  }
+  .fees-row-archived {
+    @apply opacity-60;
+  }
+  /* Looks like a spreadsheet cell (no visible border/background at rest, a soft highlight only
+     while focused) rather than a normal boxed form field -- @apply here overrides the base
+     input rule's border/bg/rounded/padding outright, a plain class beats a plain element
+     selector on specificity regardless of source order. */
+  .fees-cell-input {
+    @apply w-full text-right border-0 bg-transparent rounded-md px-1 py-0.5;
+  }
+  .fees-cell-input:focus-visible {
+    @apply outline-none;
+    background: color-mix(in srgb, var(--color-primary) 10%, transparent);
   }
 
   /* ---- responsive ----

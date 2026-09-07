@@ -1,7 +1,7 @@
-import { isFirebaseConfigured, auth } from "./firebase-init.js?v=1788808484451";
-import { escapeHtml } from "./html-safety.js?v=1788808484451";
-import { friendlyAuthError } from "./auth-errors.js?v=1788808484451";
-import { getEffectiveTheme, toggleTheme } from "./theme.js?v=1788808484451";
+import { isFirebaseConfigured, auth } from "./firebase-init.js?v=1788809593179";
+import { escapeHtml } from "./html-safety.js?v=1788809593179";
+import { friendlyAuthError } from "./auth-errors.js?v=1788809593179";
+import { getEffectiveTheme, toggleTheme } from "./theme.js?v=1788809593179";
 import {
   watchAuthState,
   signInWithPassword,
@@ -9,14 +9,14 @@ import {
   getOwnProfile,
   afterSignIn,
   updateOwnDisplayName,
-} from "./auth.js?v=1788808484451";
+} from "./auth.js?v=1788809593179";
 import {
   isMfaEnrolled,
   startMfaEnrollment,
   finishMfaEnrollment,
   getResolver,
   completeMfaSignIn,
-} from "./mfa.js?v=1788808484451";
+} from "./mfa.js?v=1788809593179";
 import {
   startSync,
   stopSync,
@@ -35,12 +35,13 @@ import {
   unmarkComplete,
   isFullyLoaded,
   getClientRecord,
-} from "./data.js?v=1788808484451";
-import { renderCalendar } from "./calendar-view.js?v=1788808484451";
-import { renderList } from "./list-view.js?v=1788808484451";
-import { describeRecurrence, describeRecurrenceHistory, getLastDueOccurrence, toISODate } from "./recurrence.js?v=1788808484451";
-import { colorFor, tintFor } from "./colors.js?v=1788808484451";
-import { githubRepoSlug } from "./firebase-config.js?v=1788808484451";
+  setClientFee,
+} from "./data.js?v=1788809593179";
+import { renderCalendar } from "./calendar-view.js?v=1788809593179";
+import { renderList } from "./list-view.js?v=1788809593179";
+import { describeRecurrence, describeRecurrenceHistory, getLastDueOccurrence, toISODate } from "./recurrence.js?v=1788809593179";
+import { colorFor, tintFor } from "./colors.js?v=1788809593179";
+import { githubRepoSlug } from "./firebase-config.js?v=1788809593179";
 import {
   DOC_TYPES,
   docTypeLabel,
@@ -49,10 +50,10 @@ import {
   setDocumentReviewed,
   getDocumentDownloadURL,
   deleteDocument,
-} from "./documents.js?v=1788808484451";
-import { createClientInvite, subscribeToInviteStatus } from "./invites.js?v=1788808484451";
-import { subscribeToOwnCompliance } from "./client-compliance.js?v=1788808484451";
-import { subscribeToLetters, sendLetter, signLetter, deleteLetter, getLetterDownloadURL } from "./letters.js?v=1788808484451";
+} from "./documents.js?v=1788809593179";
+import { createClientInvite, subscribeToInviteStatus } from "./invites.js?v=1788809593179";
+import { subscribeToOwnCompliance } from "./client-compliance.js?v=1788809593179";
+import { subscribeToLetters, sendLetter, signLetter, deleteLetter, getLetterDownloadURL } from "./letters.js?v=1788809593179";
 import {
   subscribeToFormTemplates,
   uploadFormTemplate,
@@ -62,7 +63,7 @@ import {
   subscribeToSentForms,
   markFormReturned,
   markFormReturnedManually,
-} from "./forms.js?v=1788808484451";
+} from "./forms.js?v=1788809593179";
 import {
   stampSignature,
   stampFields,
@@ -72,8 +73,8 @@ import {
   loadPdfDocument,
   renderPdfPageToCanvas,
   FIELD_DEFAULT_SIZE,
-} from "./pdf-sign.js?v=1788808484451";
-import { iconEdit, iconTrash, iconPlus, iconPlusLarge, iconCheck, iconTag, iconUpload, iconLogout, iconCalendar, iconListView, iconFolder, iconFolderLarge, iconHome, iconChevronRight, iconUsers, iconAlertTriangle, iconSignature, iconFile, iconUploadLarge, iconDownload, iconClock, iconSun, iconMoon, iconSearch, iconClipboard } from "./icons.js?v=1788808484451";
+} from "./pdf-sign.js?v=1788809593179";
+import { iconEdit, iconTrash, iconPlus, iconPlusLarge, iconCheck, iconTag, iconUpload, iconLogout, iconCalendar, iconListView, iconFolder, iconFolderLarge, iconHome, iconChevronLeft, iconChevronRight, iconUsers, iconAlertTriangle, iconSignature, iconFile, iconUploadLarge, iconDownload, iconClock, iconSun, iconMoon, iconSearch, iconClipboard, iconDollar } from "./icons.js?v=1788809593179";
 
 const DEFAULT_CATEGORIES = [
   "Payroll",
@@ -447,6 +448,7 @@ const STAFF_NAV_ITEMS = [
   { id: "calendar", label: "Calendar", icon: iconCalendar, render: renderCalendarViewWrapper },
   { id: "list", label: "List", icon: iconListView, render: renderListViewWrapper },
   { id: "clienthub", label: "Client Hub", icon: iconFolder, render: renderClientHubStaffView },
+  { id: "fees", label: "Fees", icon: iconDollar, render: renderFeesView },
 ];
 
 function renderStaffTabBar() {
@@ -667,6 +669,142 @@ function renderListViewWrapper() {
     },
     onMarkAllComplete: handleMarkAllShownComplete,
   });
+}
+
+// ---- fees (bookkeeping monthly fee tracker) ----------------------------------------------
+
+let feesYear = new Date().getFullYear();
+
+function periodKeyFor(year, monthIndex) {
+  return `${year}-${String(monthIndex + 1).padStart(2, "0")}`;
+}
+
+function formatCurrency(amount) {
+  return `$${amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
+
+function renderFeesView() {
+  const allBookkeeping = [...latestState.clients.values()].filter((c) => c.isBookkeeping);
+  const clients = (viewState.showArchived ? allBookkeeping : allBookkeeping.filter((c) => !c.archived)).sort((a, b) =>
+    a.name.localeCompare(b.name)
+  );
+
+  // Restores focus (and cursor position) to whichever cell the user was in before this function
+  // re-ran. subscribeToData's callback re-renders the current view on every Firestore change
+  // (see init()) -- harmless for a checkbox or a static list, but a grid of live text inputs is
+  // different: without this, a re-render landing between a cell's blur-triggered save and the
+  // user's next keystroke would silently steal focus from wherever they'd already tabbed to.
+  const active = document.activeElement;
+  const focusedCell =
+    active?.dataset?.feeCell !== undefined
+      ? { clientId: active.dataset.clientId, periodKey: active.dataset.periodKey, selectionStart: active.selectionStart }
+      : null;
+
+  if (clients.length === 0) {
+    els.viewContainer.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-state-badge empty-state-badge-primary">${iconDollar}</div>
+        <h3>No bookkeeping clients yet</h3>
+        <p>Mark a client as a "Bookkeeping client" from Add/Edit client to start tracking their monthly fees here.</p>
+      </div>`;
+    return;
+  }
+
+  const monthTotals = new Array(12).fill(0);
+  let grandTotal = 0;
+
+  const rowsHtml = clients
+    .map((c) => {
+      const feesForClient = latestState.fees.get(c.id);
+      let rowTotal = 0;
+      const cellsHtml = MONTH_NAMES.map((_, i) => {
+        const periodKey = periodKeyFor(feesYear, i);
+        const amount = feesForClient?.get(periodKey)?.amount;
+        if (typeof amount === "number") {
+          rowTotal += amount;
+          monthTotals[i] += amount;
+        }
+        return `<td class="fees-cell"><input type="number" step="0.01" min="0" inputmode="decimal" class="fees-cell-input" data-fee-cell data-client-id="${c.id}" data-period-key="${periodKey}" value="${typeof amount === "number" ? amount : ""}" /></td>`;
+      }).join("");
+      grandTotal += rowTotal;
+      return `
+      <tr class="${c.archived ? "fees-row-archived" : ""}">
+        <th scope="row" class="fees-name-cell">${escapeHtml(c.name)}${c.archived ? ' <span class="client-archived-tag">Archived</span>' : ""}</th>
+        <td class="fees-payment-cell">${typeof c.defaultMonthlyFee === "number" ? formatCurrency(c.defaultMonthlyFee) : ""}</td>
+        ${cellsHtml}
+        <td class="fees-total-cell">${formatCurrency(rowTotal)}</td>
+      </tr>`;
+    })
+    .join("");
+
+  const footerCellsHtml = monthTotals.map((total) => `<td class="fees-total-cell">${formatCurrency(total)}</td>`).join("");
+
+  els.viewContainer.innerHTML = `
+    <div class="fees-year-nav">
+      <button type="button" class="icon-btn" data-action="prev-year" aria-label="Previous year">${iconChevronLeft}</button>
+      <span class="fees-year-label">${feesYear}</span>
+      <button type="button" class="icon-btn" data-action="next-year" aria-label="Next year">${iconChevronRight}</button>
+    </div>
+    <div class="fees-table-wrap">
+      <table class="fees-table">
+        <thead>
+          <tr>
+            <th scope="col" class="fees-name-cell">Name</th>
+            <th scope="col" class="fees-payment-cell">Payment</th>
+            ${MONTH_NAMES.map((m) => `<th scope="col">${m.slice(0, 3)}</th>`).join("")}
+            <th scope="col" class="fees-total-cell">Total</th>
+          </tr>
+        </thead>
+        <tbody>${rowsHtml}</tbody>
+        <tfoot>
+          <tr>
+            <th scope="row" class="fees-name-cell">Total</th>
+            <td class="fees-payment-cell"></td>
+            ${footerCellsHtml}
+            <td class="fees-total-cell">${formatCurrency(grandTotal)}</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  `;
+
+  els.viewContainer.querySelector('[data-action="prev-year"]').addEventListener("click", () => {
+    feesYear -= 1;
+    renderCurrentView();
+  });
+  els.viewContainer.querySelector('[data-action="next-year"]').addEventListener("click", () => {
+    feesYear += 1;
+    renderCurrentView();
+  });
+
+  els.viewContainer.querySelectorAll("[data-fee-cell]").forEach((input) => {
+    input.addEventListener("change", async () => {
+      const { clientId, periodKey } = input.dataset;
+      const raw = input.value.trim();
+      const amount = raw === "" ? null : Number(raw);
+      try {
+        await setClientFee(clientId, periodKey, amount);
+      } catch (err) {
+        alert("Could not save: " + err.message);
+      }
+    });
+  });
+
+  if (focusedCell) {
+    const restored = els.viewContainer.querySelector(
+      `[data-fee-cell][data-client-id="${focusedCell.clientId}"][data-period-key="${focusedCell.periodKey}"]`
+    );
+    if (restored) {
+      restored.focus();
+      if (typeof focusedCell.selectionStart === "number") {
+        try {
+          restored.setSelectionRange(focusedCell.selectionStart, focusedCell.selectionStart);
+        } catch {
+          // Number inputs don't support setSelectionRange in every browser -- harmless to skip.
+        }
+      }
+    }
+  }
 }
 
 // ---- overview (firm-wide dashboard) -----------------------------------------------------
@@ -2298,10 +2436,13 @@ function renderClientList() {
         const progressBadge = stats
           ? `<span class="client-progress ${stats.current === stats.total ? "client-progress-ok" : "client-progress-behind"}">${stats.current}/${stats.total}</span>`
           : "";
+        const typeTags =
+          (c.isBookkeeping ? `<span class="client-type-tag client-type-tag-bk">BK</span>` : "") +
+          (c.isTaxClient ? `<span class="client-type-tag client-type-tag-tax">TAX</span>` : "");
         return `
         <div class="client-row ${viewState.clientFilter === c.id ? "client-row-active" : ""} ${c.archived ? "client-row-archived" : ""}" data-client-id="${c.id}">
           <span class="client-dot" style="background:${colorFor(c.id)}"></span>
-          <span class="client-name" data-action="filter">${escapeHtml(c.name)}${c.archived ? ' <span class="client-archived-tag">Archived</span>' : ""}</span>
+          <span class="client-name" data-action="filter">${escapeHtml(c.name)}${typeTags}${c.archived ? ' <span class="client-archived-tag">Archived</span>' : ""}</span>
           ${progressBadge}
           <span class="client-actions">
             <button class="icon-btn" data-action="add-item" title="Add item">${iconPlus}</button>
@@ -2358,11 +2499,18 @@ function closeModal() {
 
 function openClientModal(clientId) {
   const client = clientId ? latestState.clients.get(clientId) : null;
+  const isBookkeeping = client?.isBookkeeping ?? false;
   openModal(`
     <h2>${client ? "Edit client" : "Add client"}</h2>
     <form id="client-form">
       <label>Name<br/><input type="text" id="client-name" required value="${client ? escapeHtml(client.name) : ""}" /></label>
       <label>Notes (optional)<br/><textarea id="client-notes">${client ? escapeHtml(client.notes || "") : ""}</textarea></label>
+      <label class="confirm-checkbox"><input type="checkbox" id="client-is-bookkeeping" ${isBookkeeping ? "checked" : ""} /> Bookkeeping client</label>
+      <label class="confirm-checkbox" style="margin-top:0.4rem;"><input type="checkbox" id="client-is-tax" ${client?.isTaxClient ? "checked" : ""} /> Tax return client</label>
+      <label id="client-fee-wrap" style="margin-top:0.75rem;" ${isBookkeeping ? "" : "hidden"}>
+        Default monthly fee<br/>
+        <input type="number" id="client-default-fee" min="0" step="0.01" value="${client?.defaultMonthlyFee ?? ""}" placeholder="e.g. 400" />
+      </label>
       <div class="modal-actions">
         <button type="button" class="btn" data-action="cancel">Cancel</button>
         ${
@@ -2374,14 +2522,25 @@ function openClientModal(clientId) {
       </div>
     </form>
   `);
+  qs("client-is-bookkeeping").addEventListener("change", (e) => {
+    qs("client-fee-wrap").hidden = !e.target.checked;
+  });
   qs("client-form").addEventListener("submit", async (e) => {
     e.preventDefault();
     const name = qs("client-name").value.trim();
     const notes = qs("client-notes").value.trim();
     if (!name) return;
+    const feeRaw = qs("client-default-fee").value;
+    const clientData = {
+      name,
+      notes,
+      isBookkeeping: qs("client-is-bookkeeping").checked,
+      isTaxClient: qs("client-is-tax").checked,
+      defaultMonthlyFee: feeRaw ? Number(feeRaw) : null,
+    };
     try {
-      if (client) await updateClient(clientId, { name, notes });
-      else await addClient(name, notes);
+      if (client) await updateClient(clientId, clientData);
+      else await addClient(name, notes, clientData);
       closeModal();
     } catch (err) {
       alert("Could not save client: " + err.message);
