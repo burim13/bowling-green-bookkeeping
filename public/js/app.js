@@ -1,19 +1,20 @@
-import { isFirebaseConfigured, auth } from "./firebase-init.js?v=1788790854414";
-import { escapeHtml } from "./html-safety.js?v=1788790854414";
+import { isFirebaseConfigured, auth } from "./firebase-init.js?v=1788791092687";
+import { escapeHtml } from "./html-safety.js?v=1788791092687";
+import { friendlyAuthError } from "./auth-errors.js?v=1788791092687";
 import {
   watchAuthState,
   signInWithPassword,
   signOutUser,
   getOwnProfile,
   afterSignIn,
-} from "./auth.js?v=1788790854414";
+} from "./auth.js?v=1788791092687";
 import {
   isMfaEnrolled,
   startMfaEnrollment,
   finishMfaEnrollment,
   getResolver,
   completeMfaSignIn,
-} from "./mfa.js?v=1788790854414";
+} from "./mfa.js?v=1788791092687";
 import {
   startSync,
   stopSync,
@@ -32,12 +33,12 @@ import {
   unmarkComplete,
   isFullyLoaded,
   getClientRecord,
-} from "./data.js?v=1788790854414";
-import { renderCalendar } from "./calendar-view.js?v=1788790854414";
-import { renderList } from "./list-view.js?v=1788790854414";
-import { describeRecurrence, describeRecurrenceHistory, getLastDueOccurrence, toISODate } from "./recurrence.js?v=1788790854414";
-import { colorFor, tintFor } from "./colors.js?v=1788790854414";
-import { githubRepoSlug } from "./firebase-config.js?v=1788790854414";
+} from "./data.js?v=1788791092687";
+import { renderCalendar } from "./calendar-view.js?v=1788791092687";
+import { renderList } from "./list-view.js?v=1788791092687";
+import { describeRecurrence, describeRecurrenceHistory, getLastDueOccurrence, toISODate } from "./recurrence.js?v=1788791092687";
+import { colorFor, tintFor } from "./colors.js?v=1788791092687";
+import { githubRepoSlug } from "./firebase-config.js?v=1788791092687";
 import {
   DOC_TYPES,
   docTypeLabel,
@@ -46,10 +47,10 @@ import {
   setDocumentReviewed,
   getDocumentDownloadURL,
   deleteDocument,
-} from "./documents.js?v=1788790854414";
-import { createClientInvite, subscribeToInviteStatus } from "./invites.js?v=1788790854414";
-import { subscribeToOwnCompliance } from "./client-compliance.js?v=1788790854414";
-import { subscribeToLetters, sendLetter, signLetter, deleteLetter, getLetterDownloadURL } from "./letters.js?v=1788790854414";
+} from "./documents.js?v=1788791092687";
+import { createClientInvite, subscribeToInviteStatus } from "./invites.js?v=1788791092687";
+import { subscribeToOwnCompliance } from "./client-compliance.js?v=1788791092687";
+import { subscribeToLetters, sendLetter, signLetter, deleteLetter, getLetterDownloadURL } from "./letters.js?v=1788791092687";
 import {
   stampSignature,
   stampFields,
@@ -59,8 +60,8 @@ import {
   loadPdfDocument,
   renderPdfPageToCanvas,
   FIELD_DEFAULT_SIZE,
-} from "./pdf-sign.js?v=1788790854414";
-import { iconEdit, iconTrash, iconPlus, iconPlusLarge, iconCheck, iconTag, iconUpload, iconLogout, iconCalendar, iconListView, iconFolder, iconFolderLarge, iconHome, iconChevronRight, iconUsers, iconAlertTriangle, iconSignature, iconFile, iconUploadLarge, iconDownload, iconClock } from "./icons.js?v=1788790854414";
+} from "./pdf-sign.js?v=1788791092687";
+import { iconEdit, iconTrash, iconPlus, iconPlusLarge, iconCheck, iconTag, iconUpload, iconLogout, iconCalendar, iconListView, iconFolder, iconFolderLarge, iconHome, iconChevronRight, iconUsers, iconAlertTriangle, iconSignature, iconFile, iconUploadLarge, iconDownload, iconClock } from "./icons.js?v=1788791092687";
 
 const DEFAULT_CATEGORIES = [
   "Payroll",
@@ -173,7 +174,7 @@ function init() {
     try {
       profile = await getOwnProfile();
     } catch (err) {
-      showAuthError(err.message);
+      showAuthError(friendlyAuthError(err));
       await signOutUser();
       return;
     }
@@ -238,7 +239,7 @@ function wireAuthForms() {
         els.authScreen.hidden = true;
         els.mfaChallengeScreen.hidden = false;
       } else {
-        showAuthError(err.message);
+        showAuthError(friendlyAuthError(err));
       }
     }
   });
@@ -268,7 +269,7 @@ function wireMfaScreens() {
       // watchAuthState's onAuthStateChanged fires now that sign-in is fully resolved; it
       // picks the right shell from here (this account is already MFA-enrolled by definition).
     } catch (err) {
-      errEl.textContent = err.message;
+      errEl.textContent = friendlyAuthError(err);
       errEl.hidden = false;
     }
   });
@@ -292,7 +293,7 @@ function wireMfaScreens() {
       els.mfaEnrollScreen.hidden = true;
       showStaffShell(user);
     } catch (err) {
-      errEl.textContent = err.message;
+      errEl.textContent = friendlyAuthError(err);
       errEl.hidden = false;
     }
   });
@@ -331,7 +332,7 @@ async function startMfaEnrollmentFlow(user) {
     errEl.textContent =
       err.code === "auth/operation-not-allowed"
         ? "Two-factor authentication isn't enabled for this project yet. Contact your administrator."
-        : err.message;
+        : friendlyAuthError(err);
     errEl.hidden = false;
   }
 }

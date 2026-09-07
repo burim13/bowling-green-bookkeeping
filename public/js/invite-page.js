@@ -3,7 +3,8 @@
 // that's true: turn a valid invite token into a brand new role:"client" account.
 import { createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 import { doc, setDoc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
-import { auth, db, isFirebaseConfigured } from "./firebase-init.js?v=1788790854414";
+import { auth, db, isFirebaseConfigured } from "./firebase-init.js?v=1788791092687";
+import { friendlyAuthError } from "./auth-errors.js?v=1788791092687";
 
 function qs(id) {
   return document.getElementById(id);
@@ -77,7 +78,7 @@ function init() {
       } else if (err.code === "auth/email-already-in-use") {
         showError("An account with that email already exists. Try signing in instead.");
       } else {
-        showError(err.message);
+        showError(friendlyAuthError(err));
       }
       submitBtn.disabled = false;
     }
