@@ -1,8 +1,8 @@
-import { getOccurrencesInRange, getLastDueOccurrence, describeRecurrence, toISODate } from "./recurrence.js?v=1788805746998";
-import { colorFor } from "./colors.js?v=1788805746998";
-import { iconEdit, iconCheckLarge } from "./icons.js?v=1788805746998";
-import { escapeHtml } from "./html-safety.js?v=1788805746998";
-import { categoryOptions } from "./calendar-view.js?v=1788805746998";
+import { getOccurrencesInRange, getLastDueOccurrence, describeRecurrence, toISODate } from "./recurrence.js?v=1788806140664";
+import { colorFor } from "./colors.js?v=1788806140664";
+import { iconEdit, iconCheckLarge } from "./icons.js?v=1788806140664";
+import { escapeHtml } from "./html-safety.js?v=1788806140664";
+import { categoryOptions } from "./calendar-view.js?v=1788806140664";
 
 function completionFor(state, itemId, periodKey) {
   const forItem = state.completions.get(itemId);
@@ -109,7 +109,7 @@ export function renderList(container, ctx) {
   if (overdueRows.length > 0) {
     html += `<div class="list-group list-group-overdue">
       <div class="list-group-header list-group-header-overdue">Overdue (${overdueRows.length})</div>
-      ${overdueRows.map((row) => rowHtml(row, state, today, readOnly)).join("")}
+      <div class="ios-grouped-list">${overdueRows.map((row) => rowHtml(row, state, today, readOnly)).join("")}</div>
     </div>`;
   }
 
@@ -124,7 +124,7 @@ export function renderList(container, ctx) {
     const date = groupRows[0].date;
     html += `<div class="list-group">
       <div class="list-group-header">${WEEKDAY_NAMES[date.getDay()]}, ${date.toLocaleDateString(undefined, { month: "long", day: "numeric", year: "numeric" })}</div>
-      ${groupRows.map((row) => rowHtml(row, state, today, readOnly)).join("")}
+      <div class="ios-grouped-list">${groupRows.map((row) => rowHtml(row, state, today, readOnly)).join("")}</div>
     </div>`;
   }
   container.innerHTML = html;

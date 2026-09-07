@@ -1001,13 +1001,19 @@
     @apply mb-5;
   }
   .list-group-header {
-    @apply font-bold text-[0.9rem] text-text-muted mb-[0.4rem];
+    @apply font-bold text-[0.9rem] text-text-muted mb-[0.4rem] px-1;
   }
+  /* Rows sit inside one continuous .ios-grouped-list card per group (see list-view.js) instead
+     of each being its own individually rounded, individually margined floating card -- the
+     classic iOS grouped-table look (Reminders, Settings), not a stack of separate cards. */
   .list-row {
-    @apply flex items-center gap-[0.6rem] px-[0.65rem] py-[0.55rem] bg-panel border border-border rounded-xl mb-[0.35rem] cursor-pointer text-[0.9rem] transition-shadow;
+    @apply flex items-center gap-[0.6rem] px-[0.65rem] py-[0.65rem] border-b border-border cursor-pointer text-[0.9rem] transition-colors;
+  }
+  .list-row:last-child {
+    @apply border-b-0;
   }
   .list-row:hover {
-    @apply shadow-sm;
+    background: color-mix(in srgb, var(--color-text) 5%, transparent);
   }
   .list-row-done {
     @apply bg-done-bg;
@@ -1035,7 +1041,7 @@
     @apply text-danger;
   }
   .list-row-overdue {
-    @apply border-danger bg-danger-bg;
+    @apply bg-danger-bg;
   }
   .list-row-overdue-tag {
     @apply text-danger text-[0.8rem] font-semibold;

@@ -9,7 +9,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 import { getFirestore } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 import { getStorage } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-storage.js";
-import { firebaseConfig, isFirebaseConfigured, recaptchaSiteKey } from "./firebase-config.js?v=1788805746998";
+import { firebaseConfig, isFirebaseConfigured, recaptchaSiteKey } from "./firebase-config.js?v=1788806140664";
 
 export { isFirebaseConfigured };
 
