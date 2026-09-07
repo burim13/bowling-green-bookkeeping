@@ -276,9 +276,14 @@
   /* Floating pill, not edge-to-edge -- margin on all sides + full rounding + a shadow for depth,
      matching the current iOS tab-bar treatment rather than the older flush-with-the-edge style.
      overflow-hidden so the blur/background actually respects the rounded corners instead of the
-     tab items poking past them. */
+     tab items poking past them.
+     fixed (not the sticky it inherits from .ios-glass-bar) -- it's the last child of #app-shell,
+     which only has a min-height, so on any page taller than one screen "sticky" only reaches its
+     stuck position once you scroll all the way to the document's bottom edge, and disappears the
+     moment you scroll back up even slightly. fixed pins it to the viewport regardless of how
+     tall the content is or which element ends up actually scrolling. */
   .ios-glass-bar-bottom {
-    @apply mx-3 rounded-[22px] shadow-lg border overflow-hidden;
+    @apply fixed inset-x-0 bottom-0 mx-3 rounded-[22px] shadow-lg border overflow-hidden;
     border-color: var(--color-glass-border);
     /* max(...) so there's always some breathing room even on a device with no safe-area inset,
        not just "0 margin" -- env() alone evaluates to 0 on everything but an actual notched
@@ -464,6 +469,9 @@
   .view-container {
     @apply flex-1 p-5 overflow-y-auto;
     animation: fade-in 0.15s ease;
+    /* Clears the now-fixed .ios-glass-bar-bottom so the last row of content isn't hidden
+       underneath it. */
+    padding-bottom: calc(5.5rem + env(safe-area-inset-bottom));
   }
 
   @keyframes fade-in {
