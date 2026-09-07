@@ -1,7 +1,7 @@
-import { isFirebaseConfigured, auth } from "./firebase-init.js?v=1788800698718";
-import { escapeHtml } from "./html-safety.js?v=1788800698718";
-import { friendlyAuthError } from "./auth-errors.js?v=1788800698718";
-import { getEffectiveTheme, toggleTheme } from "./theme.js?v=1788800698718";
+import { isFirebaseConfigured, auth } from "./firebase-init.js?v=1788805746998";
+import { escapeHtml } from "./html-safety.js?v=1788805746998";
+import { friendlyAuthError } from "./auth-errors.js?v=1788805746998";
+import { getEffectiveTheme, toggleTheme } from "./theme.js?v=1788805746998";
 import {
   watchAuthState,
   signInWithPassword,
@@ -9,14 +9,14 @@ import {
   getOwnProfile,
   afterSignIn,
   updateOwnDisplayName,
-} from "./auth.js?v=1788800698718";
+} from "./auth.js?v=1788805746998";
 import {
   isMfaEnrolled,
   startMfaEnrollment,
   finishMfaEnrollment,
   getResolver,
   completeMfaSignIn,
-} from "./mfa.js?v=1788800698718";
+} from "./mfa.js?v=1788805746998";
 import {
   startSync,
   stopSync,
@@ -35,12 +35,12 @@ import {
   unmarkComplete,
   isFullyLoaded,
   getClientRecord,
-} from "./data.js?v=1788800698718";
-import { renderCalendar } from "./calendar-view.js?v=1788800698718";
-import { renderList } from "./list-view.js?v=1788800698718";
-import { describeRecurrence, describeRecurrenceHistory, getLastDueOccurrence, toISODate } from "./recurrence.js?v=1788800698718";
-import { colorFor, tintFor } from "./colors.js?v=1788800698718";
-import { githubRepoSlug } from "./firebase-config.js?v=1788800698718";
+} from "./data.js?v=1788805746998";
+import { renderCalendar } from "./calendar-view.js?v=1788805746998";
+import { renderList } from "./list-view.js?v=1788805746998";
+import { describeRecurrence, describeRecurrenceHistory, getLastDueOccurrence, toISODate } from "./recurrence.js?v=1788805746998";
+import { colorFor, tintFor } from "./colors.js?v=1788805746998";
+import { githubRepoSlug } from "./firebase-config.js?v=1788805746998";
 import {
   DOC_TYPES,
   docTypeLabel,
@@ -49,10 +49,10 @@ import {
   setDocumentReviewed,
   getDocumentDownloadURL,
   deleteDocument,
-} from "./documents.js?v=1788800698718";
-import { createClientInvite, subscribeToInviteStatus } from "./invites.js?v=1788800698718";
-import { subscribeToOwnCompliance } from "./client-compliance.js?v=1788800698718";
-import { subscribeToLetters, sendLetter, signLetter, deleteLetter, getLetterDownloadURL } from "./letters.js?v=1788800698718";
+} from "./documents.js?v=1788805746998";
+import { createClientInvite, subscribeToInviteStatus } from "./invites.js?v=1788805746998";
+import { subscribeToOwnCompliance } from "./client-compliance.js?v=1788805746998";
+import { subscribeToLetters, sendLetter, signLetter, deleteLetter, getLetterDownloadURL } from "./letters.js?v=1788805746998";
 import {
   stampSignature,
   stampFields,
@@ -62,8 +62,8 @@ import {
   loadPdfDocument,
   renderPdfPageToCanvas,
   FIELD_DEFAULT_SIZE,
-} from "./pdf-sign.js?v=1788800698718";
-import { iconEdit, iconTrash, iconPlus, iconPlusLarge, iconCheck, iconTag, iconUpload, iconLogout, iconCalendar, iconListView, iconFolder, iconFolderLarge, iconHome, iconChevronRight, iconUsers, iconAlertTriangle, iconSignature, iconFile, iconUploadLarge, iconDownload, iconClock, iconSun, iconMoon, iconSearch } from "./icons.js?v=1788800698718";
+} from "./pdf-sign.js?v=1788805746998";
+import { iconEdit, iconTrash, iconPlus, iconPlusLarge, iconCheck, iconTag, iconUpload, iconLogout, iconCalendar, iconListView, iconFolder, iconFolderLarge, iconHome, iconChevronRight, iconUsers, iconAlertTriangle, iconSignature, iconFile, iconUploadLarge, iconDownload, iconClock, iconSun, iconMoon, iconSearch } from "./icons.js?v=1788805746998";
 
 const DEFAULT_CATEGORIES = [
   "Payroll",
@@ -132,6 +132,7 @@ function init() {
   wireMfaScreens();
   wireToolbar();
   wireClientHubScreen();
+  wireLargeTitleCollapse();
 
   watchAuthState(async (user) => {
     if (!user) {
@@ -549,6 +550,22 @@ function setSidebarOpen(open) {
   qs("sidebar-backdrop").hidden = !open;
 }
 
+// Real iOS nav bars shrink their large title into a small centered one in the compact row once
+// content scrolls past the top, then expand it back on scroll-up. The page itself scrolls here
+// (#app-shell/#client-hub-screen are only min-height, not capped, so .view-container's own
+// overflow-y-auto never actually engages -- see .ios-glass-bar-bottom's fixed positioning for
+// the same finding), so a single window-level listener covers both shells; toggling the class on
+// both headers unconditionally is harmless since only one is ever visible at a time.
+function wireLargeTitleCollapse() {
+  const bars = document.querySelectorAll(".ios-glass-bar-top");
+  const syncCollapsed = () => {
+    const collapsed = window.scrollY > 8;
+    bars.forEach((bar) => bar.classList.toggle("ios-glass-bar-top-collapsed", collapsed));
+  };
+  window.addEventListener("scroll", syncCollapsed, { passive: true });
+  syncCollapsed();
+}
+
 function setActiveView(view) {
   viewState.view = view;
   localStorage.setItem("cct_view", view);
@@ -559,6 +576,7 @@ function setActiveView(view) {
     .querySelectorAll("[data-nav-id]")
     .forEach((btn) => btn.classList.toggle("ios-tab-bar-item-active", btn.dataset.navId === view));
   qs("app-large-title").textContent = item?.label || "";
+  qs("app-nav-title").textContent = item?.label || "";
 
   if (view !== "clienthub") {
     staffDocsUnsub?.();
@@ -1428,7 +1446,9 @@ function setClientHubTab(tab) {
   qs("client-tab-bar")
     .querySelectorAll("[data-nav-id]")
     .forEach((btn) => btn.classList.toggle("ios-tab-bar-item-active", btn.dataset.navId === tab));
-  qs("chub-large-title").textContent = CLIENT_NAV_ITEMS.find((i) => i.id === tab)?.label || "";
+  const chubLabel = CLIENT_NAV_ITEMS.find((i) => i.id === tab)?.label || "";
+  qs("chub-large-title").textContent = chubLabel;
+  qs("chub-nav-title").textContent = chubLabel;
 
   qs("chub-panel-documents").hidden = tab !== "documents";
   qs("chub-panel-letters").hidden = tab !== "letters";

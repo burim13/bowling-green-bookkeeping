@@ -360,13 +360,43 @@
   }
 
   .ios-nav-row {
-    @apply flex items-center justify-between px-4 h-11;
+    @apply relative flex items-center justify-between px-4 h-11;
+  }
+  /* The compact centered title that fades in as .ios-large-title-wrap collapses on scroll (see
+     .ios-glass-bar-top-collapsed below) -- absolutely centered on the row itself rather than
+     flexed between the surrounding buttons, since their combined width differs between the
+     staff shell (toggle + save-status + header-right) and the client-facing one (empty span +
+     header-right) and would otherwise throw the title off-center or force it to wrap. */
+  .ios-nav-title {
+    @apply absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 font-semibold text-[1rem] text-text opacity-0 pointer-events-none whitespace-nowrap overflow-hidden text-ellipsis max-w-[55%];
+    transition: opacity 0.2s ease;
+  }
+  /* Real iOS nav bars shrink the big title into this small centered one as content scrolls
+     past the top, then expand it back on scroll-up -- toggled by wireLargeTitleCollapse() in
+     app.js. grid-template-rows 1fr -> 0fr (not max-height with a guessed pixel value) collapses
+     .ios-large-title-wrap precisely regardless of how long the title text is or whether it
+     wraps. */
+  .ios-glass-bar-top-collapsed .ios-nav-title {
+    @apply opacity-100;
   }
   .ios-large-title-wrap {
-    @apply px-4 pt-1 pb-3;
+    @apply px-4;
+    display: grid;
+    grid-template-rows: 1fr;
+    padding-top: 0.25rem;
+    padding-bottom: 0.75rem;
+    transition: grid-template-rows 0.25s ease, opacity 0.2s ease, padding 0.25s ease;
+  }
+  .ios-glass-bar-top-collapsed .ios-large-title-wrap {
+    grid-template-rows: 0fr;
+    opacity: 0;
+    padding-top: 0;
+    padding-bottom: 0;
   }
   .ios-large-title {
     @apply text-[1.7rem] font-bold tracking-[-0.02em] m-0 text-text;
+    overflow: hidden;
+    min-height: 0;
   }
 
   .ios-tab-bar {
