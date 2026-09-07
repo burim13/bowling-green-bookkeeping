@@ -1173,5 +1173,11 @@
     .cal-more {
       @apply hidden;
     }
+    /* auto-fit/minmax lays out 2 columns at this width, and a 3rd card (an odd count) ends up
+       alone in the second row at half-width instead of spanning it -- stack to a single column
+       so every card is full-width instead of leaving that dangling half-empty row. */
+    .stat-grid {
+      grid-template-columns: 1fr;
+    }
   }
 }
