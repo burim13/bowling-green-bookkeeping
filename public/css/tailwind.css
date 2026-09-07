@@ -731,16 +731,22 @@
     @apply mb-5 pb-0 border-b border-border;
   }
   .dropzone {
-    @apply flex flex-col items-center text-center gap-1 border-2 border-dashed border-border rounded-lg py-8 px-4 mt-3 cursor-pointer text-text-muted transition-colors;
+    @apply flex flex-col items-center text-center gap-1 border-2 border-dashed border-border rounded-2xl py-10 px-4 mt-3 cursor-pointer text-text-muted transition-colors;
+    background: var(--color-bg);
   }
   .dropzone:hover, .dropzone:focus-visible {
-    @apply border-primary bg-[rgba(37,99,235,0.04)] outline-none;
+    @apply border-primary outline-none;
+    background: color-mix(in srgb, var(--color-primary) 6%, var(--color-bg));
   }
   .dropzone-active {
-    @apply border-primary bg-[rgba(37,99,235,0.06)];
+    @apply border-primary;
+    background: color-mix(in srgb, var(--color-primary) 10%, var(--color-bg));
   }
-  .dropzone p {
-    @apply text-[0.85rem] m-0 mt-1;
+  .dropzone-title {
+    @apply text-[0.9rem] font-semibold text-text m-0;
+  }
+  .dropzone-hint {
+    @apply text-[0.8rem] text-text-muted m-0 mt-1;
   }
   .doc-row {
     @apply flex items-center gap-3 px-3 py-2.5 border-b border-border;
