@@ -1,10 +1,10 @@
-import { isFirebaseConfigured, auth } from "./firebase-init.js?v=1788749658461";
+import { isFirebaseConfigured, auth } from "./firebase-init.js?v=1788750143133";
 import {
   watchAuthState,
   signInWithPassword,
   signOutUser,
   getOwnProfile,
-} from "./auth.js?v=1788749658461";
+} from "./auth.js?v=1788750143133";
 import {
   startSync,
   stopSync,
@@ -23,12 +23,12 @@ import {
   unmarkComplete,
   isFullyLoaded,
   getClientRecord,
-} from "./data.js?v=1788749658461";
-import { renderCalendar } from "./calendar-view.js?v=1788749658461";
-import { renderList } from "./list-view.js?v=1788749658461";
-import { describeRecurrence, describeRecurrenceHistory, getLastDueOccurrence, toISODate } from "./recurrence.js?v=1788749658461";
-import { colorFor, tintFor } from "./colors.js?v=1788749658461";
-import { githubRepoSlug } from "./firebase-config.js?v=1788749658461";
+} from "./data.js?v=1788750143133";
+import { renderCalendar } from "./calendar-view.js?v=1788750143133";
+import { renderList } from "./list-view.js?v=1788750143133";
+import { describeRecurrence, describeRecurrenceHistory, getLastDueOccurrence, toISODate } from "./recurrence.js?v=1788750143133";
+import { colorFor, tintFor } from "./colors.js?v=1788750143133";
+import { githubRepoSlug } from "./firebase-config.js?v=1788750143133";
 import {
   DOC_TYPES,
   docTypeLabel,
@@ -36,9 +36,9 @@ import {
   uploadDocument,
   setDocumentReviewed,
   getDocumentDownloadURL,
-} from "./documents.js?v=1788749658461";
-import { createClientInvite } from "./invites.js?v=1788749658461";
-import { iconEdit, iconTrash, iconPlus, iconPlusLarge, iconCheck, iconTag, iconUpload, iconLogout, iconCalendar, iconListView, iconFolder, iconFolderLarge, iconHome, iconChevronRight, iconUsers, iconAlertTriangle, iconSignature, iconFile, iconUploadLarge, iconDownload } from "./icons.js?v=1788749658461";
+} from "./documents.js?v=1788750143133";
+import { createClientInvite } from "./invites.js?v=1788750143133";
+import { iconEdit, iconTrash, iconPlus, iconPlusLarge, iconCheck, iconTag, iconUpload, iconLogout, iconCalendar, iconListView, iconFolder, iconFolderLarge, iconHome, iconChevronRight, iconUsers, iconAlertTriangle, iconSignature, iconFile, iconUploadLarge, iconDownload } from "./icons.js?v=1788750143133";
 
 const DEFAULT_CATEGORIES = [
   "Payroll",
@@ -547,45 +547,66 @@ function renderClientHubTabContent(container, client, tab) {
   container.innerHTML = `<p class="client-tab-content">${CLIENT_HUB_PLACEHOLDER_COPY[tab]}</p>`;
 }
 
-async function openInviteClientModal(client) {
-  openModal(`<h2>Invite ${escapeHtml(client.name)}</h2><p class="client-tab-content">Generating an invite link…</p>`);
-  let token;
-  try {
-    token = await createClientInvite(client.id);
-  } catch (err) {
-    openModal(`
-      <h2>Could not create invite</h2>
-      <p class="client-tab-content">${escapeHtml(err.message)}</p>
-      <div class="modal-actions"><button type="button" class="btn" data-action="close">Close</button></div>
-    `);
-    qs("modal-content").querySelector('[data-action="close"]').addEventListener("click", closeModal);
-    return;
-  }
-
-  const link = `${window.location.origin}/invite.html?token=${token}&clientId=${client.id}`;
+function openInviteClientModal(client) {
   openModal(`
     <h2>Invite ${escapeHtml(client.name)}</h2>
-    <p class="client-tab-content">Send this link to your client. It lets them set their own email and
-    password and creates their Client Hub account -- they'll only ever see their own documents, never
-    other clients' data or your compliance calendar.</p>
-    <div class="invite-link-row">
-      <input type="text" id="invite-link-input" readonly value="${escapeHtml(link)}" />
-      <button type="button" class="btn" id="invite-copy-btn">Copy</button>
-    </div>
-    <p class="client-tab-content">This link works once -- if they don't use it, come back here to
-    generate a fresh one.</p>
-    <div class="modal-actions"><button type="button" class="btn" data-action="close">Close</button></div>
+    <p class="client-tab-content">Enter their email and we'll send them a link to set up their
+    Client Hub account -- or leave it blank to just get a link you can share yourself.</p>
+    <form id="invite-send-form">
+      <label>Client's email (optional)<br/><input type="email" id="invite-recipient-email" placeholder="client@example.com" /></label>
+      <div class="modal-actions" style="justify-content:flex-start;">
+        <button type="submit" class="btn btn-primary" id="invite-generate-btn">Generate invite</button>
+      </div>
+    </form>
   `);
-  qs("invite-link-input").addEventListener("click", (e) => e.target.select());
-  qs("invite-copy-btn").addEventListener("click", async () => {
+
+  qs("invite-send-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const email = qs("invite-recipient-email").value.trim();
+    const btn = qs("invite-generate-btn");
+    btn.disabled = true;
+    btn.textContent = "Generating…";
+
+    let token;
     try {
-      await navigator.clipboard.writeText(link);
-      qs("invite-copy-btn").textContent = "Copied";
-    } catch {
-      qs("invite-link-input").select();
+      token = await createClientInvite(client.id, email || null);
+    } catch (err) {
+      openModal(`
+        <h2>Could not create invite</h2>
+        <p class="client-tab-content">${escapeHtml(err.message)}</p>
+        <div class="modal-actions"><button type="button" class="btn" data-action="close">Close</button></div>
+      `);
+      qs("modal-content").querySelector('[data-action="close"]').addEventListener("click", closeModal);
+      return;
     }
+
+    const link = `${window.location.origin}/invite.html?token=${token}&clientId=${client.id}`;
+    openModal(`
+      <h2>Invite ${escapeHtml(client.name)}</h2>
+      ${
+        email
+          ? `<p class="client-tab-content">Emailing <strong>${escapeHtml(email)}</strong> now -- it may take a minute to arrive.</p>`
+          : `<p class="client-tab-content">No email address given -- share this link with them yourself.</p>`
+      }
+      <div class="invite-link-row">
+        <input type="text" id="invite-link-input" readonly value="${escapeHtml(link)}" />
+        <button type="button" class="btn" id="invite-copy-btn">Copy</button>
+      </div>
+      <p class="client-tab-content">This link works once -- if they don't use it, come back here to
+      generate a fresh one.</p>
+      <div class="modal-actions"><button type="button" class="btn" data-action="close">Close</button></div>
+    `);
+    qs("invite-link-input").addEventListener("click", (ev) => ev.target.select());
+    qs("invite-copy-btn").addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(link);
+        qs("invite-copy-btn").textContent = "Copied";
+      } catch {
+        qs("invite-link-input").select();
+      }
+    });
+    qs("modal-content").querySelector('[data-action="close"]').addEventListener("click", closeModal);
   });
-  qs("modal-content").querySelector('[data-action="close"]').addEventListener("click", closeModal);
 }
 
 // ---- document list rendering (shared by the staff Documents tab and the client-facing screen) --
