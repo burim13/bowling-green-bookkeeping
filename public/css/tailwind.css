@@ -141,22 +141,35 @@
 
   /* ---- auth screen ---- */
   #auth-screen {
-    @apply flex items-center justify-center min-h-screen;
+    @apply flex items-center justify-center min-h-screen p-6;
+    background: radial-gradient(circle at 50% 0%, rgba(37, 99, 235, 0.07), transparent 60%), var(--color-bg);
   }
   .auth-box {
-    @apply w-full max-w-[380px] bg-panel border border-border rounded-xl p-8 shadow-lg;
+    @apply w-full max-w-[380px] bg-panel border border-border border-t-[3px] border-t-primary rounded-xl p-8 shadow-lg;
+  }
+  .auth-brand {
+    @apply flex flex-col items-center text-center gap-1 mb-7;
+  }
+  .auth-brand-mark {
+    @apply w-11 h-11 rounded-[10px] mb-2;
+  }
+  .auth-brand-mark svg {
+    @apply w-[22px] h-[22px];
+  }
+  .auth-brand h1 {
+    @apply text-[1.15rem];
+  }
+  .auth-subtitle {
+    @apply text-text-muted text-[0.85rem] m-0;
   }
   .auth-actions {
     @apply flex gap-2;
   }
-  .auth-divider {
-    @apply text-center text-text-muted text-[0.85rem] my-5;
+  .auth-submit {
+    @apply w-full py-[0.6rem] text-[0.95rem] font-medium;
   }
   .auth-error {
     @apply bg-danger-bg text-danger px-3 py-[0.6rem] rounded-md mb-4 text-[0.9rem];
-  }
-  .auth-status {
-    @apply text-[0.85rem] text-text-muted;
   }
 
   /* ---- app shell ---- */

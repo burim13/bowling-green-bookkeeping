@@ -1,12 +1,10 @@
-import { isFirebaseConfigured, auth } from "./firebase-init.js?v=1788737242177";
+import { isFirebaseConfigured, auth } from "./firebase-init.js?v=1788745756106";
 import {
   watchAuthState,
   signInWithPassword,
-  sendEmailLink,
-  completeEmailLinkSignInIfPresent,
   signOutUser,
   getOwnProfile,
-} from "./auth.js?v=1788737242177";
+} from "./auth.js?v=1788745756106";
 import {
   startSync,
   stopSync,
@@ -25,13 +23,13 @@ import {
   unmarkComplete,
   isFullyLoaded,
   getClientRecord,
-} from "./data.js?v=1788737242177";
-import { renderCalendar } from "./calendar-view.js?v=1788737242177";
-import { renderList } from "./list-view.js?v=1788737242177";
-import { describeRecurrence, describeRecurrenceHistory, getLastDueOccurrence, toISODate } from "./recurrence.js?v=1788737242177";
-import { colorFor, tintFor } from "./colors.js?v=1788737242177";
-import { githubRepoSlug } from "./firebase-config.js?v=1788737242177";
-import { iconEdit, iconTrash, iconPlus, iconPlusLarge, iconCheck, iconTag, iconUpload, iconLogout, iconCalendar, iconListView, iconFolder, iconFolderLarge, iconHome, iconChevronRight, iconUsers, iconAlertTriangle, iconSignature } from "./icons.js?v=1788737242177";
+} from "./data.js?v=1788745756106";
+import { renderCalendar } from "./calendar-view.js?v=1788745756106";
+import { renderList } from "./list-view.js?v=1788745756106";
+import { describeRecurrence, describeRecurrenceHistory, getLastDueOccurrence, toISODate } from "./recurrence.js?v=1788745756106";
+import { colorFor, tintFor } from "./colors.js?v=1788745756106";
+import { githubRepoSlug } from "./firebase-config.js?v=1788745756106";
+import { iconEdit, iconTrash, iconPlus, iconPlusLarge, iconCheck, iconTag, iconUpload, iconLogout, iconCalendar, iconListView, iconFolder, iconFolderLarge, iconHome, iconChevronRight, iconUsers, iconAlertTriangle, iconSignature } from "./icons.js?v=1788745756106";
 
 const DEFAULT_CATEGORIES = [
   "Payroll",
@@ -116,8 +114,6 @@ function init() {
   wireToolbar();
   wireClientHubScreen();
 
-  completeEmailLinkSignInIfPresent().catch((err) => alert("Sign-in link failed: " + err.message));
-
   watchAuthState(async (user) => {
     if (!user) {
       els.authScreen.hidden = false;
@@ -194,17 +190,6 @@ function wireAuthForms() {
     const password = qs("auth-password").value;
     try {
       await signInWithPassword(email, password);
-    } catch (err) {
-      showAuthError(err.message);
-    }
-  });
-
-  qs("email-link-form").addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const email = qs("auth-email-link").value.trim();
-    try {
-      await sendEmailLink(email);
-      qs("email-link-status").textContent = `Sign-in link sent to ${email}. Check your inbox.`;
     } catch (err) {
       showAuthError(err.message);
     }

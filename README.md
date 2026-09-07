@@ -38,9 +38,9 @@ firebase deploy --only firestore:rules,hosting
 1. Go to https://console.firebase.google.com and click **Add project**. Name it anything (e.g.
    "client-compliance-tracker"). You can decline Google Analytics -- it's not needed.
 2. In the left sidebar, go to **Build -> Authentication -> Get started**.
-   - Under **Sign-in method**, enable **Email/Password**.
-   - Also enable **Email link (passwordless sign-in)** if you want that option (it's under the
-     same Email/Password provider's settings, as a second toggle).
+   - Under **Sign-in method**, enable **Email/Password** only. (There's deliberately no
+     passwordless "email link" option -- that flow lets Firebase auto-create an Auth account for
+     any typed email, which cuts against "every account is added by you" below.)
 3. In the left sidebar, go to **Build -> Firestore Database -> Create database**. Choose
    **Production mode** and any nearby region. (Production mode just means "start locked down" --
    we deploy our own rules below, so this is fine.)
