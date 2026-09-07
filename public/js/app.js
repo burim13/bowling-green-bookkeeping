@@ -1,21 +1,22 @@
-import { isFirebaseConfigured, auth } from "./firebase-init.js?v=1788794909370";
-import { escapeHtml } from "./html-safety.js?v=1788794909370";
-import { friendlyAuthError } from "./auth-errors.js?v=1788794909370";
-import { getEffectiveTheme, toggleTheme } from "./theme.js?v=1788794909370";
+import { isFirebaseConfigured, auth } from "./firebase-init.js?v=1788795346382";
+import { escapeHtml } from "./html-safety.js?v=1788795346382";
+import { friendlyAuthError } from "./auth-errors.js?v=1788795346382";
+import { getEffectiveTheme, toggleTheme } from "./theme.js?v=1788795346382";
 import {
   watchAuthState,
   signInWithPassword,
   signOutUser,
   getOwnProfile,
   afterSignIn,
-} from "./auth.js?v=1788794909370";
+  updateOwnDisplayName,
+} from "./auth.js?v=1788795346382";
 import {
   isMfaEnrolled,
   startMfaEnrollment,
   finishMfaEnrollment,
   getResolver,
   completeMfaSignIn,
-} from "./mfa.js?v=1788794909370";
+} from "./mfa.js?v=1788795346382";
 import {
   startSync,
   stopSync,
@@ -34,12 +35,12 @@ import {
   unmarkComplete,
   isFullyLoaded,
   getClientRecord,
-} from "./data.js?v=1788794909370";
-import { renderCalendar } from "./calendar-view.js?v=1788794909370";
-import { renderList } from "./list-view.js?v=1788794909370";
-import { describeRecurrence, describeRecurrenceHistory, getLastDueOccurrence, toISODate } from "./recurrence.js?v=1788794909370";
-import { colorFor, tintFor } from "./colors.js?v=1788794909370";
-import { githubRepoSlug } from "./firebase-config.js?v=1788794909370";
+} from "./data.js?v=1788795346382";
+import { renderCalendar } from "./calendar-view.js?v=1788795346382";
+import { renderList } from "./list-view.js?v=1788795346382";
+import { describeRecurrence, describeRecurrenceHistory, getLastDueOccurrence, toISODate } from "./recurrence.js?v=1788795346382";
+import { colorFor, tintFor } from "./colors.js?v=1788795346382";
+import { githubRepoSlug } from "./firebase-config.js?v=1788795346382";
 import {
   DOC_TYPES,
   docTypeLabel,
@@ -48,10 +49,10 @@ import {
   setDocumentReviewed,
   getDocumentDownloadURL,
   deleteDocument,
-} from "./documents.js?v=1788794909370";
-import { createClientInvite, subscribeToInviteStatus } from "./invites.js?v=1788794909370";
-import { subscribeToOwnCompliance } from "./client-compliance.js?v=1788794909370";
-import { subscribeToLetters, sendLetter, signLetter, deleteLetter, getLetterDownloadURL } from "./letters.js?v=1788794909370";
+} from "./documents.js?v=1788795346382";
+import { createClientInvite, subscribeToInviteStatus } from "./invites.js?v=1788795346382";
+import { subscribeToOwnCompliance } from "./client-compliance.js?v=1788795346382";
+import { subscribeToLetters, sendLetter, signLetter, deleteLetter, getLetterDownloadURL } from "./letters.js?v=1788795346382";
 import {
   stampSignature,
   stampFields,
@@ -61,8 +62,8 @@ import {
   loadPdfDocument,
   renderPdfPageToCanvas,
   FIELD_DEFAULT_SIZE,
-} from "./pdf-sign.js?v=1788794909370";
-import { iconEdit, iconTrash, iconPlus, iconPlusLarge, iconCheck, iconTag, iconUpload, iconLogout, iconCalendar, iconListView, iconFolder, iconFolderLarge, iconHome, iconChevronRight, iconUsers, iconAlertTriangle, iconSignature, iconFile, iconUploadLarge, iconDownload, iconClock, iconSun, iconMoon, iconEllipsis } from "./icons.js?v=1788794909370";
+} from "./pdf-sign.js?v=1788795346382";
+import { iconEdit, iconTrash, iconPlus, iconPlusLarge, iconCheck, iconTag, iconUpload, iconLogout, iconCalendar, iconListView, iconFolder, iconFolderLarge, iconHome, iconChevronRight, iconUsers, iconAlertTriangle, iconSignature, iconFile, iconUploadLarge, iconDownload, iconClock, iconSun, iconMoon, iconEllipsis } from "./icons.js?v=1788795346382";
 
 const DEFAULT_CATEGORIES = [
   "Payroll",
@@ -176,7 +177,7 @@ function init() {
       stopSync();
       await showClientHub(profile);
     } else if (isMfaEnrolled(user)) {
-      showStaffShell(user);
+      await showStaffShell(user, profile);
     } else {
       // Every staff/admin account must enroll TOTP MFA before it can see any client data --
       // gate the app shell behind enrollment instead of just nudging toward it.
@@ -276,7 +277,7 @@ function wireMfaScreens() {
       mfaEnrollSecret = null;
       mfaEnrollUser = null;
       els.mfaEnrollScreen.hidden = true;
-      showStaffShell(user);
+      await showStaffShell(user);
     } catch (err) {
       errEl.textContent = friendlyAuthError(err);
       errEl.hidden = false;
@@ -322,17 +323,81 @@ async function startMfaEnrollmentFlow(user) {
   }
 }
 
-function showStaffShell(user) {
+async function showStaffShell(user, profile) {
   els.clientHubScreen.hidden = true;
   els.mfaEnrollScreen.hidden = true;
   els.appShell.hidden = false;
-  const userColor = colorFor(user.email);
-  els.userBadge.innerHTML = `
-    <span class="avatar-badge" style="background:${tintFor(userColor)}; color:${userColor};">${user.email.slice(0, 2).toUpperCase()}</span>
-    <span class="user-badge-email">${escapeHtml(user.email)}</span>
-  `;
+  if (!profile) {
+    try {
+      profile = await getOwnProfile();
+    } catch (err) {
+      console.error(err);
+      profile = null;
+    }
+  }
+  renderUserBadge(user, profile);
   startSync();
   seedCategoriesIfMissing(DEFAULT_CATEGORIES).catch((err) => console.error(err));
+}
+
+// displayName defaults to the account's own email at signup (see ensureUserDoc in auth.js), so
+// "still equals email" is exactly "hasn't set a real name yet" -- shown as a "Set your name"
+// prompt rather than silently falling back to the email this whole feature exists to hide.
+function renderUserBadge(user, profile) {
+  const roleLabel = profile?.role === "admin" ? "Admin" : "Staff";
+  const savedName = profile?.displayName?.trim();
+  const hasCustomName = savedName && savedName !== user.email;
+  const nameWords = hasCustomName ? savedName.split(/\s+/) : [];
+  const firstName = hasCustomName ? nameWords[0] : "Set your name";
+  const initials = hasCustomName
+    ? nameWords
+        .slice(0, 2)
+        .map((w) => w[0])
+        .join("")
+        .toUpperCase()
+    : user.email.slice(0, 2).toUpperCase();
+  const userColor = colorFor(user.email);
+
+  els.userBadge.innerHTML = `
+    <span class="avatar-badge" style="background:${tintFor(userColor)}; color:${userColor};">${escapeHtml(initials)}</span>
+    <button type="button" id="user-badge-name-btn" class="user-badge-name-btn" title="Edit your name">
+      <span class="user-badge-name">${escapeHtml(firstName)}</span>
+      <span class="user-badge-role">${roleLabel}</span>
+    </button>
+  `;
+  qs("user-badge-name-btn").addEventListener("click", () => openEditNameModal(user, profile));
+}
+
+function openEditNameModal(user, profile) {
+  const savedName = profile?.displayName?.trim();
+  const prefill = savedName && savedName !== user.email ? savedName : "";
+  openModal(`
+    <h2>Your name</h2>
+    <p class="client-tab-content">Shown in the app instead of your email address.</p>
+    <form id="edit-name-form">
+      <label>Full name<br/><input type="text" id="edit-name-input" value="${escapeHtml(prefill)}" placeholder="Jane Smith" required /></label>
+      <div id="edit-name-error" class="auth-error" hidden></div>
+      <div class="modal-actions">
+        <button type="button" class="btn" data-action="close">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save</button>
+      </div>
+    </form>
+  `);
+  qs("modal-content").querySelector('[data-action="close"]').addEventListener("click", closeModal);
+  qs("edit-name-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const name = qs("edit-name-input").value.trim();
+    const errEl = qs("edit-name-error");
+    errEl.hidden = true;
+    try {
+      await updateOwnDisplayName(name);
+      closeModal();
+      renderUserBadge(user, { ...profile, displayName: name });
+    } catch (err) {
+      errEl.textContent = err.message;
+      errEl.hidden = false;
+    }
+  });
 }
 
 // ---- toolbar / view switching ----------------------------------------------

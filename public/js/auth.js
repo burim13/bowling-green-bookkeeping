@@ -3,8 +3,8 @@ import {
   signInWithEmailAndPassword,
   signOut,
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
-import { doc, setDoc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
-import { auth, db } from "./firebase-init.js?v=1788794909370";
+import { doc, setDoc, getDoc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+import { auth, db } from "./firebase-init.js?v=1788795346382";
 
 export function watchAuthState(callback) {
   return onAuthStateChanged(auth, callback);
@@ -41,6 +41,17 @@ export async function getOwnProfile() {
   if (!user) return null;
   const snap = await getDoc(doc(db, "users", user.uid));
   return snap.exists() ? snap.data() : null;
+}
+
+// Lets a staff/admin account set a real display name instead of the "displayName defaults to
+// email" fallback ensureUserDoc below writes at signup -- the header shows this (first word
+// only) + role instead of the raw email once it's set. Firestore rules already allow an
+// approved user to update any field on their own /users/{uid} doc except role, so nothing new
+// needed there.
+export async function updateOwnDisplayName(name) {
+  const user = auth.currentUser;
+  if (!user) return;
+  await updateDoc(doc(db, "users", user.uid), { displayName: name });
 }
 
 async function ensureUserDoc() {
