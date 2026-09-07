@@ -1,21 +1,21 @@
-import { isFirebaseConfigured, auth } from "./firebase-init.js?v=1788794106272";
-import { escapeHtml } from "./html-safety.js?v=1788794106272";
-import { friendlyAuthError } from "./auth-errors.js?v=1788794106272";
-import { getEffectiveTheme, toggleTheme } from "./theme.js?v=1788794106272";
+import { isFirebaseConfigured, auth } from "./firebase-init.js?v=1788794909370";
+import { escapeHtml } from "./html-safety.js?v=1788794909370";
+import { friendlyAuthError } from "./auth-errors.js?v=1788794909370";
+import { getEffectiveTheme, toggleTheme } from "./theme.js?v=1788794909370";
 import {
   watchAuthState,
   signInWithPassword,
   signOutUser,
   getOwnProfile,
   afterSignIn,
-} from "./auth.js?v=1788794106272";
+} from "./auth.js?v=1788794909370";
 import {
   isMfaEnrolled,
   startMfaEnrollment,
   finishMfaEnrollment,
   getResolver,
   completeMfaSignIn,
-} from "./mfa.js?v=1788794106272";
+} from "./mfa.js?v=1788794909370";
 import {
   startSync,
   stopSync,
@@ -34,12 +34,12 @@ import {
   unmarkComplete,
   isFullyLoaded,
   getClientRecord,
-} from "./data.js?v=1788794106272";
-import { renderCalendar } from "./calendar-view.js?v=1788794106272";
-import { renderList } from "./list-view.js?v=1788794106272";
-import { describeRecurrence, describeRecurrenceHistory, getLastDueOccurrence, toISODate } from "./recurrence.js?v=1788794106272";
-import { colorFor, tintFor } from "./colors.js?v=1788794106272";
-import { githubRepoSlug } from "./firebase-config.js?v=1788794106272";
+} from "./data.js?v=1788794909370";
+import { renderCalendar } from "./calendar-view.js?v=1788794909370";
+import { renderList } from "./list-view.js?v=1788794909370";
+import { describeRecurrence, describeRecurrenceHistory, getLastDueOccurrence, toISODate } from "./recurrence.js?v=1788794909370";
+import { colorFor, tintFor } from "./colors.js?v=1788794909370";
+import { githubRepoSlug } from "./firebase-config.js?v=1788794909370";
 import {
   DOC_TYPES,
   docTypeLabel,
@@ -48,10 +48,10 @@ import {
   setDocumentReviewed,
   getDocumentDownloadURL,
   deleteDocument,
-} from "./documents.js?v=1788794106272";
-import { createClientInvite, subscribeToInviteStatus } from "./invites.js?v=1788794106272";
-import { subscribeToOwnCompliance } from "./client-compliance.js?v=1788794106272";
-import { subscribeToLetters, sendLetter, signLetter, deleteLetter, getLetterDownloadURL } from "./letters.js?v=1788794106272";
+} from "./documents.js?v=1788794909370";
+import { createClientInvite, subscribeToInviteStatus } from "./invites.js?v=1788794909370";
+import { subscribeToOwnCompliance } from "./client-compliance.js?v=1788794909370";
+import { subscribeToLetters, sendLetter, signLetter, deleteLetter, getLetterDownloadURL } from "./letters.js?v=1788794909370";
 import {
   stampSignature,
   stampFields,
@@ -61,8 +61,8 @@ import {
   loadPdfDocument,
   renderPdfPageToCanvas,
   FIELD_DEFAULT_SIZE,
-} from "./pdf-sign.js?v=1788794106272";
-import { iconEdit, iconTrash, iconPlus, iconPlusLarge, iconCheck, iconTag, iconUpload, iconLogout, iconCalendar, iconListView, iconFolder, iconFolderLarge, iconHome, iconChevronRight, iconUsers, iconAlertTriangle, iconSignature, iconFile, iconUploadLarge, iconDownload, iconClock, iconSun, iconMoon, iconEllipsis } from "./icons.js?v=1788794106272";
+} from "./pdf-sign.js?v=1788794909370";
+import { iconEdit, iconTrash, iconPlus, iconPlusLarge, iconCheck, iconTag, iconUpload, iconLogout, iconCalendar, iconListView, iconFolder, iconFolderLarge, iconHome, iconChevronRight, iconUsers, iconAlertTriangle, iconSignature, iconFile, iconUploadLarge, iconDownload, iconClock, iconSun, iconMoon, iconEllipsis } from "./icons.js?v=1788794909370";
 
 const DEFAULT_CATEGORIES = [
   "Payroll",
@@ -115,12 +115,6 @@ function init() {
   els.viewContainer = qs("view-container");
   els.clientList = qs("client-list");
   els.clientSearch = qs("client-search");
-  els.listFilterClient = qs("list-filter-client");
-  els.filterCategory = qs("filter-category");
-  els.categoryFilterWrap = qs("category-filter-wrap");
-  els.bulkAddItemBtn = qs("bulk-add-item-btn");
-  els.toolbarActionsBtn = qs("toolbar-actions-btn");
-  els.markAllCompleteBtn = qs("mark-all-complete-btn");
   els.userBadge = qs("user-badge");
   els.clientHubScreen = qs("client-hub-screen");
   els.clientHubName = qs("client-hub-name");
@@ -193,7 +187,6 @@ function init() {
   subscribeToData((state) => {
     latestState = state;
     renderClientList();
-    renderCategoryFilterOptions();
     renderCurrentView();
   });
 
@@ -378,23 +371,12 @@ function wireToolbar() {
   qs("client-list-toggle-btn").addEventListener("click", () => setSidebarOpen(true));
   qs("sidebar-backdrop").addEventListener("click", () => setSidebarOpen(false));
 
-  els.listFilterClient.addEventListener("change", (e) => {
-    viewState.clientFilter = e.target.value || null;
-    renderCurrentView();
-  });
-  els.filterCategory.addEventListener("change", (e) => {
-    viewState.categoryFilter = e.target.value || null;
-    renderCurrentView();
-  });
-  els.markAllCompleteBtn.addEventListener("click", handleMarkAllShownComplete);
-
   els.clientSearch.addEventListener("input", (e) => {
     viewState.clientSearch = e.target.value;
     renderClientList();
   });
 
-  qs("add-client-btn").addEventListener("click", () => openClientModal());
-  qs("bulk-add-item-btn").addEventListener("click", () => openBulkAddItemModal());
+  qs("toolbar-actions-btn").innerHTML = iconEllipsis;
   qs("toolbar-actions-btn").addEventListener("click", () => openToolbarActionsMenu());
   qs("modal-backdrop").addEventListener("click", (e) => {
     if (e.target.id === "modal-backdrop") closeModal();
@@ -404,13 +386,23 @@ function wireToolbar() {
   wireThemeToggle(qs("chub-theme-toggle-btn"));
 }
 
-// Action-sheet-style overflow menu for the compliance calendar/list's secondary actions --
-// keeps the toolbar itself down to just the filter + primary "Add" buttons (see the AskUserQuestion
-// decision to declutter rather than restyle everything in place).
+// Global actions menu (the same "..." button regardless of which view is active) -- Add client
+// and Add item apply everywhere, and Manage categories/Export are compliance-related but harmless
+// to offer from any screen. Category and client filters, and "mark all complete", moved into
+// Calendar's/List's own headers instead of living here, since those are contextual to one view,
+// not global actions.
 function openToolbarActionsMenu() {
   openModal(`
     <h2>Actions</h2>
     <div class="ios-grouped-list">
+      <button type="button" class="ios-grouped-list-row" id="toolbar-action-add-client">
+        <span class="ios-grouped-list-row-icon" style="background:#007AFF;">${iconPlus}</span>
+        <span class="ios-grouped-list-row-label">Add client</span>
+      </button>
+      <button type="button" class="ios-grouped-list-row" id="toolbar-action-add-item">
+        <span class="ios-grouped-list-row-icon" style="background:#007AFF;">${iconPlus}</span>
+        <span class="ios-grouped-list-row-label">Add item to clients...</span>
+      </button>
       <button type="button" class="ios-grouped-list-row" id="toolbar-action-manage-categories">
         <span class="ios-grouped-list-row-icon" style="background:#8E8E93;">${iconTag}</span>
         <span class="ios-grouped-list-row-label">Manage categories</span>
@@ -423,6 +415,14 @@ function openToolbarActionsMenu() {
     <div class="modal-actions"><button type="button" class="btn" data-action="close">Cancel</button></div>
   `);
   qs("modal-content").querySelector('[data-action="close"]').addEventListener("click", closeModal);
+  qs("toolbar-action-add-client").addEventListener("click", () => {
+    closeModal();
+    openClientModal();
+  });
+  qs("toolbar-action-add-item").addEventListener("click", () => {
+    closeModal();
+    openBulkAddItemModal();
+  });
   qs("toolbar-action-manage-categories").addEventListener("click", () => {
     closeModal();
     openCategoriesModal();
@@ -466,18 +466,10 @@ function setActiveView(view) {
     .forEach((btn) => btn.classList.toggle("ios-tab-bar-item-active", btn.dataset.navId === view));
   qs("app-large-title").textContent = item?.label || "";
 
-  qs("list-filter-wrap").hidden = view !== "list";
-  els.markAllCompleteBtn.hidden = view !== "list";
   if (view !== "clienthub") {
     staffDocsUnsub?.();
     staffDocsUnsub = null;
   }
-  // Category filtering and bulk item-add only mean anything for the compliance calendar/list --
-  // showing them on Overview or Client Hub reads as unrelated clutter with nothing to act on.
-  const isComplianceView = view === "calendar" || view === "list";
-  els.categoryFilterWrap.hidden = !isComplianceView;
-  els.bulkAddItemBtn.hidden = !isComplianceView;
-  els.toolbarActionsBtn.hidden = !isComplianceView;
   renderCurrentView();
 }
 
@@ -511,6 +503,10 @@ function renderCalendarViewWrapper() {
       localStorage.setItem("cct_colormode", mode);
       renderCurrentView();
     },
+    onCategoryFilterChange: (category) => {
+      viewState.categoryFilter = category;
+      renderCurrentView();
+    },
     onJumpToMonth: () => openJumpToMonthModal(),
     onDayClick: (date, entries) => openDayModal(date, entries),
   });
@@ -528,6 +524,16 @@ function renderListViewWrapper() {
     rangeEnd,
     onToggleComplete: handleToggleComplete,
     onEditItem: (clientId, itemId) => openItemModal(clientId, itemId),
+    showFilterHeader: true,
+    onClientFilterChange: (clientId) => {
+      viewState.clientFilter = clientId;
+      renderCurrentView();
+    },
+    onCategoryFilterChange: (category) => {
+      viewState.categoryFilter = category;
+      renderCurrentView();
+    },
+    onMarkAllComplete: handleMarkAllShownComplete,
   });
 }
 
@@ -1826,7 +1832,10 @@ async function handleMarkAllShownComplete() {
   }
   if (!confirm(`Mark all ${currentListRows.length} shown item(s) as complete?`)) return;
 
-  els.markAllCompleteBtn.disabled = true;
+  // Looked up fresh (not cached in els) -- list-view.js re-creates this button on every render,
+  // most recently when this same click just fired.
+  const btn = els.viewContainer.querySelector('[data-action="mark-all"]');
+  if (btn) btn.disabled = true;
   try {
     for (const { clientId, itemId, periodKey } of currentListRows) {
       await markComplete(clientId, itemId, periodKey);
@@ -1834,7 +1843,7 @@ async function handleMarkAllShownComplete() {
   } catch (err) {
     alert("Could not mark everything complete: " + err.message);
   } finally {
-    els.markAllCompleteBtn.disabled = false;
+    if (btn) btn.disabled = false;
   }
 }
 
@@ -1964,12 +1973,6 @@ function renderClientList() {
     });
   }
 
-  const clientFilterOptions = viewState.showArchived ? allClients : activeClients;
-  els.listFilterClient.innerHTML =
-    `<option value="">All clients</option>` +
-    clientFilterOptions.map((c) => `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join("");
-  els.listFilterClient.value = viewState.clientFilter || "";
-
   els.clientList.querySelectorAll(".client-row").forEach((row) => {
     const clientId = row.dataset.clientId;
     row.querySelector('[data-action="filter"]').addEventListener("click", () => {
@@ -1981,19 +1984,6 @@ function renderClientList() {
     row.querySelector('[data-action="edit"]').addEventListener("click", () => openClientModal(clientId));
     row.querySelector('[data-action="delete"]')?.addEventListener("click", () => confirmDeleteClient(clientId));
   });
-}
-
-function renderCategoryFilterOptions() {
-  // Union of the master category list plus any category actually in use (covers custom labels
-  // that were typed in rather than picked from the list) -- sorted for a stable dropdown order.
-  const inUse = new Set(latestState.categories);
-  for (const item of latestState.items.values()) inUse.add(item.category);
-  const options = [...inUse].sort((a, b) => a.localeCompare(b));
-
-  els.filterCategory.innerHTML =
-    `<option value="">All categories</option>` +
-    options.map((c) => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join("");
-  els.filterCategory.value = viewState.categoryFilter || "";
 }
 
 // ---- modals ------------------------------------------------------------

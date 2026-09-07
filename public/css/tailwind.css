@@ -698,10 +698,13 @@
   .cal-title:focus-visible {
     @apply outline-none shadow-[0_0_0_3px_rgba(37,99,235,0.2)];
   }
-  .cal-colormode {
-    @apply ml-auto text-[0.85rem] text-text-muted flex items-center gap-[0.4rem];
+  .cal-filters {
+    @apply ml-auto flex items-center gap-3 flex-wrap;
   }
-  .cal-colormode select {
+  .cal-filter-item {
+    @apply text-[0.85rem] text-text-muted flex items-center gap-[0.4rem];
+  }
+  .cal-filter-item select {
     @apply w-auto;
   }
 
@@ -801,6 +804,9 @@
   }
 
   /* ---- list view ---- */
+  .list-header {
+    @apply flex items-center justify-between gap-3 flex-wrap mb-4;
+  }
   .list-group {
     @apply mb-5;
   }
@@ -1040,7 +1046,7 @@
     .cal-title {
       @apply min-w-0 text-[0.95rem];
     }
-    .cal-colormode {
+    .cal-filters {
       @apply ml-0;
     }
     .cal-cell {

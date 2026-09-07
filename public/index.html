@@ -18,7 +18,7 @@
   </script>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Dancing+Script:wght@600&display=swap" />
-  <link rel="stylesheet" href="css/styles.css?v=1788794106272" />
+  <link rel="stylesheet" href="css/styles.css?v=1788794909370" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
 </head>
@@ -110,6 +110,7 @@
         <span id="save-status" class="save-status"></span>
         <div class="header-right">
           <button id="theme-toggle-btn" class="icon-btn" title="Toggle light/dark mode" aria-label="Toggle light/dark mode"></button>
+          <button id="toolbar-actions-btn" class="icon-btn" title="Actions" aria-label="Actions"></button>
           <span id="user-badge" class="user-badge"></span>
           <span class="header-divider"></span>
           <button id="sign-out-btn" class="btn btn-ghost btn-header" title="Sign out">Sign out</button>
@@ -117,20 +118,6 @@
       </div>
       <div class="ios-large-title-wrap">
         <h1 id="app-large-title" class="ios-large-title">Overview</h1>
-      </div>
-
-      <div class="toolbar">
-        <div id="category-filter-wrap" class="list-filter-wrap">
-          <label>Category <select id="filter-category"></select></label>
-        </div>
-        <div id="list-filter-wrap" class="list-filter-wrap" hidden>
-          <label>Client filter <select id="list-filter-client"></select></label>
-        </div>
-        <button id="mark-all-complete-btn" class="btn" hidden>Mark all shown complete</button>
-        <div class="toolbar-spacer"></div>
-        <button id="toolbar-actions-btn" class="icon-btn" title="More actions" aria-label="More actions"></button>
-        <button id="bulk-add-item-btn" class="btn btn-primary">Add item to clients...</button>
-        <button id="add-client-btn" class="btn btn-primary">Add client</button>
       </div>
     </header>
 
@@ -200,6 +187,6 @@
     <nav class="ios-glass-bar ios-glass-bar-bottom ios-tab-bar" id="client-tab-bar"></nav>
   </div>
 
-  <script type="module" src="js/app.js?v=1788794106272"></script>
+  <script type="module" src="js/app.js?v=1788794909370"></script>
 </body>
 </html>

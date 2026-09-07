@@ -1,7 +1,8 @@
-import { getOccurrencesInRange, getLastDueOccurrence, describeRecurrence, toISODate } from "./recurrence.js?v=1788794106272";
-import { colorFor } from "./colors.js?v=1788794106272";
-import { iconEdit, iconCheckLarge } from "./icons.js?v=1788794106272";
-import { escapeHtml } from "./html-safety.js?v=1788794106272";
+import { getOccurrencesInRange, getLastDueOccurrence, describeRecurrence, toISODate } from "./recurrence.js?v=1788794909370";
+import { colorFor } from "./colors.js?v=1788794909370";
+import { iconEdit, iconCheckLarge } from "./icons.js?v=1788794909370";
+import { escapeHtml } from "./html-safety.js?v=1788794909370";
+import { categoryOptions } from "./calendar-view.js?v=1788794909370";
 
 function completionFor(state, itemId, periodKey) {
   const forItem = state.completions.get(itemId);
@@ -12,9 +13,14 @@ const WEEKDAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 // ctx: { state, clientFilter, categoryFilter, showArchived, rangeStart, rangeEnd, onToggleComplete,
-// onEditItem, readOnly }. readOnly (used by the client-facing Compliance view -- a client has no
-// Firestore permission to toggle completion or edit items, so those controls would just fail
-// silently if shown) disables the checkbox and omits the edit button entirely.
+// onEditItem, readOnly, showFilterHeader, onClientFilterChange, onCategoryFilterChange,
+// onMarkAllComplete }. readOnly
+// (used by the client-facing Compliance view -- a client has no Firestore permission to toggle
+// completion or edit items, so those controls would just fail silently if shown) disables the
+// checkbox and omits the edit button entirely. showFilterHeader (used only by the staff List
+// view -- NOT the per-client Compliance tab, which is already scoped to one client, and NOT the
+// client-facing Compliance view, which has nothing to filter) renders the client filter + "mark
+// all shown complete" inside the list itself instead of a page-level toolbar.
 // Returns the list of currently-rendered, not-yet-complete rows ({ clientId, itemId, periodKey }),
 // so callers can offer a "mark all shown complete" bulk action without recomputing the filtering.
 export function renderList(container, ctx) {
@@ -58,17 +64,47 @@ export function renderList(container, ctx) {
     ...rows.filter((r) => r.date <= today && !completionFor(state, r.item.id, r.periodKey)),
   ].map(({ item, periodKey }) => ({ clientId: item.clientId, itemId: item.id, periodKey }));
 
+  const headerHtml = ctx.showFilterHeader
+    ? `<div class="list-header">
+        <div class="cal-filters">
+          <label class="cal-filter-item">
+            Client
+            <select data-action="clientfilter">
+              <option value="">All clients</option>
+              ${[...state.clients.values()]
+                .filter((c) => ctx.showArchived || !c.archived)
+                .sort((a, b) => a.name.localeCompare(b.name))
+                .map((c) => `<option value="${c.id}" ${ctx.clientFilter === c.id ? "selected" : ""}>${escapeHtml(c.name)}</option>`)
+                .join("")}
+            </select>
+          </label>
+          <label class="cal-filter-item">
+            Category
+            <select data-action="categoryfilter">
+              <option value="">All categories</option>
+              ${categoryOptions(state)
+                .map((c) => `<option value="${escapeHtml(c)}" ${ctx.categoryFilter === c ? "selected" : ""}>${escapeHtml(c)}</option>`)
+                .join("")}
+            </select>
+          </label>
+        </div>
+        <button type="button" class="btn" data-action="mark-all">Mark all shown complete</button>
+      </div>`
+    : "";
+
   if (rows.length === 0 && overdueRows.length === 0) {
-    container.innerHTML = `
-      <div class="empty-state">
+    container.innerHTML =
+      headerHtml +
+      `<div class="empty-state">
         <div class="empty-state-badge empty-state-badge-success">${iconCheckLarge}</div>
         <h3>All caught up</h3>
         <p>Nothing due in this window.</p>
       </div>`;
+    wireFilterHeader(container, ctx);
     return incompleteRows;
   }
 
-  let html = "";
+  let html = headerHtml;
 
   if (overdueRows.length > 0) {
     html += `<div class="list-group list-group-overdue">
@@ -108,7 +144,19 @@ export function renderList(container, ctx) {
     });
   }
 
+  wireFilterHeader(container, ctx);
   return incompleteRows;
+}
+
+function wireFilterHeader(container, ctx) {
+  if (!ctx.showFilterHeader) return;
+  container.querySelector('[data-action="clientfilter"]').addEventListener("change", (e) => {
+    ctx.onClientFilterChange(e.target.value || null);
+  });
+  container.querySelector('[data-action="categoryfilter"]').addEventListener("change", (e) => {
+    ctx.onCategoryFilterChange(e.target.value || null);
+  });
+  container.querySelector('[data-action="mark-all"]').addEventListener("click", ctx.onMarkAllComplete);
 }
 
 function rowHtml({ item, periodKey, date }, state, today, readOnly) {

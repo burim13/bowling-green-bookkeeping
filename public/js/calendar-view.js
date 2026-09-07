@@ -1,7 +1,7 @@
-import { getOccurrenceInMonth, getOccurrencesInRange, describeRecurrence, toISODate } from "./recurrence.js?v=1788794106272";
-import { colorFor } from "./colors.js?v=1788794106272";
-import { iconChevronLeft, iconChevronRight } from "./icons.js?v=1788794106272";
-import { escapeHtml } from "./html-safety.js?v=1788794106272";
+import { getOccurrenceInMonth, getOccurrencesInRange, describeRecurrence, toISODate } from "./recurrence.js?v=1788794909370";
+import { colorFor } from "./colors.js?v=1788794909370";
+import { iconChevronLeft, iconChevronRight } from "./icons.js?v=1788794909370";
+import { escapeHtml } from "./html-safety.js?v=1788794909370";
 
 function isDone(state, itemId, periodKey) {
   const forItem = state.completions.get(itemId);
@@ -26,8 +26,18 @@ function itemColor(colorMode, item) {
   return colorMode === "category" ? colorFor(item.category) : colorFor(item.clientId);
 }
 
+// Union of the master category list plus any category actually in use (covers custom labels
+// typed in rather than picked from the list) -- sorted for a stable dropdown order. Shared with
+// list-view.js's own category filter so both stay consistent.
+export function categoryOptions(state) {
+  const inUse = new Set(state.categories);
+  for (const item of state.items.values()) inUse.add(item.category);
+  return [...inUse].sort((a, b) => a.localeCompare(b));
+}
+
 // ctx: { state, year, month, colorMode, clientFilter, categoryFilter, showArchived,
-//        onPrev, onNext, onToday, onJumpToMonth, onDayClick, onColorModeChange }
+//        onPrev, onNext, onToday, onJumpToMonth, onDayClick, onColorModeChange,
+//        onCategoryFilterChange }
 export function renderCalendar(container, ctx) {
   const { state, year, month, colorMode } = ctx;
 
@@ -133,13 +143,24 @@ export function renderCalendar(container, ctx) {
       <button class="cal-title" data-action="jump" title="Jump to a month">${MONTH_NAMES[month]} ${year}</button>
       <button class="btn btn-ghost btn-icon" data-action="next" aria-label="Next month">${iconChevronRight}</button>
       <button class="btn btn-ghost" data-action="today">Today</button>
-      <label class="cal-colormode">
-        Color by
-        <select data-action="colormode">
-          <option value="client" ${colorMode === "client" ? "selected" : ""}>Client</option>
-          <option value="category" ${colorMode === "category" ? "selected" : ""}>Category</option>
-        </select>
-      </label>
+      <div class="cal-filters">
+        <label class="cal-filter-item">
+          Category
+          <select data-action="categoryfilter">
+            <option value="">All categories</option>
+            ${categoryOptions(state)
+              .map((c) => `<option value="${escapeHtml(c)}" ${ctx.categoryFilter === c ? "selected" : ""}>${escapeHtml(c)}</option>`)
+              .join("")}
+          </select>
+        </label>
+        <label class="cal-filter-item">
+          Color by
+          <select data-action="colormode">
+            <option value="client" ${colorMode === "client" ? "selected" : ""}>Client</option>
+            <option value="category" ${colorMode === "category" ? "selected" : ""}>Category</option>
+          </select>
+        </label>
+      </div>
     </div>
     ${agendaHtml}
     <div class="cal-grid cal-grid-head">
@@ -154,6 +175,9 @@ export function renderCalendar(container, ctx) {
   container.querySelector('[data-action="today"]').addEventListener("click", ctx.onToday);
   container.querySelector('[data-action="jump"]').addEventListener("click", ctx.onJumpToMonth);
   container.querySelector('[data-action="colormode"]').addEventListener("change", (e) => ctx.onColorModeChange(e.target.value));
+  container
+    .querySelector('[data-action="categoryfilter"]')
+    .addEventListener("change", (e) => ctx.onCategoryFilterChange(e.target.value || null));
 
   container.querySelectorAll(".cal-cell[data-day]").forEach((cell) => {
     cell.addEventListener("click", () => {
