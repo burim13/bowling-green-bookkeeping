@@ -1,0 +1,229 @@
+{
+  "clientInvites": {
+    "3f5afb10-04aa-4546-a20f-cb90461ba590": {
+      "used": false,
+      "clientId": "52eRERsHLTACFyDYIxjJ",
+      "createdAt": "2026-09-07T02:57:38.824Z"
+    },
+    "dcc10e48-e53b-487f-a3c8-0d90f2d264f0": {
+      "clientId": "52eRERsHLTACFyDYIxjJ",
+      "recipientEmail": null,
+      "used": false,
+      "createdAt": "2026-09-07T03:24:56.156Z"
+    },
+    "defb8904-324b-4b39-83ed-8e8cbbfbeff1": {
+      "clientId": "52eRERsHLTACFyDYIxjJ",
+      "used": false,
+      "createdAt": "2026-09-07T02:58:00.753Z"
+    },
+    "f01a2c62-1416-4d95-a180-c5659251c578": {
+      "recipientEmail": null,
+      "clientId": "52eRERsHLTACFyDYIxjJ",
+      "createdAt": "2026-09-07T03:25:18.931Z",
+      "used": true
+    }
+  },
+  "clients": {
+    "52eRERsHLTACFyDYIxjJ": {
+      "notes": "",
+      "name": "Cafe Italia, LLC",
+      "createdAt": "2026-09-05T04:25:48.725Z",
+      "_subcollections": {
+        "documents": {
+          "KbTQ7xR1j2SEv5aH2LEt": {
+            "docType": "w2",
+            "fileName": "1103.pdf",
+            "sizeBytes": 98458,
+            "uploadedBy": "taxhelp@bg-bookkeeping.com",
+            "storagePath": "clients/52eRERsHLTACFyDYIxjJ/documents/KbTQ7xR1j2SEv5aH2LEt/1103.pdf",
+            "uploadedAt": "2026-09-07T04:03:29.167Z",
+            "reviewed": true
+          },
+          "OJjBWNqZZQCvWzSGzbi3": {
+            "docType": "w2",
+            "fileName": "1090.pdf",
+            "sizeBytes": 98824,
+            "uploadedBy": "taxhelp@bg-bookkeeping.com",
+            "storagePath": "clients/52eRERsHLTACFyDYIxjJ/documents/OJjBWNqZZQCvWzSGzbi3/1090.pdf",
+            "uploadedAt": "2026-09-07T03:37:38.225Z",
+            "reviewed": true
+          }
+        },
+        "items": {
+          "J4FFhD78eHR5TDn2qWpt": {
+            "customLabel": null,
+            "recurrenceCustomRule": null,
+            "recurrenceType": "monthly",
+            "category": "Payroll",
+            "recurrenceDayOfMonth": null,
+            "startDate": "2026-09-04",
+            "recurrenceInterval": null,
+            "_subcollections": {
+              "completions": {
+                "2026-09": {
+                  "periodKey": "2026-09",
+                  "completedBy": "bmbkservices@gmail.com",
+                  "completedOn": "2026-09-05T12:57:17.736Z"
+                },
+                "2026-10": {
+                  "completedBy": "bmbkservices@gmail.com",
+                  "periodKey": "2026-10",
+                  "completedOn": "2026-09-05T12:57:34.852Z"
+                }
+              }
+            }
+          },
+          "Toz6br3f4rJ1s3qfitVD": {
+            "recurrenceInterval": null,
+            "recurrenceDayOfMonth": null,
+            "recurrenceCustomRule": null,
+            "customLabel": null,
+            "startDate": "2026-09-20",
+            "category": "Sales Tax Filing",
+            "recurrenceType": "monthly",
+            "_subcollections": {
+              "completions": {
+                "2026-09": {
+                  "periodKey": "2026-09",
+                  "completedBy": "bmbkservices@gmail.com",
+                  "completedOn": "2026-09-05T12:57:27.326Z"
+                },
+                "2026-10": {
+                  "periodKey": "2026-10",
+                  "completedBy": "bmbkservices@gmail.com",
+                  "completedOn": "2026-09-05T12:57:38.869Z"
+                }
+              }
+            }
+          }
+        },
+        "letters": {
+          "EDvd9034WXKfNZuFzyhj": {
+            "title": "e233",
+            "sentBy": "bmbkservices@gmail.com",
+            "storagePath": "clients/52eRERsHLTACFyDYIxjJ/letters/EDvd9034WXKfNZuFzyhj/original.pdf",
+            "sentAt": "2026-09-07T06:11:16.759Z",
+            "signedPdfPath": "clients/52eRERsHLTACFyDYIxjJ/letters/EDvd9034WXKfNZuFzyhj/signed.pdf",
+            "signerIp": "208.80.211.10",
+            "signedAt": "2026-09-07T13:56:02.915Z",
+            "signMethod": "draw",
+            "signerName": "dasfsd",
+            "status": "signed"
+          },
+          "LAVfrVwurAVi7qoqostb": {
+            "signMethod": null,
+            "status": "sent",
+            "fields": [
+              {
+                "type": "signature",
+                "xPct": 0.12432432432432433,
+                "widthPct": 0.3,
+                "heightPct": 0.07,
+                "yPct": 0.8744799229878119,
+                "page": 0,
+                "id": "f69f7add-7e36-46e5-a528-d60efe54610e"
+              },
+              {
+                "page": 0,
+                "yPct": 0.8859664866452381,
+                "widthPct": 0.16,
+                "xPct": 0.5621621621621622,
+                "type": "date",
+                "id": "0a3a53d4-7718-4756-9a40-fbdfdcc73a78",
+                "heightPct": 0.05
+              }
+            ],
+            "storagePath": "clients/52eRERsHLTACFyDYIxjJ/letters/LAVfrVwurAVi7qoqostb/original.pdf",
+            "signedAt": null,
+            "title": "54658998",
+            "sentBy": "bmbkservices@gmail.com",
+            "signedPdfPath": null,
+            "signerName": null,
+            "signerIp": null,
+            "sentAt": "2026-09-07T14:12:43.179Z"
+          }
+        }
+      }
+    },
+    "pNJsonXxVghgt7e3pH5c": {
+      "name": "Fine Jewelry & Pawn, LLC",
+      "notes": "",
+      "createdAt": "2026-09-05T04:49:19.499Z",
+      "_subcollections": {
+        "items": {
+          "2FfijKSAxInXXt9GLCko": {
+            "category": "Sales Tax Filing",
+            "recurrenceDayOfMonth": null,
+            "recurrenceType": "monthly",
+            "customLabel": null,
+            "recurrenceInterval": null,
+            "startDate": "2026-09-20",
+            "recurrenceCustomRule": null
+          },
+          "6cAMHLzoBQhgHFCz7053": {
+            "recurrenceDayOfMonth": null,
+            "category": "Payroll",
+            "startDate": "2026-09-04",
+            "customLabel": null,
+            "recurrenceType": "monthly",
+            "recurrenceInterval": null,
+            "recurrenceCustomRule": null,
+            "_subcollections": {
+              "completions": {
+                "2026-09": {
+                  "periodKey": "2026-09",
+                  "completedBy": "bmbkservices@gmail.com",
+                  "completedOn": "2026-09-06T20:03:04.176Z"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "reATM5V5xqeyqFqHyVff": {
+      "notes": "",
+      "name": "ZZZ Save Indicator Test",
+      "createdAt": "2026-09-05T05:26:16.793Z",
+      "archived": true
+    }
+  },
+  "settings": {
+    "allowlist": {
+      "emails": [
+        "bmbkservices@gmail.com"
+      ]
+    },
+    "categories": {
+      "names": [
+        "Payroll",
+        "Sales Tax Filing",
+        "Quarterly Estimated Taxes",
+        "1099-NEC / 1099-MISC Filing",
+        "W-2 / W-3 Filing",
+        "Annual Report / State Franchise Filing",
+        "Partnership Return (Form 1065)",
+        "Corporate Return (Form 1120/1120-S)",
+        "Personal Return (Form 1040)",
+        "Monthly Bookkeeping Reconciliation",
+        "BOI (Beneficial Ownership Information) Report",
+        "Extension Deadline"
+      ]
+    }
+  },
+  "users": {
+    "NQi3zhc2AXX7Km3Aajn9Bunsrn93": {
+      "inviteToken": "f01a2c62-1416-4d95-a180-c5659251c578",
+      "role": "client",
+      "clientId": "52eRERsHLTACFyDYIxjJ",
+      "email": "taxhelp@bg-bookkeeping.com",
+      "createdAt": "2026-09-07T03:25:56.355Z",
+      "note": "backfill"
+    },
+    "nbf70VXbl7Y5PAlHuolerIKfrom2": {
+      "displayName": "bmbkservices@gmail.com",
+      "createdAt": "2026-09-05T03:29:26.143Z",
+      "role": "admin"
+    }
+  }
+}
