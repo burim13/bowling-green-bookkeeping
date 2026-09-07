@@ -11,7 +11,7 @@ import {
   TotpMultiFactorGenerator,
   getMultiFactorResolver,
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
-import { auth } from "./firebase-init.js?v=1788800047877";
+import { auth } from "./firebase-init.js?v=1788800213033";
 
 const APP_NAME = "Bowling Green Bookkeeping & Taxes";
 

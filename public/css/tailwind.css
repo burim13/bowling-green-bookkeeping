@@ -818,11 +818,41 @@
     @apply hidden;
   }
 
-  .show-archived-toggle {
-    @apply flex items-center gap-[0.4rem] text-[0.8rem] text-text-muted pt-2 pb-[0.1rem] px-[0.4rem] cursor-pointer;
+  /* Reusable iOS-style pill toggle switch -- wraps a real checkbox (kept for semantics/keyboard
+     support) styled as a sliding track+knob instead of the small square check used elsewhere for
+     checklist-style checkboxes (task completion, multi-select). Use this only for a genuine on/
+     off setting -- iOS itself never uses a checkbox for that, always a switch. */
+  .ios-toggle {
+    @apply relative inline-block w-[38px] h-[22px] shrink-0;
   }
-  .show-archived-toggle input {
-    @apply w-auto;
+  .ios-toggle input[type="checkbox"] {
+    appearance: none;
+    @apply absolute inset-0 m-0 w-full h-full rounded-full border-0 cursor-pointer;
+    background: var(--color-border);
+    transition: background-color 0.2s ease;
+  }
+  .ios-toggle input[type="checkbox"]::after {
+    content: "";
+    @apply absolute rounded-full bg-white shadow-sm;
+    width: 18px;
+    height: 18px;
+    top: 2px;
+    left: 2px;
+    transition: transform 0.2s ease;
+  }
+  .ios-toggle input[type="checkbox"]:checked {
+    background: var(--color-success);
+  }
+  .ios-toggle input[type="checkbox"]:checked::after {
+    transform: translateX(16px);
+  }
+  .ios-toggle input[type="checkbox"]:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.25);
+  }
+
+  .show-archived-toggle {
+    @apply flex items-center gap-[0.6rem] text-[0.8rem] text-text-muted pt-2 pb-[0.1rem] px-[0.4rem] cursor-pointer;
   }
 
   /* ---- calendar ---- */
