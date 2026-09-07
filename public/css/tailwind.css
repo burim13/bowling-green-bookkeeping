@@ -769,7 +769,13 @@
     @apply cursor-crosshair;
   }
   .pdf-field-box {
-    @apply absolute border-2 border-dashed rounded-md flex items-center justify-center text-[0.7rem] font-medium overflow-hidden;
+    @apply absolute border-2 border-dashed rounded-md flex items-center justify-center text-[0.7rem] font-medium overflow-hidden select-none;
+  }
+  .pdf-field-box-draggable {
+    cursor: move;
+  }
+  .pdf-field-box-dragging {
+    @apply shadow-lg opacity-90 z-10;
   }
   .pdf-field-box-signature {
     @apply border-primary bg-[rgba(37,99,235,0.08)] text-primary;
@@ -784,7 +790,7 @@
     @apply max-w-full max-h-full object-contain;
   }
   .pdf-field-delete-btn {
-    @apply absolute -top-2 -right-2 w-5 h-5 rounded-full bg-danger text-white flex items-center justify-center text-[0.7rem] leading-none cursor-pointer border-2 border-panel;
+    @apply absolute -top-2.5 -right-2.5 w-6 h-6 rounded-full bg-danger text-white flex items-center justify-center text-[0.85rem] leading-none cursor-pointer border-2 border-panel z-20;
   }
   .field-placement-hint {
     @apply text-[0.8rem] text-text-muted mb-2;

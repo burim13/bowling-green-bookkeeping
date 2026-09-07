@@ -1,19 +1,19 @@
-import { isFirebaseConfigured, auth } from "./firebase-init.js?v=1788790192341";
-import { escapeHtml } from "./html-safety.js?v=1788790192341";
+import { isFirebaseConfigured, auth } from "./firebase-init.js?v=1788790854414";
+import { escapeHtml } from "./html-safety.js?v=1788790854414";
 import {
   watchAuthState,
   signInWithPassword,
   signOutUser,
   getOwnProfile,
   afterSignIn,
-} from "./auth.js?v=1788790192341";
+} from "./auth.js?v=1788790854414";
 import {
   isMfaEnrolled,
   startMfaEnrollment,
   finishMfaEnrollment,
   getResolver,
   completeMfaSignIn,
-} from "./mfa.js?v=1788790192341";
+} from "./mfa.js?v=1788790854414";
 import {
   startSync,
   stopSync,
@@ -32,12 +32,12 @@ import {
   unmarkComplete,
   isFullyLoaded,
   getClientRecord,
-} from "./data.js?v=1788790192341";
-import { renderCalendar } from "./calendar-view.js?v=1788790192341";
-import { renderList } from "./list-view.js?v=1788790192341";
-import { describeRecurrence, describeRecurrenceHistory, getLastDueOccurrence, toISODate } from "./recurrence.js?v=1788790192341";
-import { colorFor, tintFor } from "./colors.js?v=1788790192341";
-import { githubRepoSlug } from "./firebase-config.js?v=1788790192341";
+} from "./data.js?v=1788790854414";
+import { renderCalendar } from "./calendar-view.js?v=1788790854414";
+import { renderList } from "./list-view.js?v=1788790854414";
+import { describeRecurrence, describeRecurrenceHistory, getLastDueOccurrence, toISODate } from "./recurrence.js?v=1788790854414";
+import { colorFor, tintFor } from "./colors.js?v=1788790854414";
+import { githubRepoSlug } from "./firebase-config.js?v=1788790854414";
 import {
   DOC_TYPES,
   docTypeLabel,
@@ -46,10 +46,10 @@ import {
   setDocumentReviewed,
   getDocumentDownloadURL,
   deleteDocument,
-} from "./documents.js?v=1788790192341";
-import { createClientInvite, subscribeToInviteStatus } from "./invites.js?v=1788790192341";
-import { subscribeToOwnCompliance } from "./client-compliance.js?v=1788790192341";
-import { subscribeToLetters, sendLetter, signLetter, deleteLetter, getLetterDownloadURL } from "./letters.js?v=1788790192341";
+} from "./documents.js?v=1788790854414";
+import { createClientInvite, subscribeToInviteStatus } from "./invites.js?v=1788790854414";
+import { subscribeToOwnCompliance } from "./client-compliance.js?v=1788790854414";
+import { subscribeToLetters, sendLetter, signLetter, deleteLetter, getLetterDownloadURL } from "./letters.js?v=1788790854414";
 import {
   stampSignature,
   stampFields,
@@ -59,8 +59,8 @@ import {
   loadPdfDocument,
   renderPdfPageToCanvas,
   FIELD_DEFAULT_SIZE,
-} from "./pdf-sign.js?v=1788790192341";
-import { iconEdit, iconTrash, iconPlus, iconPlusLarge, iconCheck, iconTag, iconUpload, iconLogout, iconCalendar, iconListView, iconFolder, iconFolderLarge, iconHome, iconChevronRight, iconUsers, iconAlertTriangle, iconSignature, iconFile, iconUploadLarge, iconDownload, iconClock } from "./icons.js?v=1788790192341";
+} from "./pdf-sign.js?v=1788790854414";
+import { iconEdit, iconTrash, iconPlus, iconPlusLarge, iconCheck, iconTag, iconUpload, iconLogout, iconCalendar, iconListView, iconFolder, iconFolderLarge, iconHome, iconChevronRight, iconUsers, iconAlertTriangle, iconSignature, iconFile, iconUploadLarge, iconDownload, iconClock } from "./icons.js?v=1788790854414";
 
 const DEFAULT_CATEGORIES = [
   "Payroll",
@@ -990,12 +990,47 @@ function renderSendLetterStep1(client) {
 async function renderFieldPlacementStep(client, { file, title, pdfDoc }) {
   let fields = [];
   let armedType = null;
+  // Drag state lives here (not per-box) so only ONE pair of document-level move/up listeners is
+  // ever needed regardless of how many boxes get placed -- each box's mousedown/touchstart just
+  // points this at itself; the shared listeners do the actual dragging for whichever box (if
+  // any) is currently active. Removed in both ways this step ends (Back, successful Send) so
+  // repeated open/close of this modal doesn't pile up listeners.
+  let dragState = null;
+
+  function onDragMove(e) {
+    if (!dragState) return;
+    e.preventDefault();
+    const p = e.touches ? e.touches[0] : e;
+    const rect = dragState.wrap.getBoundingClientRect();
+    const dxPct = (p.clientX - dragState.startClientX) / rect.width;
+    const dyPct = (p.clientY - dragState.startClientY) / rect.height;
+    const { field, box } = dragState;
+    field.xPct = Math.min(Math.max(dragState.startXPct + dxPct, 0), 1 - field.widthPct);
+    field.yPct = Math.min(Math.max(dragState.startYPct + dyPct, 0), 1 - field.heightPct);
+    box.style.left = `${field.xPct * 100}%`;
+    box.style.top = `${field.yPct * 100}%`;
+  }
+  function onDragEnd() {
+    dragState?.box.classList.remove("pdf-field-box-dragging");
+    dragState = null;
+  }
+  document.addEventListener("mousemove", onDragMove);
+  document.addEventListener("mouseup", onDragEnd);
+  document.addEventListener("touchmove", onDragMove, { passive: false });
+  document.addEventListener("touchend", onDragEnd);
+  function removeDragListeners() {
+    document.removeEventListener("mousemove", onDragMove);
+    document.removeEventListener("mouseup", onDragEnd);
+    document.removeEventListener("touchmove", onDragMove);
+    document.removeEventListener("touchend", onDragEnd);
+  }
 
   openModal(
     `
     <h2>Place signature fields</h2>
     <p class="field-placement-hint">Click "Add signature box" or "Add date box", then click on
-    the document below to drop it there. At least one signature box is required.</p>
+    the document below to drop it there. Drag a placed box to move it, or click × to remove it.
+    At least one signature box is required.</p>
     <div class="field-toolbar">
       <button type="button" class="btn" id="add-signature-field-btn">+ Signature box</button>
       <button type="button" class="btn" id="add-date-field-btn">+ Date box</button>
@@ -1025,12 +1060,31 @@ async function renderFieldPlacementStep(client, { file, title, pdfDoc }) {
 
   function addFieldBox(wrap, field) {
     const box = document.createElement("div");
-    box.className = `pdf-field-box pdf-field-box-${field.type}`;
+    box.className = `pdf-field-box pdf-field-box-${field.type} pdf-field-box-draggable`;
     box.style.left = `${field.xPct * 100}%`;
     box.style.top = `${field.yPct * 100}%`;
     box.style.width = `${field.widthPct * 100}%`;
     box.style.height = `${field.heightPct * 100}%`;
     box.textContent = field.type === "signature" ? "Signature" : "Date";
+    box.title = "Drag to move";
+
+    function startDrag(e) {
+      if (e.target.closest(".pdf-field-delete-btn")) return;
+      e.preventDefault();
+      const p = e.touches ? e.touches[0] : e;
+      dragState = {
+        field,
+        box,
+        wrap,
+        startClientX: p.clientX,
+        startClientY: p.clientY,
+        startXPct: field.xPct,
+        startYPct: field.yPct,
+      };
+      box.classList.add("pdf-field-box-dragging");
+    }
+    box.addEventListener("mousedown", startDrag);
+    box.addEventListener("touchstart", startDrag, { passive: false });
 
     const del = document.createElement("button");
     del.type = "button";
@@ -1077,7 +1131,10 @@ async function renderFieldPlacementStep(client, { file, title, pdfDoc }) {
     });
   }
 
-  qs("field-placement-back-btn").addEventListener("click", () => renderSendLetterStep1(client));
+  qs("field-placement-back-btn").addEventListener("click", () => {
+    removeDragListeners();
+    renderSendLetterStep1(client);
+  });
 
   qs("field-placement-send-btn").addEventListener("click", async () => {
     const errEl = qs("field-placement-error");
@@ -1092,6 +1149,7 @@ async function renderFieldPlacementStep(client, { file, title, pdfDoc }) {
     btn.textContent = "Sending…";
     try {
       await sendLetter(client.id, file, title, auth.currentUser.email, fields);
+      removeDragListeners();
       closeModal();
     } catch (err) {
       errEl.textContent = err.message;
@@ -1361,6 +1419,7 @@ async function openSignLetterModalWithFields(clientId, letter) {
   let capturedSignerName = "";
   let capturedSignatureImage = "";
   let originalPdfBytes = null;
+  const todayDateText = new Date().toLocaleDateString();
 
   const cleanup = () => {
     canvasControls?.destroy();
@@ -1458,7 +1517,14 @@ async function openSignLetterModalWithFields(clientId, letter) {
         box.style.top = `${field.yPct * 100}%`;
         box.style.width = `${field.widthPct * 100}%`;
         box.style.height = `${field.heightPct * 100}%`;
-        box.textContent = field.type === "signature" ? "Sign here" : "Date";
+        // Date boxes never need the client to do anything -- fill them with today's date the
+        // instant the document loads, not gated behind signing like signature boxes are.
+        if (field.type === "date") {
+          box.classList.add("pdf-field-box-filled");
+          box.textContent = todayDateText;
+        } else {
+          box.textContent = "Sign here";
+        }
         wrap.appendChild(box);
         boxElsByField.set(field.id, box);
       }
@@ -1488,19 +1554,17 @@ async function openSignLetterModalWithFields(clientId, letter) {
       signatureImage = renderTypedSignature(signerName);
     }
 
-    const dateText = new Date().toLocaleDateString();
+    // Date boxes are already showing today's date from the moment the document loaded (see the
+    // render loop above) -- only signature boxes need anything here.
     for (const field of letter.fields) {
+      if (field.type !== "signature") continue;
       const box = boxElsByField.get(field.id);
       if (!box) continue;
       box.classList.add("pdf-field-box-filled");
       box.textContent = "";
-      if (field.type === "signature") {
-        const img = document.createElement("img");
-        img.src = signatureImage;
-        box.appendChild(img);
-      } else {
-        box.textContent = dateText;
-      }
+      const img = document.createElement("img");
+      img.src = signatureImage;
+      box.appendChild(img);
     }
 
     capturedSignerName = signerName;
