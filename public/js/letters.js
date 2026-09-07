@@ -19,7 +19,7 @@ import {
   getDownloadURL,
   deleteObject,
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-storage.js";
-import { db, storage } from "./firebase-init.js?v=1788797783167";
+import { db, storage } from "./firebase-init.js?v=1788798115894";
 
 export function subscribeToLetters(clientId, callback, onError) {
   const q = query(collection(db, "clients", clientId, "letters"), orderBy("sentAt", "desc"));

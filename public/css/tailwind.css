@@ -479,6 +479,10 @@
     /* Clears the now-fixed .ios-glass-bar-bottom so the last row of content isn't hidden
        underneath it. */
     padding-bottom: calc(5.5rem + env(safe-area-inset-bottom));
+    /* Lets .stat-grid below query the space actually available to it (see there) -- the sidebar
+       eats into this on desktop, so viewport width alone isn't a reliable signal of how much
+       room the grid really has. */
+    container-type: inline-size;
   }
 
   @keyframes fade-in {
@@ -518,9 +522,22 @@
   }
 
   /* ---- overview view ---- */
+  /* auto-fit/minmax lays out as many 160px+ columns as fit -- fine once there's room for all
+     three side by side, but for any width that only fits two, the third (odd) card is left
+     dangling alone in a half-empty second row instead of spanning it. Below the width three
+     actually need (3 * 160px + 2 gaps = 504px, rounded up), stack to a single column instead of
+     ever landing in that in-between two-column state. A container query (not a viewport media
+     query) keys this off .view-container's own available width, which is what actually
+     determines the grid's room -- a viewport-width check would miss that the sidebar eats into
+     it on desktop. */
   .stat-grid {
     @apply grid gap-3 mb-6;
-    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    grid-template-columns: 1fr;
+  }
+  @container (min-width: 520px) {
+    .stat-grid {
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    }
   }
   .stat-card {
     @apply bg-card border-0 rounded-2xl p-4 shadow-sm;
@@ -1172,12 +1189,6 @@
     }
     .cal-more {
       @apply hidden;
-    }
-    /* auto-fit/minmax lays out 2 columns at this width, and a 3rd card (an odd count) ends up
-       alone in the second row at half-width instead of spanning it -- stack to a single column
-       so every card is full-width instead of leaving that dangling half-empty row. */
-    .stat-grid {
-      grid-template-columns: 1fr;
     }
   }
 }

@@ -4,7 +4,7 @@ import {
   signOut,
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 import { doc, setDoc, getDoc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
-import { auth, db } from "./firebase-init.js?v=1788797783167";
+import { auth, db } from "./firebase-init.js?v=1788798115894";
 
 export function watchAuthState(callback) {
   return onAuthStateChanged(auth, callback);
