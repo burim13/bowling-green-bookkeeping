@@ -70,3 +70,6 @@ export const iconUploadLarge = svg(
 export const iconDownload = svg(
   `<path d="M10 3v9"/><path d="M6.5 8.5 10 12l3.5-3.5"/><path d="M4 15.5h12"/>`
 );
+export const iconClock = svg(
+  `<circle cx="10" cy="10" r="7"/><path d="M10 6v4l2.6 2.6"/>`
+);

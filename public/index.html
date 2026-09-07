@@ -6,7 +6,7 @@
   <title>Bowling Green Bookkeeping &amp; Taxes — Client Hub</title>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" />
-  <link rel="stylesheet" href="css/styles.css?v=1788752726623" />
+  <link rel="stylesheet" href="css/styles.css?v=1788754176801" />
 </head>
 <body>
 
@@ -101,25 +101,38 @@
     </header>
     <main class="view-container">
       <h3 class="chub-welcome">Welcome<span id="client-hub-name"></span></h3>
+      <p class="chub-subtitle">Upload your tax documents securely below, or check what's coming due.</p>
 
-      <div class="chub-card">
-        <label>Document type
-          <select id="chub-doctype"></select>
-        </label>
-        <div id="chub-dropzone" class="dropzone" tabindex="0" role="button" aria-label="Upload a document">
-          <span id="chub-dropzone-icon"></span>
-          <p>Drag and drop a file here, or click to choose one</p>
-          <input type="file" id="chub-file-input" accept=".pdf,.png,.jpg,.jpeg,.heic" capture="environment" hidden />
+      <div class="stat-grid" id="chub-stat-grid"></div>
+
+      <nav class="client-tab-bar chub-tab-bar">
+        <button class="client-tab-btn client-tab-btn-active" id="chub-tab-documents" data-tab="documents">Documents</button>
+        <button class="client-tab-btn" id="chub-tab-compliance" data-tab="compliance">Compliance</button>
+      </nav>
+
+      <div id="chub-panel-documents">
+        <div class="chub-card">
+          <label>Document type
+            <select id="chub-doctype"></select>
+          </label>
+          <div id="chub-dropzone" class="dropzone" tabindex="0" role="button" aria-label="Upload documents">
+            <span id="chub-dropzone-icon"></span>
+            <p>Drag and drop files here, or click to choose</p>
+            <input type="file" id="chub-file-input" accept=".pdf,.png,.jpg,.jpeg,.heic" capture="environment" multiple hidden />
+          </div>
+          <div id="chub-upload-progress" class="progress-track" hidden><div class="progress-fill"></div></div>
+          <p id="chub-upload-status" class="client-tab-content" hidden></p>
+          <div id="chub-upload-error" class="auth-error" hidden></div>
         </div>
-        <div id="chub-upload-progress" class="progress-track" hidden><div class="progress-fill"></div></div>
-        <div id="chub-upload-error" class="auth-error" hidden></div>
+
+        <h2 class="chub-section-title">Your documents</h2>
+        <div id="chub-document-list"></div>
       </div>
 
-      <h2 class="chub-section-title">Your documents</h2>
-      <div id="chub-document-list"></div>
+      <div id="chub-panel-compliance" hidden></div>
     </main>
   </div>
 
-  <script type="module" src="js/app.js?v=1788752726623"></script>
+  <script type="module" src="js/app.js?v=1788754176801"></script>
 </body>
 </html>

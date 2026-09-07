@@ -1,10 +1,10 @@
-import { isFirebaseConfigured, auth } from "./firebase-init.js?v=1788752726623";
+import { isFirebaseConfigured, auth } from "./firebase-init.js?v=1788754176801";
 import {
   watchAuthState,
   signInWithPassword,
   signOutUser,
   getOwnProfile,
-} from "./auth.js?v=1788752726623";
+} from "./auth.js?v=1788754176801";
 import {
   startSync,
   stopSync,
@@ -23,12 +23,12 @@ import {
   unmarkComplete,
   isFullyLoaded,
   getClientRecord,
-} from "./data.js?v=1788752726623";
-import { renderCalendar } from "./calendar-view.js?v=1788752726623";
-import { renderList } from "./list-view.js?v=1788752726623";
-import { describeRecurrence, describeRecurrenceHistory, getLastDueOccurrence, toISODate } from "./recurrence.js?v=1788752726623";
-import { colorFor, tintFor } from "./colors.js?v=1788752726623";
-import { githubRepoSlug } from "./firebase-config.js?v=1788752726623";
+} from "./data.js?v=1788754176801";
+import { renderCalendar } from "./calendar-view.js?v=1788754176801";
+import { renderList } from "./list-view.js?v=1788754176801";
+import { describeRecurrence, describeRecurrenceHistory, getLastDueOccurrence, toISODate } from "./recurrence.js?v=1788754176801";
+import { colorFor, tintFor } from "./colors.js?v=1788754176801";
+import { githubRepoSlug } from "./firebase-config.js?v=1788754176801";
 import {
   DOC_TYPES,
   docTypeLabel,
@@ -36,9 +36,10 @@ import {
   uploadDocument,
   setDocumentReviewed,
   getDocumentDownloadURL,
-} from "./documents.js?v=1788752726623";
-import { createClientInvite, subscribeToInviteStatus } from "./invites.js?v=1788752726623";
-import { iconEdit, iconTrash, iconPlus, iconPlusLarge, iconCheck, iconTag, iconUpload, iconLogout, iconCalendar, iconListView, iconFolder, iconFolderLarge, iconHome, iconChevronRight, iconUsers, iconAlertTriangle, iconSignature, iconFile, iconUploadLarge, iconDownload } from "./icons.js?v=1788752726623";
+} from "./documents.js?v=1788754176801";
+import { createClientInvite, subscribeToInviteStatus } from "./invites.js?v=1788754176801";
+import { subscribeToOwnCompliance } from "./client-compliance.js?v=1788754176801";
+import { iconEdit, iconTrash, iconPlus, iconPlusLarge, iconCheck, iconTag, iconUpload, iconLogout, iconCalendar, iconListView, iconFolder, iconFolderLarge, iconHome, iconChevronRight, iconUsers, iconAlertTriangle, iconSignature, iconFile, iconUploadLarge, iconDownload, iconClock } from "./icons.js?v=1788754176801";
 
 const DEFAULT_CATEGORIES = [
   "Payroll",
@@ -130,6 +131,8 @@ function init() {
       stopSync();
       clientDocsUnsub?.();
       clientDocsUnsub = null;
+      clientComplianceUnsub?.();
+      clientComplianceUnsub = null;
       staffDocsUnsub?.();
       staffDocsUnsub = null;
       return;
@@ -692,12 +695,17 @@ function wireDocumentRows(container, clientId) {
 // ---- client hub (client-facing screen) --------------------------------------------------
 
 let clientHubClientId = null;
+let clientHubClientName = "";
 let clientDocsUnsub = null;
+let clientComplianceUnsub = null;
 
 function wireClientHubScreen() {
   qs("client-hub-signout-btn").addEventListener("click", () => signOutUser());
   qs("chub-doctype").innerHTML = DOC_TYPES.map((t) => `<option value="${t.id}">${t.label}</option>`).join("");
   qs("chub-dropzone-icon").innerHTML = iconUploadLarge;
+
+  qs("chub-tab-documents").addEventListener("click", () => setClientHubTab("documents"));
+  qs("chub-tab-compliance").addEventListener("click", () => setClientHubTab("compliance"));
 
   const dropzone = qs("chub-dropzone");
   const fileInput = qs("chub-file-input");
@@ -717,34 +725,73 @@ function wireClientHubScreen() {
   dropzone.addEventListener("drop", (e) => {
     e.preventDefault();
     dropzone.classList.remove("dropzone-active");
-    const file = e.dataTransfer.files[0];
-    if (file) handleClientUpload(file);
+    if (e.dataTransfer.files.length) handleClientUpload(e.dataTransfer.files);
   });
   fileInput.addEventListener("change", () => {
-    const file = fileInput.files[0];
-    if (file) handleClientUpload(file);
+    if (fileInput.files.length) handleClientUpload(fileInput.files);
     fileInput.value = "";
   });
 }
 
-async function handleClientUpload(file) {
+function setClientHubTab(tab) {
+  qs("chub-tab-documents").classList.toggle("client-tab-btn-active", tab === "documents");
+  qs("chub-tab-compliance").classList.toggle("client-tab-btn-active", tab === "compliance");
+  qs("chub-panel-documents").hidden = tab !== "documents";
+  qs("chub-panel-compliance").hidden = tab !== "compliance";
+
+  if (tab === "compliance" && !clientComplianceUnsub && clientHubClientId) {
+    const panel = qs("chub-panel-compliance");
+    panel.innerHTML = `<div class="loading-hint"><span class="spinner"></span> Loading…</div>`;
+    clientComplianceUnsub = subscribeToOwnCompliance(clientHubClientId, clientHubClientName, (state) => {
+      const now = new Date();
+      const rangeStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      const rangeEnd = new Date(now.getFullYear(), now.getMonth() + 4, 0);
+      renderList(panel, {
+        state,
+        clientFilter: clientHubClientId,
+        categoryFilter: null,
+        showArchived: false,
+        rangeStart,
+        rangeEnd,
+        readOnly: true,
+      });
+    });
+  }
+}
+
+// Uploads a FileList sequentially (simpler progress reporting than parallel, and avoids
+// hammering Storage with many simultaneous resumable-upload sessions from one click).
+async function handleClientUpload(fileList) {
   if (!clientHubClientId || !auth.currentUser) return;
+  const files = [...fileList];
   const errorEl = qs("chub-upload-error");
+  const statusEl = qs("chub-upload-status");
   errorEl.hidden = true;
   const progressWrap = qs("chub-upload-progress");
   const progressFill = progressWrap.querySelector(".progress-fill");
   progressWrap.hidden = false;
-  progressFill.style.width = "0%";
+  statusEl.hidden = false;
 
-  try {
-    await uploadDocument(clientHubClientId, file, qs("chub-doctype").value, auth.currentUser.email, (pct) => {
-      progressFill.style.width = `${pct}%`;
-    });
-  } catch (err) {
-    errorEl.textContent = "Could not upload: " + err.message;
+  const docType = qs("chub-doctype").value;
+  const failures = [];
+
+  for (let i = 0; i < files.length; i++) {
+    statusEl.textContent = files.length > 1 ? `Uploading ${i + 1} of ${files.length}: ${files[i].name}` : `Uploading ${files[i].name}…`;
+    progressFill.style.width = "0%";
+    try {
+      await uploadDocument(clientHubClientId, files[i], docType, auth.currentUser.email, (pct) => {
+        progressFill.style.width = `${pct}%`;
+      });
+    } catch (err) {
+      failures.push(`${files[i].name}: ${err.message}`);
+    }
+  }
+
+  progressWrap.hidden = true;
+  statusEl.hidden = true;
+  if (failures.length) {
+    errorEl.textContent = `Could not upload ${failures.length} of ${files.length} file(s) -- ${failures.join("; ")}`;
     errorEl.hidden = false;
-  } finally {
-    progressWrap.hidden = true;
   }
 }
 
@@ -758,17 +805,43 @@ async function showClientHub(profile) {
   clientHubClientId = profile.clientId;
   try {
     const client = await getClientRecord(profile.clientId);
+    clientHubClientName = client ? client.name : "";
     els.clientHubName.textContent = client ? `, ${client.name}` : "";
   } catch (err) {
     console.error(err);
   }
 
+  setClientHubTab("documents");
+
   clientDocsUnsub?.();
   clientDocsUnsub = subscribeToDocuments(
     profile.clientId,
-    (documents) => renderDocumentList(qs("chub-document-list"), documents, profile.clientId, { allowReviewToggle: false }),
+    (documents) => {
+      renderDocumentList(qs("chub-document-list"), documents, profile.clientId, { allowReviewToggle: false });
+      renderClientStatGrid(documents);
+    },
     (err) => console.error(err)
   );
+}
+
+function renderClientStatGrid(documents) {
+  const pending = documents.filter((d) => !d.reviewed).length;
+  qs("chub-stat-grid").innerHTML = `
+    <div class="stat-card">
+      <div class="stat-card-header">
+        <span class="stat-icon-badge" style="background:${tintFor("#2563eb")}; color:#2563eb;">${iconFile}</span>
+        <span class="stat-card-label">Documents uploaded</span>
+      </div>
+      <div class="stat-card-value">${documents.length}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card-header">
+        <span class="stat-icon-badge" style="background:${tintFor("#d97706")}; color:#d97706;">${iconClock}</span>
+        <span class="stat-card-label">Pending review</span>
+      </div>
+      <div class="${pending ? "stat-card-value" : "stat-card-value-muted"}">${pending}</div>
+    </div>
+  `;
 }
 
 async function handleMarkAllShownComplete() {

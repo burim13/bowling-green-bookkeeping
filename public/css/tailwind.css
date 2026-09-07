@@ -413,13 +413,19 @@
 
   /* ---- client hub document intake (client-facing screen + staff Documents tab) ---- */
   .chub-welcome {
-    @apply text-[1.1rem] mb-4;
+    @apply text-[1.3rem] mb-1;
+  }
+  .chub-subtitle {
+    @apply text-text-muted text-[0.9rem] mb-5 mt-0;
   }
   .chub-card {
     @apply bg-panel border border-border rounded-xl p-5 mb-6 max-w-[520px];
   }
   .chub-section-title {
     @apply text-[0.9rem] font-semibold mb-3;
+  }
+  .chub-tab-bar {
+    @apply mb-5 pb-0 border-b border-border;
   }
   .dropzone {
     @apply flex flex-col items-center text-center gap-1 border-2 border-dashed border-border rounded-lg py-8 px-4 mt-3 cursor-pointer text-text-muted transition-colors;

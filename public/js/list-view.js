@@ -1,6 +1,6 @@
-import { getOccurrencesInRange, getLastDueOccurrence, describeRecurrence, toISODate } from "./recurrence.js?v=1788752726623";
-import { colorFor } from "./colors.js?v=1788752726623";
-import { iconEdit, iconCheckLarge } from "./icons.js?v=1788752726623";
+import { getOccurrencesInRange, getLastDueOccurrence, describeRecurrence, toISODate } from "./recurrence.js?v=1788754176801";
+import { colorFor } from "./colors.js?v=1788754176801";
+import { iconEdit, iconCheckLarge } from "./icons.js?v=1788754176801";
 
 function completionFor(state, itemId, periodKey) {
   const forItem = state.completions.get(itemId);
@@ -10,11 +10,14 @@ function completionFor(state, itemId, periodKey) {
 const WEEKDAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-// ctx: { state, clientFilter, categoryFilter, showArchived, rangeStart, rangeEnd, onToggleComplete, onEditItem }
+// ctx: { state, clientFilter, categoryFilter, showArchived, rangeStart, rangeEnd, onToggleComplete,
+// onEditItem, readOnly }. readOnly (used by the client-facing Compliance view -- a client has no
+// Firestore permission to toggle completion or edit items, so those controls would just fail
+// silently if shown) disables the checkbox and omits the edit button entirely.
 // Returns the list of currently-rendered, not-yet-complete rows ({ clientId, itemId, periodKey }),
 // so callers can offer a "mark all shown complete" bulk action without recomputing the filtering.
 export function renderList(container, ctx) {
-  const { state, rangeStart, rangeEnd } = ctx;
+  const { state, rangeStart, rangeEnd, readOnly } = ctx;
   const today = new Date(new Date().setHours(0, 0, 0, 0));
   const matchesFilters = (item) =>
     (!ctx.clientFilter || item.clientId === ctx.clientFilter) &&
@@ -69,7 +72,7 @@ export function renderList(container, ctx) {
   if (overdueRows.length > 0) {
     html += `<div class="list-group list-group-overdue">
       <div class="list-group-header list-group-header-overdue">Overdue (${overdueRows.length})</div>
-      ${overdueRows.map((row) => rowHtml(row, state, today)).join("")}
+      ${overdueRows.map((row) => rowHtml(row, state, today, readOnly)).join("")}
     </div>`;
   }
 
@@ -84,28 +87,30 @@ export function renderList(container, ctx) {
     const date = groupRows[0].date;
     html += `<div class="list-group">
       <div class="list-group-header">${WEEKDAY_NAMES[date.getDay()]}, ${date.toLocaleDateString(undefined, { month: "long", day: "numeric", year: "numeric" })}</div>
-      ${groupRows.map((row) => rowHtml(row, state, today)).join("")}
+      ${groupRows.map((row) => rowHtml(row, state, today, readOnly)).join("")}
     </div>`;
   }
   container.innerHTML = html;
 
-  container.querySelectorAll("[data-toggle]").forEach((el) => {
-    el.addEventListener("change", () => {
-      const { itemId, clientId, periodKey } = el.dataset;
-      ctx.onToggleComplete(clientId, itemId, periodKey, el.checked);
+  if (!readOnly) {
+    container.querySelectorAll("[data-toggle]").forEach((el) => {
+      el.addEventListener("change", () => {
+        const { itemId, clientId, periodKey } = el.dataset;
+        ctx.onToggleComplete(clientId, itemId, periodKey, el.checked);
+      });
     });
-  });
 
-  container.querySelectorAll('[data-action="edit-item"]').forEach((btn) => {
-    btn.addEventListener("click", () => {
-      ctx.onEditItem(btn.dataset.clientId, btn.dataset.itemId);
+    container.querySelectorAll('[data-action="edit-item"]').forEach((btn) => {
+      btn.addEventListener("click", () => {
+        ctx.onEditItem(btn.dataset.clientId, btn.dataset.itemId);
+      });
     });
-  });
+  }
 
   return incompleteRows;
 }
 
-function rowHtml({ item, periodKey, date }, state, today) {
+function rowHtml({ item, periodKey, date }, state, today, readOnly) {
   const client = state.clients.get(item.clientId);
   const completion = completionFor(state, item.id, periodKey);
   const done = !!completion;
@@ -117,7 +122,7 @@ function rowHtml({ item, periodKey, date }, state, today) {
   return `
     <div class="list-row ${done ? "list-row-done" : ""} ${overdue ? "list-row-overdue" : ""}">
       <label style="display:flex; align-items:center; gap:0.6rem; flex:1; cursor:pointer;">
-        <input type="checkbox" data-toggle data-item-id="${item.id}" data-client-id="${item.clientId}" data-period-key="${periodKey}" ${done ? "checked" : ""} />
+        <input type="checkbox" ${readOnly ? "disabled" : ""} data-toggle data-item-id="${item.id}" data-client-id="${item.clientId}" data-period-key="${periodKey}" ${done ? "checked" : ""} />
         <span class="list-row-dot" style="background:${color}"></span>
         <span class="list-row-client">${client ? client.name : "Unknown client"}</span>
         <span class="list-row-label">${label}${item.customLabel ? ` <em>(${item.category})</em>` : ""}</span>
@@ -125,6 +130,6 @@ function rowHtml({ item, periodKey, date }, state, today) {
         ${overdue ? `<span class="list-row-overdue-tag">${daysOverdue}d overdue</span>` : ""}
         ${completion ? `<span class="list-row-completed-by">done by ${completion.completedBy}</span>` : ""}
       </label>
-      <button class="icon-btn" data-action="edit-item" data-item-id="${item.id}" data-client-id="${item.clientId}" title="Edit or remove item">${iconEdit}</button>
+      ${readOnly ? "" : `<button class="icon-btn" data-action="edit-item" data-item-id="${item.id}" data-client-id="${item.clientId}" title="Edit or remove item">${iconEdit}</button>`}
     </div>`;
 }

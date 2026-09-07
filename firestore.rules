@@ -57,6 +57,20 @@ service cloud.firestore {
         allow read: if isApproved() || isOwningClient(clientId);
         allow write: if isApproved();
       }
+
+      // Read-only view of a client's own compliance items/completions, for the Client Hub
+      // "Compliance" tab. This is ADDITIONAL to (not a replacement for) the {path=**} wildcard
+      // rules below -- Firestore grants access if ANY matching rule block allows it, and a
+      // nested match like this one only ever authorizes direct/scoped reads at this exact path
+      // shape (never collection-group queries), so it can't broaden staff's existing access.
+      // A client's own app code queries these paths directly (never collectionGroup), matching
+      // this shape exactly -- see public/js/client-compliance.js.
+      match /items/{itemId} {
+        allow read: if isOwningClient(clientId);
+        match /completions/{completionId} {
+          allow read: if isOwningClient(clientId);
+        }
+      }
     }
 
     // The app loads items/completions across ALL clients at once via collectionGroup()
