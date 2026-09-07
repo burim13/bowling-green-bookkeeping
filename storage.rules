@@ -1,0 +1,40 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // Mirrors firestore.rules' isApproved() exactly -- same allowlist document, same boundary.
+    // Storage rules can't read Firestore directly except via this firestore.get() bridge.
+    function isApproved() {
+      return isSignedIn() &&
+        request.auth.token.email in
+          firestore.get(/databases/(default)/documents/settings/allowlist).data.emails;
+    }
+
+    // Mirrors firestore.rules' isOwningClient() -- a client-role account can only touch its own
+    // client's files, identified by the clientId on their own /users/{uid} Firestore doc.
+    function isOwningClient(clientId) {
+      return isSignedIn() &&
+        firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.role == 'client' &&
+        firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.clientId == clientId;
+    }
+
+    // Staff manage everything; the owning client can read their own folder and upload new
+    // documents, but can't overwrite or delete what's already there (matches the create-only
+    // client permission on the Firestore documents subcollection in firestore.rules).
+    match /clients/{clientId}/documents/{allPaths=**} {
+      allow read, create: if isApproved() || isOwningClient(clientId);
+      allow update, delete: if isApproved();
+    }
+
+    // Generated engagement letters / signed PDFs -- staff-generated only, client can read theirs.
+    match /clients/{clientId}/letters/{allPaths=**} {
+      allow read: if isApproved() || isOwningClient(clientId);
+      allow write: if isApproved();
+    }
+  }
+}
