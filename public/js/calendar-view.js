@@ -1,6 +1,7 @@
-import { getOccurrenceInMonth, getOccurrencesInRange, describeRecurrence, toISODate } from "./recurrence.js?v=1788754870928";
-import { colorFor } from "./colors.js?v=1788754870928";
-import { iconChevronLeft, iconChevronRight } from "./icons.js?v=1788754870928";
+import { getOccurrenceInMonth, getOccurrencesInRange, describeRecurrence, toISODate } from "./recurrence.js?v=1788755519497";
+import { colorFor } from "./colors.js?v=1788755519497";
+import { iconChevronLeft, iconChevronRight } from "./icons.js?v=1788755519497";
+import { escapeHtml } from "./html-safety.js?v=1788755519497";
 
 function isDone(state, itemId, periodKey) {
   const forItem = state.completions.get(itemId);
@@ -67,7 +68,7 @@ export function renderCalendar(container, ctx) {
           const color = itemColor(colorMode, item);
           const done = isDone(state, item.id, periodKey);
           const overdue = isPast && !done;
-          return `<span class="cal-dot ${done ? "cal-dot-done" : ""} ${overdue ? "cal-dot-overdue" : ""}" style="background:${color}" title="${escapeAttr(labelFor(item, state))}"></span>`;
+          return `<span class="cal-dot ${done ? "cal-dot-done" : ""} ${overdue ? "cal-dot-overdue" : ""}" style="background:${color}" title="${escapeHtml(labelFor(item, state))}"></span>`;
         })
         .join("");
       const more = entries.length > 4 ? `<span class="cal-more">+${entries.length - 4}</span>` : "";
@@ -92,7 +93,7 @@ export function renderCalendar(container, ctx) {
     legendEntries.size > 0
       ? `<div class="cal-legend">${[...legendEntries.entries()]
           .sort((a, b) => a[0].localeCompare(b[0]))
-          .map(([label, color]) => `<span class="cal-legend-item"><span class="cal-legend-dot" style="background:${color}"></span>${escapeAttr(label)}</span>`)
+          .map(([label, color]) => `<span class="cal-legend-item"><span class="cal-legend-dot" style="background:${color}"></span>${escapeHtml(label)}</span>`)
           .join("")}</div>`
       : "";
 
@@ -116,7 +117,7 @@ export function renderCalendar(container, ctx) {
                   : shown
                       .map(
                         ({ item }) =>
-                          `<div class="cal-agenda-item"><span class="cal-agenda-dot" style="background:${itemColor(colorMode, item)}"></span><span class="cal-agenda-item-label">${escapeAttr(shortLabelFor(item, state))}</span></div>`
+                          `<div class="cal-agenda-item"><span class="cal-agenda-dot" style="background:${itemColor(colorMode, item)}"></span><span class="cal-agenda-item-label">${escapeHtml(shortLabelFor(item, state))}</span></div>`
                       )
                       .join("") + (extra > 0 ? `<div class="cal-agenda-more">+${extra} more</div>` : "")
               }
@@ -205,8 +206,4 @@ function shortLabelFor(item, state) {
   const client = state.clients.get(item.clientId);
   const label = item.customLabel || item.category;
   return `${client ? client.name : "Unknown"}: ${label}`;
-}
-
-function escapeAttr(str) {
-  return String(str).replace(/"/g, "&quot;").replace(/</g, "&lt;");
 }

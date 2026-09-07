@@ -1,10 +1,11 @@
-import { isFirebaseConfigured, auth } from "./firebase-init.js?v=1788754870928";
+import { isFirebaseConfigured, auth } from "./firebase-init.js?v=1788755519497";
+import { escapeHtml } from "./html-safety.js?v=1788755519497";
 import {
   watchAuthState,
   signInWithPassword,
   signOutUser,
   getOwnProfile,
-} from "./auth.js?v=1788754870928";
+} from "./auth.js?v=1788755519497";
 import {
   startSync,
   stopSync,
@@ -23,12 +24,12 @@ import {
   unmarkComplete,
   isFullyLoaded,
   getClientRecord,
-} from "./data.js?v=1788754870928";
-import { renderCalendar } from "./calendar-view.js?v=1788754870928";
-import { renderList } from "./list-view.js?v=1788754870928";
-import { describeRecurrence, describeRecurrenceHistory, getLastDueOccurrence, toISODate } from "./recurrence.js?v=1788754870928";
-import { colorFor, tintFor } from "./colors.js?v=1788754870928";
-import { githubRepoSlug } from "./firebase-config.js?v=1788754870928";
+} from "./data.js?v=1788755519497";
+import { renderCalendar } from "./calendar-view.js?v=1788755519497";
+import { renderList } from "./list-view.js?v=1788755519497";
+import { describeRecurrence, describeRecurrenceHistory, getLastDueOccurrence, toISODate } from "./recurrence.js?v=1788755519497";
+import { colorFor, tintFor } from "./colors.js?v=1788755519497";
+import { githubRepoSlug } from "./firebase-config.js?v=1788755519497";
 import {
   DOC_TYPES,
   docTypeLabel,
@@ -37,10 +38,10 @@ import {
   setDocumentReviewed,
   getDocumentDownloadURL,
   deleteDocument,
-} from "./documents.js?v=1788754870928";
-import { createClientInvite, subscribeToInviteStatus } from "./invites.js?v=1788754870928";
-import { subscribeToOwnCompliance } from "./client-compliance.js?v=1788754870928";
-import { iconEdit, iconTrash, iconPlus, iconPlusLarge, iconCheck, iconTag, iconUpload, iconLogout, iconCalendar, iconListView, iconFolder, iconFolderLarge, iconHome, iconChevronRight, iconUsers, iconAlertTriangle, iconSignature, iconFile, iconUploadLarge, iconDownload, iconClock } from "./icons.js?v=1788754870928";
+} from "./documents.js?v=1788755519497";
+import { createClientInvite, subscribeToInviteStatus } from "./invites.js?v=1788755519497";
+import { subscribeToOwnCompliance } from "./client-compliance.js?v=1788755519497";
+import { iconEdit, iconTrash, iconPlus, iconPlusLarge, iconCheck, iconTag, iconUpload, iconLogout, iconCalendar, iconListView, iconFolder, iconFolderLarge, iconHome, iconChevronRight, iconUsers, iconAlertTriangle, iconSignature, iconFile, iconUploadLarge, iconDownload, iconClock } from "./icons.js?v=1788755519497";
 
 const DEFAULT_CATEGORIES = [
   "Payroll",
@@ -1569,14 +1570,6 @@ function openExportInfo() {
     </div>
   `);
   qs("modal-content").querySelector('[data-action="close"]').addEventListener("click", closeModal);
-}
-
-function escapeHtml(str) {
-  return String(str)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
 }
 
 init();

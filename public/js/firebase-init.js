@@ -8,7 +8,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 import { getFirestore } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 import { getStorage } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-storage.js";
-import { firebaseConfig, isFirebaseConfigured } from "./firebase-config.js?v=1788754870928";
+import { firebaseConfig, isFirebaseConfigured } from "./firebase-config.js?v=1788755519497";
 
 export { isFirebaseConfigured };
 

@@ -90,8 +90,17 @@ service cloud.firestore {
       allow read, write: if isApproved();
     }
 
+    // The allowlist is the actual security boundary (see isApproved() above) -- letting any
+    // approved staff account edit it would mean any one of them could grant themselves/anyone
+    // else access, or remove the owner's own email and lock them out. Every other settings doc
+    // (categories, etc.) stays editable by any approved staff, matching the existing "Manage
+    // categories" feature available to all staff, not just admins.
     match /settings/{docId} {
-      allow read, write: if isApproved();
+      allow read: if isApproved();
+      allow write: if isApproved() && docId != 'allowlist';
+    }
+    match /settings/allowlist {
+      allow write: if isAdmin();
     }
 
     // Users can read anyone's doc (nothing sensitive in it) and create/update only their OWN

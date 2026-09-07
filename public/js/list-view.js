@@ -1,6 +1,7 @@
-import { getOccurrencesInRange, getLastDueOccurrence, describeRecurrence, toISODate } from "./recurrence.js?v=1788754870928";
-import { colorFor } from "./colors.js?v=1788754870928";
-import { iconEdit, iconCheckLarge } from "./icons.js?v=1788754870928";
+import { getOccurrencesInRange, getLastDueOccurrence, describeRecurrence, toISODate } from "./recurrence.js?v=1788755519497";
+import { colorFor } from "./colors.js?v=1788755519497";
+import { iconEdit, iconCheckLarge } from "./icons.js?v=1788755519497";
+import { escapeHtml } from "./html-safety.js?v=1788755519497";
 
 function completionFor(state, itemId, periodKey) {
   const forItem = state.completions.get(itemId);
@@ -124,11 +125,11 @@ function rowHtml({ item, periodKey, date }, state, today, readOnly) {
       <label style="display:flex; align-items:center; gap:0.6rem; flex:1; cursor:pointer;">
         <input type="checkbox" ${readOnly ? "disabled" : ""} data-toggle data-item-id="${item.id}" data-client-id="${item.clientId}" data-period-key="${periodKey}" ${done ? "checked" : ""} />
         <span class="list-row-dot" style="background:${color}"></span>
-        <span class="list-row-client">${client ? client.name : "Unknown client"}</span>
-        <span class="list-row-label">${label}${item.customLabel ? ` <em>(${item.category})</em>` : ""}</span>
+        <span class="list-row-client">${escapeHtml(client ? client.name : "Unknown client")}</span>
+        <span class="list-row-label">${escapeHtml(label)}${item.customLabel ? ` <em>(${escapeHtml(item.category)})</em>` : ""}</span>
         <span class="list-row-recurrence">${describeRecurrence(item)}</span>
         ${overdue ? `<span class="list-row-overdue-tag">${daysOverdue}d overdue</span>` : ""}
-        ${completion ? `<span class="list-row-completed-by">done by ${completion.completedBy}</span>` : ""}
+        ${completion ? `<span class="list-row-completed-by">done by ${escapeHtml(completion.completedBy)}</span>` : ""}
       </label>
       ${readOnly ? "" : `<button class="icon-btn" data-action="edit-item" data-item-id="${item.id}" data-client-id="${item.clientId}" title="Edit or remove item">${iconEdit}</button>`}
     </div>`;
