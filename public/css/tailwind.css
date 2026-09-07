@@ -128,7 +128,7 @@
 
   input, select, textarea {
     font: inherit;
-    @apply px-[0.6rem] py-[0.45rem] border border-border rounded-md w-full bg-panel text-text transition-colors;
+    @apply px-[0.75rem] py-[0.55rem] border border-border rounded-xl w-full bg-panel text-text transition-colors;
   }
   input:focus-visible, select:focus-visible, textarea:focus-visible {
     @apply outline-none border-primary shadow-[0_0_0_3px_rgba(37,99,235,0.15)];
@@ -171,10 +171,10 @@
   /* ---- buttons ---- */
   .btn {
     font: inherit;
-    @apply px-[0.9rem] py-[0.45rem] rounded-[10px] border border-border bg-panel text-text cursor-pointer whitespace-nowrap transition-colors;
+    @apply px-[0.9rem] py-[0.45rem] rounded-xl border border-border bg-panel text-text cursor-pointer whitespace-nowrap transition-colors;
   }
   .btn:hover {
-    @apply bg-[#eef0f4];
+    background: color-mix(in srgb, var(--color-text) 6%, transparent);
   }
   .btn:active {
     @apply translate-y-px;
@@ -323,7 +323,7 @@
     @apply bg-danger-bg text-danger px-4 py-3 rounded-2xl mb-5 text-[0.88rem];
   }
   .notice-warning {
-    @apply bg-warning-bg text-warning px-3 py-[0.6rem] rounded-md text-[0.85rem] leading-snug;
+    @apply bg-warning-bg text-warning px-4 py-3 rounded-2xl text-[0.85rem] leading-snug;
   }
 
   /* ---- iOS design system: glass bars, bottom tab bar, grouped lists ---- */
@@ -625,10 +625,10 @@
     @apply flex items-center gap-3 px-3 py-2 rounded-md border-0 bg-transparent w-full text-left cursor-pointer;
   }
   .attention-row:hover {
-    @apply bg-[#eef0f4];
+    background: color-mix(in srgb, var(--color-text) 6%, transparent);
   }
   .attention-badge {
-    @apply text-[0.75rem] px-2 py-[2px] rounded-md bg-warning-bg text-warning shrink-0;
+    @apply text-[0.75rem] px-2 py-[2px] rounded-full bg-warning-bg text-warning shrink-0;
   }
   .stat-card-header {
     @apply flex items-center gap-2 mb-2;
@@ -644,7 +644,7 @@
     @apply w-8 h-8 rounded-full flex items-center justify-center text-[0.7rem] font-semibold shrink-0;
   }
   .progress-track {
-    @apply h-[6px] rounded-full bg-[#eef0f4] overflow-hidden mt-2;
+    @apply h-[6px] rounded-full bg-border overflow-hidden mt-2;
   }
   .progress-fill {
     @apply h-full rounded-full;
@@ -664,7 +664,7 @@
     @apply w-full flex items-center gap-3 px-3 py-2.5 bg-transparent border-0 cursor-pointer text-left;
   }
   .client-accordion-row:hover {
-    @apply bg-[#eef0f4];
+    background: color-mix(in srgb, var(--color-text) 6%, transparent);
   }
   .client-accordion-chevron {
     @apply inline-flex transition-transform text-text-muted;
@@ -683,7 +683,7 @@
     @apply text-[0.8rem] px-2.5 py-1 rounded-md border-0 bg-transparent cursor-pointer text-text-muted;
   }
   .client-tab-btn-active {
-    @apply bg-[#eef0f4] text-text;
+    @apply bg-border text-text;
   }
   /* iOS-style unread/attention count bubble -- next to a client's name in the accordion row, and
      on each tab button once expanded, so it's obvious at a glance which client (and which tab)
@@ -749,7 +749,7 @@
     @apply border-b-0;
   }
   .doc-row-icon {
-    @apply w-8 h-8 rounded-lg bg-[#eef0f4] text-text-muted flex items-center justify-center shrink-0;
+    @apply w-8 h-8 rounded-lg bg-border text-text-muted flex items-center justify-center shrink-0;
   }
   .doc-row-name {
     @apply text-[0.9rem];
@@ -758,10 +758,10 @@
     @apply text-[0.78rem] text-text-muted;
   }
   .doc-type-badge {
-    @apply text-[0.75rem] px-2 py-[2px] rounded-md bg-[#eef0f4] text-text-muted shrink-0;
+    @apply text-[0.75rem] px-2 py-[2px] rounded-full bg-border text-text-muted shrink-0;
   }
   .doc-status-badge {
-    @apply text-[0.75rem] px-2 py-[2px] rounded-md shrink-0;
+    @apply text-[0.75rem] px-2 py-[2px] rounded-full shrink-0;
   }
   .doc-status-pending {
     @apply bg-warning-bg text-warning;
@@ -775,7 +775,7 @@
     cursor: default;
   }
   .client-row:hover {
-    @apply bg-[#eef0f4];
+    background: color-mix(in srgb, var(--color-text) 6%, transparent);
   }
   .client-row-active {
     @apply bg-[rgba(37,99,235,0.08)];
@@ -834,7 +834,7 @@
     @apply font-bold min-w-[10rem] text-left bg-transparent border-0 text-text cursor-pointer rounded-md px-[0.4rem] py-[0.2rem] -my-[0.2rem] -mx-[0.4rem] transition-colors;
   }
   .cal-title:hover {
-    @apply bg-[#eef0f4];
+    background: color-mix(in srgb, var(--color-text) 6%, transparent);
   }
   .cal-title:focus-visible {
     @apply outline-none shadow-[0_0_0_3px_rgba(37,99,235,0.2)];
@@ -1008,8 +1008,14 @@
     from { opacity: 0; }
     to { opacity: 1; }
   }
+  /* Glass card matching .auth-box, rather than the plain flat panel this used to be -- landing in
+     a flat rounded-xl box right after the frosted sign-in card read as a step down in polish. */
   .modal-content {
-    @apply bg-panel rounded-xl p-6 w-full max-w-[480px] shadow-lg;
+    @apply rounded-[24px] p-7 w-full max-w-[480px] shadow-2xl;
+    background: var(--color-glass-bg);
+    border: 1px solid var(--color-glass-border);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    backdrop-filter: blur(24px) saturate(180%);
     animation: modal-in 0.16s cubic-bezier(0.2, 0.8, 0.3, 1);
   }
   .modal-content-wide {
@@ -1056,7 +1062,7 @@
     @apply flex items-center gap-2 mb-3 flex-wrap;
   }
   .pdf-pages-scroll {
-    @apply border border-border rounded-lg overflow-y-auto bg-[#eef0f4] p-3;
+    @apply border border-border rounded-lg overflow-y-auto bg-bg p-3;
     max-height: 55vh;
   }
   .pdf-page-wrap {
