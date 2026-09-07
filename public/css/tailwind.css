@@ -831,7 +831,7 @@
   }
   .cal-title {
     font: inherit;
-    @apply font-bold min-w-[10rem] text-left bg-transparent border-0 text-text cursor-pointer rounded-md px-[0.4rem] py-[0.2rem] -my-[0.2rem] -mx-[0.4rem] transition-colors;
+    @apply font-bold min-w-[10rem] text-left bg-transparent border-0 text-text cursor-pointer rounded-xl px-[0.4rem] py-[0.2rem] -my-[0.2rem] -mx-[0.4rem] transition-colors;
   }
   .cal-title:hover {
     background: color-mix(in srgb, var(--color-text) 6%, transparent);
@@ -860,17 +860,26 @@
   }
 
   .cal-cell {
-    @apply bg-panel border border-border rounded-lg min-h-[90px] p-[0.45rem] cursor-pointer transition-all;
+    @apply bg-panel border border-border rounded-xl min-h-[90px] p-[0.45rem] cursor-pointer transition-all;
   }
+  /* border+shadow only, no translate-y lift -- the "card floats up" skeuomorphism read as dated
+     next to the rest of the app's flatter, iOS-style press feedback (a scale-down on tap
+     instead, see :active below). */
   .cal-cell:hover {
-    @apply border-primary shadow-sm -translate-y-px;
+    @apply border-primary shadow-sm;
+  }
+  .cal-cell:active {
+    transform: scale(0.97);
   }
   .cal-cell-empty {
     @apply bg-transparent border-transparent;
     cursor: default;
   }
   .cal-cell-empty:hover {
-    @apply shadow-none translate-y-0;
+    @apply shadow-none;
+  }
+  .cal-cell-empty:active {
+    transform: none;
   }
   .cal-cell-weekend {
     @apply bg-weekend-bg;
@@ -920,10 +929,13 @@
     @apply grid grid-cols-7 gap-[6px];
   }
   .cal-agenda-day {
-    @apply bg-panel border border-border rounded-md p-[0.4rem] cursor-pointer min-h-[74px] transition-colors;
+    @apply bg-panel border border-border rounded-xl p-[0.4rem] cursor-pointer min-h-[74px] transition-all;
   }
   .cal-agenda-day:hover {
     @apply border-primary shadow-sm;
+  }
+  .cal-agenda-day:active {
+    transform: scale(0.97);
   }
   .cal-agenda-day-head {
     @apply text-[0.7rem] font-bold text-text-muted mb-[0.3rem];
@@ -962,7 +974,7 @@
     @apply font-bold text-[0.9rem] text-text-muted mb-[0.4rem];
   }
   .list-row {
-    @apply flex items-center gap-[0.6rem] px-[0.65rem] py-[0.55rem] bg-panel border border-border rounded-md mb-[0.35rem] cursor-pointer text-[0.9rem] transition-shadow;
+    @apply flex items-center gap-[0.6rem] px-[0.65rem] py-[0.55rem] bg-panel border border-border rounded-xl mb-[0.35rem] cursor-pointer text-[0.9rem] transition-shadow;
   }
   .list-row:hover {
     @apply shadow-sm;
