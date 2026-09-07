@@ -73,3 +73,12 @@ export const iconDownload = svg(
 export const iconClock = svg(
   `<circle cx="10" cy="10" r="7"/><path d="M10 6v4l2.6 2.6"/>`
 );
+
+// Theme toggle + toolbar overflow menu icons.
+export const iconSun = svg(
+  `<circle cx="10" cy="10" r="3.2"/><path d="M10 3v1.6"/><path d="M10 15.4V17"/><path d="M3 10h1.6"/><path d="M15.4 10H17"/><path d="M5.2 5.2l1.1 1.1"/><path d="M13.7 13.7l1.1 1.1"/><path d="M14.8 5.2l-1.1 1.1"/><path d="M6.3 13.7l-1.1 1.1"/>`
+);
+export const iconMoon = svg(`<path d="M15.5 12.3A6.5 6.5 0 0 1 7.7 4.5a6.5 6.5 0 1 0 7.8 7.8z"/>`);
+export const iconEllipsis = svg(
+  `<circle cx="4.5" cy="10" r="1.1" fill="currentColor" stroke="none"/><circle cx="10" cy="10" r="1.1" fill="currentColor" stroke="none"/><circle cx="15.5" cy="10" r="1.1" fill="currentColor" stroke="none"/>`
+);

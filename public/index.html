@@ -4,9 +4,21 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Bowling Green Bookkeeping &amp; Taxes — Client Hub</title>
+  <!-- Sets data-theme from the saved override (if any) before any CSS paints -- doing this in
+       theme.js instead (a deferred module script at the end of body) would run after first
+       paint and flash the wrong theme for a frame on every load. Must stay a plain inline
+       script, not a module, so it runs synchronously and blocks rendering until it's done. -->
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem("bgb_theme");
+        if (t === "light" || t === "dark") document.documentElement.dataset.theme = t;
+      } catch (e) {}
+    })();
+  </script>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Dancing+Script:wght@600&display=swap" />
-  <link rel="stylesheet" href="css/styles.css?v=1788792557115" />
+  <link rel="stylesheet" href="css/styles.css?v=1788794106272" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
 </head>
@@ -97,6 +109,7 @@
         <button id="client-list-toggle-btn" class="icon-btn sidebar-toggle-btn" title="Clients" aria-label="Show client list"></button>
         <span id="save-status" class="save-status"></span>
         <div class="header-right">
+          <button id="theme-toggle-btn" class="icon-btn" title="Toggle light/dark mode" aria-label="Toggle light/dark mode"></button>
           <span id="user-badge" class="user-badge"></span>
           <span class="header-divider"></span>
           <button id="sign-out-btn" class="btn btn-ghost btn-header" title="Sign out">Sign out</button>
@@ -105,22 +118,21 @@
       <div class="ios-large-title-wrap">
         <h1 id="app-large-title" class="ios-large-title">Overview</h1>
       </div>
-    </header>
 
-    <div class="toolbar">
-      <div id="category-filter-wrap" class="list-filter-wrap">
-        <label>Category <select id="filter-category"></select></label>
-        <button id="manage-categories-btn" class="icon-btn" title="Manage categories" aria-label="Manage categories"></button>
+      <div class="toolbar">
+        <div id="category-filter-wrap" class="list-filter-wrap">
+          <label>Category <select id="filter-category"></select></label>
+        </div>
+        <div id="list-filter-wrap" class="list-filter-wrap" hidden>
+          <label>Client filter <select id="list-filter-client"></select></label>
+        </div>
+        <button id="mark-all-complete-btn" class="btn" hidden>Mark all shown complete</button>
+        <div class="toolbar-spacer"></div>
+        <button id="toolbar-actions-btn" class="icon-btn" title="More actions" aria-label="More actions"></button>
+        <button id="bulk-add-item-btn" class="btn btn-primary">Add item to clients...</button>
+        <button id="add-client-btn" class="btn btn-primary">Add client</button>
       </div>
-      <div id="list-filter-wrap" class="list-filter-wrap" hidden>
-        <label>Client filter <select id="list-filter-client"></select></label>
-      </div>
-      <button id="mark-all-complete-btn" class="btn" hidden>Mark all shown complete</button>
-      <div class="toolbar-spacer"></div>
-      <button id="export-btn" class="btn btn-ghost" title="Export to GitHub">Export to GitHub</button>
-      <button id="bulk-add-item-btn" class="btn btn-primary">Add item to clients...</button>
-      <button id="add-client-btn" class="btn btn-primary">Add client</button>
-    </div>
+    </header>
 
     <div class="app-body">
       <div id="sidebar-backdrop" class="sidebar-backdrop" hidden></div>
@@ -144,7 +156,10 @@
     <header class="ios-glass-bar ios-glass-bar-top">
       <div class="ios-nav-row">
         <span></span>
-        <button id="client-hub-signout-btn" class="btn btn-ghost btn-header" title="Sign out">Sign out</button>
+        <div class="header-right">
+          <button id="chub-theme-toggle-btn" class="icon-btn" title="Toggle light/dark mode" aria-label="Toggle light/dark mode"></button>
+          <button id="client-hub-signout-btn" class="btn btn-ghost btn-header" title="Sign out">Sign out</button>
+        </div>
       </div>
       <div class="ios-large-title-wrap">
         <h1 id="chub-large-title" class="ios-large-title">Documents</h1>
@@ -185,6 +200,6 @@
     <nav class="ios-glass-bar ios-glass-bar-bottom ios-tab-bar" id="client-tab-bar"></nav>
   </div>
 
-  <script type="module" src="js/app.js?v=1788792557115"></script>
+  <script type="module" src="js/app.js?v=1788794106272"></script>
 </body>
 </html>

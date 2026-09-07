@@ -1,20 +1,21 @@
-import { isFirebaseConfigured, auth } from "./firebase-init.js?v=1788792557115";
-import { escapeHtml } from "./html-safety.js?v=1788792557115";
-import { friendlyAuthError } from "./auth-errors.js?v=1788792557115";
+import { isFirebaseConfigured, auth } from "./firebase-init.js?v=1788794106272";
+import { escapeHtml } from "./html-safety.js?v=1788794106272";
+import { friendlyAuthError } from "./auth-errors.js?v=1788794106272";
+import { getEffectiveTheme, toggleTheme } from "./theme.js?v=1788794106272";
 import {
   watchAuthState,
   signInWithPassword,
   signOutUser,
   getOwnProfile,
   afterSignIn,
-} from "./auth.js?v=1788792557115";
+} from "./auth.js?v=1788794106272";
 import {
   isMfaEnrolled,
   startMfaEnrollment,
   finishMfaEnrollment,
   getResolver,
   completeMfaSignIn,
-} from "./mfa.js?v=1788792557115";
+} from "./mfa.js?v=1788794106272";
 import {
   startSync,
   stopSync,
@@ -33,12 +34,12 @@ import {
   unmarkComplete,
   isFullyLoaded,
   getClientRecord,
-} from "./data.js?v=1788792557115";
-import { renderCalendar } from "./calendar-view.js?v=1788792557115";
-import { renderList } from "./list-view.js?v=1788792557115";
-import { describeRecurrence, describeRecurrenceHistory, getLastDueOccurrence, toISODate } from "./recurrence.js?v=1788792557115";
-import { colorFor, tintFor } from "./colors.js?v=1788792557115";
-import { githubRepoSlug } from "./firebase-config.js?v=1788792557115";
+} from "./data.js?v=1788794106272";
+import { renderCalendar } from "./calendar-view.js?v=1788794106272";
+import { renderList } from "./list-view.js?v=1788794106272";
+import { describeRecurrence, describeRecurrenceHistory, getLastDueOccurrence, toISODate } from "./recurrence.js?v=1788794106272";
+import { colorFor, tintFor } from "./colors.js?v=1788794106272";
+import { githubRepoSlug } from "./firebase-config.js?v=1788794106272";
 import {
   DOC_TYPES,
   docTypeLabel,
@@ -47,10 +48,10 @@ import {
   setDocumentReviewed,
   getDocumentDownloadURL,
   deleteDocument,
-} from "./documents.js?v=1788792557115";
-import { createClientInvite, subscribeToInviteStatus } from "./invites.js?v=1788792557115";
-import { subscribeToOwnCompliance } from "./client-compliance.js?v=1788792557115";
-import { subscribeToLetters, sendLetter, signLetter, deleteLetter, getLetterDownloadURL } from "./letters.js?v=1788792557115";
+} from "./documents.js?v=1788794106272";
+import { createClientInvite, subscribeToInviteStatus } from "./invites.js?v=1788794106272";
+import { subscribeToOwnCompliance } from "./client-compliance.js?v=1788794106272";
+import { subscribeToLetters, sendLetter, signLetter, deleteLetter, getLetterDownloadURL } from "./letters.js?v=1788794106272";
 import {
   stampSignature,
   stampFields,
@@ -60,8 +61,8 @@ import {
   loadPdfDocument,
   renderPdfPageToCanvas,
   FIELD_DEFAULT_SIZE,
-} from "./pdf-sign.js?v=1788792557115";
-import { iconEdit, iconTrash, iconPlus, iconPlusLarge, iconCheck, iconTag, iconUpload, iconLogout, iconCalendar, iconListView, iconFolder, iconFolderLarge, iconHome, iconChevronRight, iconUsers, iconAlertTriangle, iconSignature, iconFile, iconUploadLarge, iconDownload, iconClock } from "./icons.js?v=1788792557115";
+} from "./pdf-sign.js?v=1788794106272";
+import { iconEdit, iconTrash, iconPlus, iconPlusLarge, iconCheck, iconTag, iconUpload, iconLogout, iconCalendar, iconListView, iconFolder, iconFolderLarge, iconHome, iconChevronRight, iconUsers, iconAlertTriangle, iconSignature, iconFile, iconUploadLarge, iconDownload, iconClock, iconSun, iconMoon, iconEllipsis } from "./icons.js?v=1788794106272";
 
 const DEFAULT_CATEGORIES = [
   "Payroll",
@@ -118,7 +119,7 @@ function init() {
   els.filterCategory = qs("filter-category");
   els.categoryFilterWrap = qs("category-filter-wrap");
   els.bulkAddItemBtn = qs("bulk-add-item-btn");
-  els.exportBtn = qs("export-btn");
+  els.toolbarActionsBtn = qs("toolbar-actions-btn");
   els.markAllCompleteBtn = qs("mark-all-complete-btn");
   els.userBadge = qs("user-badge");
   els.clientHubScreen = qs("client-hub-screen");
@@ -134,9 +135,8 @@ function init() {
 
   // Icon + label markup so these can collapse to icon-only on narrow screens (see .btn-header
   // in styles.css) without duplicating the icon set into static HTML.
-  qs("manage-categories-btn").innerHTML = iconTag;
-  qs("export-btn").innerHTML = `<span class="btn-header-icon">${iconUpload}</span><span class="btn-header-label">Export to GitHub</span>`;
   qs("sign-out-btn").innerHTML = `<span class="btn-header-icon">${iconLogout}</span><span class="btn-header-label">Sign out</span>`;
+  qs("toolbar-actions-btn").innerHTML = iconEllipsis;
 
   wireAuthForms();
   wireMfaScreens();
@@ -394,11 +394,56 @@ function wireToolbar() {
   });
 
   qs("add-client-btn").addEventListener("click", () => openClientModal());
-  qs("manage-categories-btn").addEventListener("click", () => openCategoriesModal());
   qs("bulk-add-item-btn").addEventListener("click", () => openBulkAddItemModal());
-  qs("export-btn").addEventListener("click", openExportInfo);
+  qs("toolbar-actions-btn").addEventListener("click", () => openToolbarActionsMenu());
   qs("modal-backdrop").addEventListener("click", (e) => {
     if (e.target.id === "modal-backdrop") closeModal();
+  });
+
+  wireThemeToggle(qs("theme-toggle-btn"));
+  wireThemeToggle(qs("chub-theme-toggle-btn"));
+}
+
+// Action-sheet-style overflow menu for the compliance calendar/list's secondary actions --
+// keeps the toolbar itself down to just the filter + primary "Add" buttons (see the AskUserQuestion
+// decision to declutter rather than restyle everything in place).
+function openToolbarActionsMenu() {
+  openModal(`
+    <h2>Actions</h2>
+    <div class="ios-grouped-list">
+      <button type="button" class="ios-grouped-list-row" id="toolbar-action-manage-categories">
+        <span class="ios-grouped-list-row-icon" style="background:#8E8E93;">${iconTag}</span>
+        <span class="ios-grouped-list-row-label">Manage categories</span>
+      </button>
+      <button type="button" class="ios-grouped-list-row" id="toolbar-action-export">
+        <span class="ios-grouped-list-row-icon" style="background:#8E8E93;">${iconUpload}</span>
+        <span class="ios-grouped-list-row-label">Export to GitHub</span>
+      </button>
+    </div>
+    <div class="modal-actions"><button type="button" class="btn" data-action="close">Cancel</button></div>
+  `);
+  qs("modal-content").querySelector('[data-action="close"]').addEventListener("click", closeModal);
+  qs("toolbar-action-manage-categories").addEventListener("click", () => {
+    closeModal();
+    openCategoriesModal();
+  });
+  qs("toolbar-action-export").addEventListener("click", () => {
+    closeModal();
+    openExportInfo();
+  });
+}
+
+// Shared by both the staff and client-facing header buttons -- shows the icon for the theme
+// you'd SWITCH TO (sun while dark, moon while light), matching how most apps label a toggle.
+function wireThemeToggle(btn) {
+  if (!btn) return;
+  const syncIcon = () => {
+    btn.innerHTML = getEffectiveTheme() === "dark" ? iconSun : iconMoon;
+  };
+  syncIcon();
+  btn.addEventListener("click", () => {
+    toggleTheme();
+    syncIcon();
   });
 }
 
@@ -432,7 +477,7 @@ function setActiveView(view) {
   const isComplianceView = view === "calendar" || view === "list";
   els.categoryFilterWrap.hidden = !isComplianceView;
   els.bulkAddItemBtn.hidden = !isComplianceView;
-  els.exportBtn.hidden = !isComplianceView;
+  els.toolbarActionsBtn.hidden = !isComplianceView;
   renderCurrentView();
 }
 

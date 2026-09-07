@@ -53,8 +53,14 @@
   color-scheme: light dark;
 }
 
+/* Dark palette applies in two cases: the system prefers dark AND the user hasn't explicitly
+   forced light (the :not guard), OR the user has explicitly forced dark regardless of system
+   preference (the plain attribute selector below, unconditional on the media query). Forcing
+   light needs no rule of its own -- the :not guard simply stops the media-query block from
+   applying, leaving the light values from @theme above already in effect. See theme.js. */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
     --color-bg: #000000;
     --color-panel: #1c1c1e;
     --color-card: #1c1c1e;
@@ -75,6 +81,33 @@
     --color-glass-bg: rgba(28, 28, 30, 0.72);
     --color-glass-border: rgba(255, 255, 255, 0.08);
   }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --color-bg: #000000;
+  --color-panel: #1c1c1e;
+  --color-card: #1c1c1e;
+  --color-border: #38383a;
+  --color-text: #ffffff;
+  --color-text-muted: #98989d;
+  --color-primary: #0a84ff;
+  --color-primary-hover: #409cff;
+  --color-danger: #ff453a;
+  --color-danger-bg: #3a1210;
+  --color-success: #30d158;
+  --color-success-bg: #0f2a16;
+  --color-warning: #ff9f0a;
+  --color-warning-bg: #3a2705;
+  --color-warning-border: #6b4a0e;
+  --color-done-bg: #0f2a16;
+  --color-weekend-bg: #1c1c1e;
+  --color-glass-bg: rgba(28, 28, 30, 0.72);
+  --color-glass-border: rgba(255, 255, 255, 0.08);
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
 }
 
 @layer base {
@@ -138,7 +171,7 @@
   /* ---- buttons ---- */
   .btn {
     font: inherit;
-    @apply px-[0.9rem] py-[0.45rem] rounded-md border border-border bg-panel text-text cursor-pointer whitespace-nowrap transition-colors;
+    @apply px-[0.9rem] py-[0.45rem] rounded-[10px] border border-border bg-panel text-text cursor-pointer whitespace-nowrap transition-colors;
   }
   .btn:hover {
     @apply bg-[#eef0f4];
@@ -341,10 +374,11 @@
     @apply text-danger font-semibold;
   }
 
-  /* Deliberately NOT styled like .app-header (no panel background, no border) -- this is a
-     contextual action row for the content below it, not a second navigation bar. */
+  /* Lives inside .ios-glass-bar-top now (see index.html), right below the large title -- no
+     background of its own, so it reads as one continuous blurred bar rather than a second,
+     opaque strip stacked underneath it. */
   .toolbar {
-    @apply flex items-center gap-[0.6rem] px-5 py-2.5 bg-bg flex-wrap;
+    @apply flex items-center gap-[0.6rem] px-4 pb-3 flex-wrap;
   }
   .toolbar-spacer {
     @apply flex-1;
@@ -618,7 +652,7 @@
     @apply flex;
   }
   .icon-btn {
-    @apply border-0 bg-transparent cursor-pointer p-[0.3rem] rounded-[5px] inline-flex items-center justify-center text-text-muted transition-colors;
+    @apply border-0 bg-transparent cursor-pointer p-[0.3rem] rounded-[8px] inline-flex items-center justify-center text-text-muted transition-colors;
   }
   .icon-btn:hover {
     @apply bg-border text-text;
