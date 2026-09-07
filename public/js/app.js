@@ -1,19 +1,19 @@
-import { isFirebaseConfigured, auth } from "./firebase-init.js?v=1788758519319";
-import { escapeHtml } from "./html-safety.js?v=1788758519319";
+import { isFirebaseConfigured, auth } from "./firebase-init.js?v=1788759669832";
+import { escapeHtml } from "./html-safety.js?v=1788759669832";
 import {
   watchAuthState,
   signInWithPassword,
   signOutUser,
   getOwnProfile,
   afterSignIn,
-} from "./auth.js?v=1788758519319";
+} from "./auth.js?v=1788759669832";
 import {
   isMfaEnrolled,
   startMfaEnrollment,
   finishMfaEnrollment,
   getResolver,
   completeMfaSignIn,
-} from "./mfa.js?v=1788758519319";
+} from "./mfa.js?v=1788759669832";
 import {
   startSync,
   stopSync,
@@ -32,12 +32,12 @@ import {
   unmarkComplete,
   isFullyLoaded,
   getClientRecord,
-} from "./data.js?v=1788758519319";
-import { renderCalendar } from "./calendar-view.js?v=1788758519319";
-import { renderList } from "./list-view.js?v=1788758519319";
-import { describeRecurrence, describeRecurrenceHistory, getLastDueOccurrence, toISODate } from "./recurrence.js?v=1788758519319";
-import { colorFor, tintFor } from "./colors.js?v=1788758519319";
-import { githubRepoSlug } from "./firebase-config.js?v=1788758519319";
+} from "./data.js?v=1788759669832";
+import { renderCalendar } from "./calendar-view.js?v=1788759669832";
+import { renderList } from "./list-view.js?v=1788759669832";
+import { describeRecurrence, describeRecurrenceHistory, getLastDueOccurrence, toISODate } from "./recurrence.js?v=1788759669832";
+import { colorFor, tintFor } from "./colors.js?v=1788759669832";
+import { githubRepoSlug } from "./firebase-config.js?v=1788759669832";
 import {
   DOC_TYPES,
   docTypeLabel,
@@ -46,10 +46,12 @@ import {
   setDocumentReviewed,
   getDocumentDownloadURL,
   deleteDocument,
-} from "./documents.js?v=1788758519319";
-import { createClientInvite, subscribeToInviteStatus } from "./invites.js?v=1788758519319";
-import { subscribeToOwnCompliance } from "./client-compliance.js?v=1788758519319";
-import { iconEdit, iconTrash, iconPlus, iconPlusLarge, iconCheck, iconTag, iconUpload, iconLogout, iconCalendar, iconListView, iconFolder, iconFolderLarge, iconHome, iconChevronRight, iconUsers, iconAlertTriangle, iconSignature, iconFile, iconUploadLarge, iconDownload, iconClock } from "./icons.js?v=1788758519319";
+} from "./documents.js?v=1788759669832";
+import { createClientInvite, subscribeToInviteStatus } from "./invites.js?v=1788759669832";
+import { subscribeToOwnCompliance } from "./client-compliance.js?v=1788759669832";
+import { subscribeToLetters, sendLetter, signLetter, deleteLetter, getLetterDownloadURL } from "./letters.js?v=1788759669832";
+import { stampSignature, renderTypedSignature, wireSignatureCanvas, fetchPublicIp } from "./pdf-sign.js?v=1788759669832";
+import { iconEdit, iconTrash, iconPlus, iconPlusLarge, iconCheck, iconTag, iconUpload, iconLogout, iconCalendar, iconListView, iconFolder, iconFolderLarge, iconHome, iconChevronRight, iconUsers, iconAlertTriangle, iconSignature, iconFile, iconUploadLarge, iconDownload, iconClock } from "./icons.js?v=1788759669832";
 
 const DEFAULT_CATEGORIES = [
   "Payroll",
@@ -147,6 +149,8 @@ function init() {
       stopSync();
       clientDocsUnsub?.();
       clientDocsUnsub = null;
+      clientLettersUnsub?.();
+      clientLettersUnsub = null;
       clientComplianceUnsub?.();
       clientComplianceUnsub = null;
       staffDocsUnsub?.();
@@ -463,9 +467,20 @@ function computeOverdueItems() {
   return rows;
 }
 
+function computeAwaitingSignatureCount() {
+  let count = 0;
+  for (const letter of latestState.letters.values()) {
+    const client = latestState.clients.get(letter.clientId);
+    if (!client || client.archived) continue;
+    if (letter.status === "sent") count++;
+  }
+  return count;
+}
+
 function renderOverviewView() {
   const activeClients = [...latestState.clients.values()].filter((c) => !c.archived);
   const overdue = computeOverdueItems();
+  const awaitingSignature = computeAwaitingSignatureCount();
 
   els.viewContainer.innerHTML = `
     <div class="stat-grid">
@@ -488,8 +503,7 @@ function renderOverviewView() {
           <span class="stat-icon-badge" style="background:${tintFor("#7c3aed")}; color:#7c3aed;">${iconSignature}</span>
           <span class="stat-card-label">Awaiting signature</span>
         </div>
-        <div class="stat-card-value-muted">0</div>
-        <div class="stat-card-label">Coming in Milestone 4</div>
+        <div class="${awaitingSignature ? "stat-card-value" : "stat-card-value-muted"}">${awaitingSignature}</div>
       </div>
       <div class="stat-card">
         <div class="stat-card-header">
@@ -524,14 +538,12 @@ function renderOverviewView() {
   });
 }
 
-// ---- client hub (per-client tabs: compliance is real, documents/signatures/letters are
-// placeholders until Milestones 2-5) ------------------------------------------------------
+// ---- client hub (per-client tabs) --------------------------------------------------------
 
 const CLIENT_HUB_TABS = [
   { id: "overview", label: "Overview" },
   { id: "compliance", label: "Compliance" },
   { id: "documents", label: "Documents" },
-  { id: "signatures", label: "Signatures" },
   { id: "letters", label: "Letters" },
 ];
 
@@ -620,11 +632,6 @@ function renderClientHubStaffView() {
   });
 }
 
-const CLIENT_HUB_PLACEHOLDER_COPY = {
-  signatures: "Signature requests land here in Milestones 3-4.",
-  letters: "Auto-generated engagement letters land here in Milestone 5.",
-};
-
 function renderClientHubTabContent(container, client, tab) {
   if (tab === "compliance") {
     const now = new Date();
@@ -664,7 +671,18 @@ function renderClientHubTabContent(container, client, tab) {
     );
     return;
   }
-  container.innerHTML = `<p class="client-tab-content">${CLIENT_HUB_PLACEHOLDER_COPY[tab]}</p>`;
+  if (tab === "letters") {
+    const letters = [...latestState.letters.values()]
+      .filter((l) => l.clientId === client.id)
+      .sort((a, b) => (b.sentAt?.toMillis() || 0) - (a.sentAt?.toMillis() || 0));
+    container.innerHTML = `
+      <button class="btn btn-primary" style="margin-bottom:0.75rem;" data-action="send-letter">Send letter for signature</button>
+      <div id="letter-list-staff"></div>
+    `;
+    container.querySelector('[data-action="send-letter"]').addEventListener("click", () => openSendLetterModal(client));
+    renderLetterListStaff(qs("letter-list-staff"), letters, client.id);
+    return;
+  }
 }
 
 function openInviteClientModal(client) {
@@ -829,12 +847,123 @@ function wireDocumentRows(container, clientId) {
   });
 }
 
+// ---- engagement letters (staff side: send + track; rendering shared list-row look with docs) --
+
+function renderLetterListStaff(container, letters, clientId) {
+  if (letters.length === 0) {
+    container.innerHTML = `<div class="empty-hint">No letters sent yet.</div>`;
+    return;
+  }
+  container.innerHTML = letters.map(letterRowHtml).join("");
+  wireLetterRowsStaff(container, clientId);
+}
+
+function letterRowHtml(l) {
+  const sentDate = l.sentAt?.toDate ? l.sentAt.toDate().toLocaleDateString() : "Sending…";
+  const meta =
+    l.status === "signed" && l.signedAt?.toDate
+      ? `Signed by ${escapeHtml(l.signerName || "")} on ${l.signedAt.toDate().toLocaleDateString()}`
+      : `Sent ${sentDate} by ${escapeHtml(l.sentBy || "")}`;
+  const statusBadge =
+    l.status === "signed"
+      ? `<span class="doc-status-badge doc-status-reviewed">Signed</span>`
+      : `<span class="doc-status-badge doc-status-pending">Awaiting signature</span>`;
+  // Only an unsigned letter can be deleted (correcting a bad send) -- once signed it's an audit
+  // record, and firestore.rules/storage.rules would reject the delete anyway.
+  const deleteBtn =
+    l.status !== "signed"
+      ? `<button class="icon-btn" data-action="delete-letter" data-letter-id="${l.id}" data-storage-path="${escapeHtml(l.storagePath)}" title="Delete" aria-label="Delete ${escapeHtml(l.title)}">${iconTrash}</button>`
+      : "";
+  return `
+    <div class="doc-row">
+      <span class="doc-row-icon">${iconSignature}</span>
+      <span style="flex:1; min-width:0;">
+        <div class="doc-row-name">${escapeHtml(l.title)}</div>
+        <div class="doc-row-meta">${meta}</div>
+      </span>
+      ${statusBadge}
+      <button class="icon-btn" data-action="download" data-storage-path="${escapeHtml(l.storagePath)}" title="Download original" aria-label="Download original">${iconDownload}</button>
+      ${l.signedPdfPath ? `<button class="icon-btn" data-action="download" data-storage-path="${escapeHtml(l.signedPdfPath)}" title="Download signed copy" aria-label="Download signed copy">${iconFile}</button>` : ""}
+      ${deleteBtn}
+    </div>`;
+}
+
+function wireLetterRowsStaff(container, clientId) {
+  container.querySelectorAll('[data-action="download"]').forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      try {
+        const url = await getLetterDownloadURL(btn.dataset.storagePath);
+        window.open(url, "_blank", "noopener");
+      } catch (err) {
+        alert("Could not open document: " + err.message);
+      }
+    });
+  });
+  container.querySelectorAll('[data-action="delete-letter"]').forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      if (!confirm("Delete this letter? This can't be undone.")) return;
+      btn.disabled = true;
+      try {
+        await deleteLetter(clientId, btn.dataset.letterId, btn.dataset.storagePath);
+      } catch (err) {
+        alert("Could not delete: " + err.message);
+        btn.disabled = false;
+      }
+    });
+  });
+}
+
+function openSendLetterModal(client) {
+  openModal(`
+    <h2>Send letter to ${escapeHtml(client.name)}</h2>
+    <p class="client-tab-content">Upload a PDF -- your client will see it in their Client Hub and can sign it there.</p>
+    <form id="send-letter-form">
+      <label>Title<br/><input type="text" id="letter-title-input" placeholder="2025 Engagement Letter" required /></label>
+      <label style="display:block; margin-top:0.75rem;">PDF file<br/><input type="file" id="letter-file-input" accept="application/pdf" required /></label>
+      <div id="send-letter-error" class="auth-error" hidden></div>
+      <div class="modal-actions">
+        <button type="button" class="btn" data-action="close">Cancel</button>
+        <button type="submit" class="btn btn-primary" id="send-letter-btn">Send</button>
+      </div>
+    </form>
+  `);
+  qs("modal-content").querySelector('[data-action="close"]').addEventListener("click", closeModal);
+
+  qs("send-letter-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const title = qs("letter-title-input").value.trim();
+    const file = qs("letter-file-input").files[0];
+    const errEl = qs("send-letter-error");
+    errEl.hidden = true;
+    if (!file || file.type !== "application/pdf") {
+      errEl.textContent = "Please choose a PDF file.";
+      errEl.hidden = false;
+      return;
+    }
+    const btn = qs("send-letter-btn");
+    btn.disabled = true;
+    btn.textContent = "Sending…";
+    try {
+      await sendLetter(client.id, file, title, auth.currentUser.email);
+      closeModal();
+    } catch (err) {
+      errEl.textContent = err.message;
+      errEl.hidden = false;
+      btn.disabled = false;
+      btn.textContent = "Send";
+    }
+  });
+}
+
 // ---- client hub (client-facing screen) --------------------------------------------------
 
 let clientHubClientId = null;
 let clientHubClientName = "";
 let clientDocsUnsub = null;
+let clientLettersUnsub = null;
 let clientComplianceUnsub = null;
+let clientLatestDocuments = [];
+let clientLatestLetters = [];
 
 function wireClientHubScreen() {
   qs("client-hub-signout-btn").addEventListener("click", () => signOutUser());
@@ -842,6 +971,7 @@ function wireClientHubScreen() {
   qs("chub-dropzone-icon").innerHTML = iconUploadLarge;
 
   qs("chub-tab-documents").addEventListener("click", () => setClientHubTab("documents"));
+  qs("chub-tab-letters").addEventListener("click", () => setClientHubTab("letters"));
   qs("chub-tab-compliance").addEventListener("click", () => setClientHubTab("compliance"));
 
   const dropzone = qs("chub-dropzone");
@@ -872,8 +1002,10 @@ function wireClientHubScreen() {
 
 function setClientHubTab(tab) {
   qs("chub-tab-documents").classList.toggle("client-tab-btn-active", tab === "documents");
+  qs("chub-tab-letters").classList.toggle("client-tab-btn-active", tab === "letters");
   qs("chub-tab-compliance").classList.toggle("client-tab-btn-active", tab === "compliance");
   qs("chub-panel-documents").hidden = tab !== "documents";
+  qs("chub-panel-letters").hidden = tab !== "letters";
   qs("chub-panel-compliance").hidden = tab !== "compliance";
 
   if (tab === "compliance" && !clientComplianceUnsub && clientHubClientId) {
@@ -954,22 +1086,35 @@ async function showClientHub(profile) {
   clientDocsUnsub = subscribeToDocuments(
     profile.clientId,
     (documents) => {
+      clientLatestDocuments = documents;
       renderDocumentList(qs("chub-document-list"), documents, profile.clientId, { allowReviewToggle: false });
-      renderClientStatGrid(documents);
+      renderClientStatGrid();
+    },
+    (err) => console.error(err)
+  );
+
+  clientLettersUnsub?.();
+  clientLettersUnsub = subscribeToLetters(
+    profile.clientId,
+    (letters) => {
+      clientLatestLetters = letters;
+      renderLetterListClient(qs("chub-letter-list"), letters, profile.clientId);
+      renderClientStatGrid();
     },
     (err) => console.error(err)
   );
 }
 
-function renderClientStatGrid(documents) {
-  const pending = documents.filter((d) => !d.reviewed).length;
+function renderClientStatGrid() {
+  const pending = clientLatestDocuments.filter((d) => !d.reviewed).length;
+  const needsSignature = clientLatestLetters.filter((l) => l.status === "sent").length;
   qs("chub-stat-grid").innerHTML = `
     <div class="stat-card">
       <div class="stat-card-header">
         <span class="stat-icon-badge" style="background:${tintFor("#2563eb")}; color:#2563eb;">${iconFile}</span>
         <span class="stat-card-label">Documents uploaded</span>
       </div>
-      <div class="stat-card-value">${documents.length}</div>
+      <div class="stat-card-value">${clientLatestDocuments.length}</div>
     </div>
     <div class="stat-card">
       <div class="stat-card-header">
@@ -978,7 +1123,188 @@ function renderClientStatGrid(documents) {
       </div>
       <div class="${pending ? "stat-card-value" : "stat-card-value-muted"}">${pending}</div>
     </div>
+    <div class="stat-card">
+      <div class="stat-card-header">
+        <span class="stat-icon-badge" style="background:${tintFor("#7c3aed")}; color:#7c3aed;">${iconSignature}</span>
+        <span class="stat-card-label">Needs your signature</span>
+      </div>
+      <div class="${needsSignature ? "stat-card-value" : "stat-card-value-muted"}">${needsSignature}</div>
+    </div>
   `;
+}
+
+// ---- engagement letters (client-facing) --------------------------------------------------
+
+function renderLetterListClient(container, letters, clientId) {
+  if (letters.length === 0) {
+    container.innerHTML = `<div class="empty-hint">No letters yet.</div>`;
+    return;
+  }
+  container.innerHTML = letters.map(letterRowHtmlClient).join("");
+  wireLetterRowsClient(container, clientId, letters);
+}
+
+function letterRowHtmlClient(l) {
+  const meta =
+    l.status === "signed" && l.signedAt?.toDate
+      ? `Signed on ${l.signedAt.toDate().toLocaleDateString()}`
+      : `Sent ${l.sentAt?.toDate ? l.sentAt.toDate().toLocaleDateString() : "recently"}`;
+  const statusBadge =
+    l.status === "signed"
+      ? `<span class="doc-status-badge doc-status-reviewed">Signed</span>`
+      : `<span class="doc-status-badge doc-status-pending">Needs signature</span>`;
+  const actionBtn =
+    l.status === "sent"
+      ? `<button class="btn btn-primary btn-sm" data-action="sign" data-letter-id="${l.id}">Sign now</button>`
+      : `<button class="icon-btn" data-action="download" data-storage-path="${escapeHtml(l.signedPdfPath || l.storagePath)}" title="Download" aria-label="Download signed copy">${iconDownload}</button>`;
+  return `
+    <div class="doc-row">
+      <span class="doc-row-icon">${iconSignature}</span>
+      <span style="flex:1; min-width:0;">
+        <div class="doc-row-name">${escapeHtml(l.title)}</div>
+        <div class="doc-row-meta">${meta}</div>
+      </span>
+      ${statusBadge}
+      ${actionBtn}
+    </div>`;
+}
+
+function wireLetterRowsClient(container, clientId, letters) {
+  container.querySelectorAll('[data-action="sign"]').forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const letter = letters.find((l) => l.id === btn.dataset.letterId);
+      if (letter) openSignLetterModal(clientId, letter);
+    });
+  });
+  container.querySelectorAll('[data-action="download"]').forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      try {
+        const url = await getLetterDownloadURL(btn.dataset.storagePath);
+        window.open(url, "_blank", "noopener");
+      } catch (err) {
+        alert("Could not open document: " + err.message);
+      }
+    });
+  });
+}
+
+// Sign modal: client can either draw on a canvas or type their name (rendered in a cursive font
+// and rasterized the same way a drawn signature is -- see pdf-sign.js's renderTypedSignature),
+// then the signature + an audit line get stamped directly onto the PDF client-side before the
+// flattened result is uploaded as the record of record (see letters.js's signLetter).
+function openSignLetterModal(clientId, letter) {
+  let signMethod = "draw";
+  let canvasControls = null;
+  const cleanup = () => {
+    canvasControls?.destroy();
+    canvasControls = null;
+  };
+
+  openModal(`
+    <h2>Sign: ${escapeHtml(letter.title)}</h2>
+    <p class="client-tab-content">Review the document, then sign below.</p>
+    <button type="button" class="btn btn-ghost" id="sign-view-doc-btn" style="margin-bottom:1rem;">View document to sign</button>
+
+    <label>Full legal name<br/><input type="text" id="sign-name-input" required placeholder="Jane Smith" /></label>
+
+    <div class="sign-method-tabs" style="margin-top:1rem;">
+      <button type="button" class="client-tab-btn client-tab-btn-active" data-sign-method="draw">Draw signature</button>
+      <button type="button" class="client-tab-btn" data-sign-method="type">Type signature</button>
+    </div>
+    <div id="sign-draw-panel">
+      <canvas id="sign-canvas" class="sign-canvas" width="480" height="140"></canvas>
+      <button type="button" class="btn btn-ghost btn-sm" id="sign-clear-btn" style="margin-top:0.4rem;">Clear</button>
+    </div>
+    <div id="sign-type-panel" hidden>
+      <div id="sign-type-preview" class="sign-type-preview">Type your name above</div>
+    </div>
+
+    <div id="sign-error" class="auth-error" hidden style="margin-top:0.75rem;"></div>
+    <div class="modal-actions">
+      <button type="button" class="btn" data-action="close">Cancel</button>
+      <button type="button" class="btn btn-primary" id="sign-submit-btn">Sign and submit</button>
+    </div>
+  `);
+
+  qs("sign-view-doc-btn").addEventListener("click", async () => {
+    try {
+      const url = await getLetterDownloadURL(letter.storagePath);
+      window.open(url, "_blank", "noopener");
+    } catch (err) {
+      alert("Could not open document: " + err.message);
+    }
+  });
+
+  qs("modal-content").querySelector('[data-action="close"]').addEventListener("click", () => {
+    cleanup();
+    closeModal();
+  });
+
+  canvasControls = wireSignatureCanvas(qs("sign-canvas"));
+  qs("sign-clear-btn").addEventListener("click", () => canvasControls.clear());
+
+  const nameInput = qs("sign-name-input");
+  const updateTypePreview = () => {
+    qs("sign-type-preview").textContent = nameInput.value.trim() || "Type your name above";
+  };
+  nameInput.addEventListener("input", updateTypePreview);
+
+  qs("modal-content").querySelectorAll("[data-sign-method]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      signMethod = btn.dataset.signMethod;
+      qs("modal-content").querySelectorAll("[data-sign-method]").forEach((b) =>
+        b.classList.toggle("client-tab-btn-active", b === btn)
+      );
+      qs("sign-draw-panel").hidden = signMethod !== "draw";
+      qs("sign-type-panel").hidden = signMethod !== "type";
+      if (signMethod === "type") updateTypePreview();
+    });
+  });
+
+  qs("sign-submit-btn").addEventListener("click", async () => {
+    const errEl = qs("sign-error");
+    errEl.hidden = true;
+    const signerName = nameInput.value.trim();
+    if (!signerName) {
+      errEl.textContent = "Enter your full legal name.";
+      errEl.hidden = false;
+      return;
+    }
+    let signatureImage;
+    if (signMethod === "draw") {
+      if (canvasControls.isEmpty()) {
+        errEl.textContent = `Draw your signature, or switch to "Type signature".`;
+        errEl.hidden = false;
+        return;
+      }
+      signatureImage = canvasControls.toDataUrl();
+    } else {
+      signatureImage = renderTypedSignature(signerName);
+    }
+
+    const btn = qs("sign-submit-btn");
+    btn.disabled = true;
+    btn.textContent = "Signing…";
+    try {
+      const originalUrl = await getLetterDownloadURL(letter.storagePath);
+      const pdfBytes = await fetch(originalUrl).then((r) => r.arrayBuffer());
+      const ip = await fetchPublicIp();
+      const signedPdfBytes = await stampSignature(pdfBytes, {
+        signatureImageDataUrl: signatureImage,
+        signerName,
+        signedAtText: new Date().toLocaleString(),
+        ip,
+      });
+      await signLetter(clientId, letter.id, { signedPdfBytes, signerName, signMethod, signerIp: ip });
+      cleanup();
+      closeModal();
+    } catch (err) {
+      errEl.textContent = err.message;
+      errEl.hidden = false;
+      btn.disabled = false;
+      btn.textContent = "Sign and submit";
+    }
+  });
 }
 
 async function handleMarkAllShownComplete() {

@@ -5,9 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Bowling Green Bookkeeping &amp; Taxes — Client Hub</title>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" />
-  <link rel="stylesheet" href="css/styles.css?v=1788758519319" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Dancing+Script:wght@600&display=swap" />
+  <link rel="stylesheet" href="css/styles.css?v=1788759669832" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
 </head>
 <body>
 
@@ -158,6 +159,7 @@
 
       <nav class="client-tab-bar chub-tab-bar">
         <button class="client-tab-btn client-tab-btn-active" id="chub-tab-documents" data-tab="documents">Documents</button>
+        <button class="client-tab-btn" id="chub-tab-letters" data-tab="letters">Letters</button>
         <button class="client-tab-btn" id="chub-tab-compliance" data-tab="compliance">Compliance</button>
       </nav>
 
@@ -180,10 +182,15 @@
         <div id="chub-document-list"></div>
       </div>
 
+      <div id="chub-panel-letters" hidden>
+        <h2 class="chub-section-title">Letters to sign</h2>
+        <div id="chub-letter-list"></div>
+      </div>
+
       <div id="chub-panel-compliance" hidden></div>
     </main>
   </div>
 
-  <script type="module" src="js/app.js?v=1788758519319"></script>
+  <script type="module" src="js/app.js?v=1788759669832"></script>
 </body>
 </html>

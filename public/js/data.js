@@ -15,7 +15,7 @@ import {
   serverTimestamp,
   writeBatch,
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
-import { db, auth } from "./firebase-init.js?v=1788758519319";
+import { db, auth } from "./firebase-init.js?v=1788759669832";
 
 // ---- live store ----------------------------------------------------------
 
@@ -24,10 +24,11 @@ const state = {
   items: new Map(), // itemId -> { id, clientId, category, customLabel, startDate, recurrenceType, recurrenceInterval, recurrenceDayOfMonth }
   completions: new Map(), // itemId -> Map(periodKey -> { completedOn, completedBy })
   categories: [],
+  letters: new Map(), // letterId -> { id, clientId, title, status, ... } -- staff only, see firestore.rules
   currentUserRole: null, // "admin" | "staff" | null, for the signed-in user
   // Whether each live listener has received its first snapshot yet -- lets the UI show a
   // loading state instead of momentarily flashing "no clients yet" while data is still en route.
-  loaded: { clients: false, items: false, completions: false, categories: false },
+  loaded: { clients: false, items: false, completions: false, categories: false, letters: false },
 };
 
 export function isFullyLoaded() {
@@ -63,6 +64,7 @@ export function startSync() {
   state.loaded.items = false;
   state.loaded.completions = false;
   state.loaded.categories = false;
+  state.loaded.letters = false;
 
   unsubscribers.push(
     onSnapshot(
@@ -127,6 +129,26 @@ export function startSync() {
       (snap) => {
         state.categories = snap.exists() ? snap.data().names || [] : [];
         state.loaded.categories = true;
+        notifyData();
+      },
+      (err) => setSaveStatus("error", err.message)
+    )
+  );
+
+  // Loaded globally (like items/completions above) so the Overview "awaiting signature" stat
+  // and the Client Hub accordion's Letters tab can both just filter this by clientId, rather
+  // than each managing their own per-client Storage-adjacent listener the way documents.js does
+  // for actual files -- letters are lightweight metadata, same weight class as items.
+  unsubscribers.push(
+    onSnapshot(
+      collectionGroup(db, "letters"),
+      (snap) => {
+        state.letters.clear();
+        snap.forEach((d) => {
+          const clientId = d.ref.parent.parent.id;
+          state.letters.set(d.id, { id: d.id, clientId, ...d.data() });
+        });
+        state.loaded.letters = true;
         notifyData();
       },
       (err) => setSaveStatus("error", err.message)

@@ -4,8 +4,10 @@ One app, two audiences:
 
 - **Staff** get the original compliance calendar/checklist -- tracking recurring deadlines
   (payroll, sales tax, quarterly estimates, annual filings, etc.) per client -- plus, from the
-  "Client Hub" sidebar tab, client-facing tools: document intake is live (Milestone 2);
-  e-signature and auto-generated engagement letters are still ahead (Milestones 3-5).
+  "Client Hub" sidebar tab, client-facing tools: document intake and engagement-letter
+  e-signature are both live (Milestones 2-5). Signing is self-hosted (typed or drawn signature,
+  stamped onto the PDF client-side with an audit line -- see public/js/pdf-sign.js), not a
+  legally-certified third-party e-signature platform.
 - **Clients** get a separate, much simpler screen (no calendar, no other clients visible) with
   their own document upload, once staff creates their account (see "Client Hub roles" below).
 

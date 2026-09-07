@@ -43,8 +43,7 @@ service cloud.firestore {
       allow delete: if isAdmin();
 
       // Client Hub subcollections. Staff manage everything; the owning client can read
-      // everything in their own folder and upload documents, but letters/signature requests
-      // are staff-generated only.
+      // everything in their own folder and upload documents.
       match /documents/{docId} {
         allow read, create: if isApproved() || isOwningClient(clientId);
         allow update: if isApproved();
@@ -54,13 +53,23 @@ service cloud.firestore {
         // reads the current reviewed value, not anything the request could try to set.
         allow delete: if isApproved() || (isOwningClient(clientId) && resource.data.reviewed == false);
       }
+      // Engagement letters: staff sends a PDF (status "sent"), the owning client signs it in the
+      // Client Hub (see public/js/letters.js + pdf-sign.js), which uploads a stamped PDF and
+      // flips status to "signed". That's the ONLY write a client can ever make here -- exactly
+      // those five fields, exactly that one status transition, same pattern as clientInvites'
+      // "used" flip below. Once signed, a letter is an audit record: even staff can no longer
+      // change it (create/delete stay staff-only for correcting a bad send, but there's
+      // deliberately no staff "update" path at all).
       match /letters/{letterId} {
         allow read: if isApproved() || isOwningClient(clientId);
-        allow write: if isApproved();
-      }
-      match /signatureRequests/{requestId} {
-        allow read: if isApproved() || isOwningClient(clientId);
-        allow write: if isApproved();
+        allow create, delete: if isApproved();
+        allow update: if isOwningClient(clientId) &&
+          resource.data.status == 'sent' &&
+          request.resource.data.status == 'signed' &&
+          request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['status', 'signedAt', 'signerName', 'signMethod', 'signerIp', 'signedPdfPath']) &&
+          request.resource.data.signerName is string && request.resource.data.signerName.size() > 0 &&
+          request.resource.data.signedPdfPath is string;
       }
 
       // Read-only view of a client's own compliance items/completions, for the Client Hub
@@ -88,6 +97,14 @@ service cloud.firestore {
     }
     match /{path=**}/completions/{completionId} {
       allow read, write: if isApproved();
+    }
+    // ADDITIONAL to (not a replacement for) the nested /clients/{clientId}/letters/{letterId}
+    // rule above, which already covers staff writes and both direct-path reads -- this only
+    // exists so staff's Overview "awaiting signature" count can collectionGroup() across every
+    // client's letters at once (see public/js/data.js). Clients never need this: they only ever
+    // read their own client's letters directly, which the nested rule already allows.
+    match /{path=**}/letters/{letterId} {
+      allow read: if isApproved();
     }
 
     // The allowlist is the actual security boundary (see isApproved() above) -- letting any

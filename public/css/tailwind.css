@@ -722,6 +722,25 @@
     @apply flex items-center gap-2;
   }
 
+  /* ---- engagement letter signing (client-facing sign modal) ---- */
+  .sign-method-tabs {
+    @apply flex gap-1 mb-2;
+  }
+  .sign-canvas {
+    @apply w-full border border-border rounded-lg bg-white cursor-crosshair touch-none;
+    height: 140px;
+  }
+  .sign-type-preview {
+    @apply w-full border border-border rounded-lg bg-white flex items-center px-4 text-text-muted overflow-hidden;
+    height: 140px;
+    font-family: "Dancing Script", cursive;
+    font-size: 2.25rem;
+    color: var(--color-text);
+  }
+  .btn-sm {
+    @apply text-[0.78rem] px-2 py-1;
+  }
+
   .category-list {
     @apply list-none p-0 m-0 mb-4;
   }

@@ -133,24 +133,12 @@ exports.sendClientInvite = onDocumentCreated(
     const link = `${APP_URL}/invite.html?token=${token}&clientId=${invite.clientId}`;
 
     try {
-      const res = await fetch("https://api.resend.com/emails", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${RESEND_API_KEY.value()}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          from: MAIL_FROM.value(),
-          to: [invite.recipientEmail],
-          subject: `Set up your ${APP_NAME} client portal`,
-          text: buildText(clientName, link),
-          html: buildHtml(clientName, link),
-        }),
+      await sendEmail({
+        to: invite.recipientEmail,
+        subject: `Set up your ${APP_NAME} client portal`,
+        text: buildText(clientName, link),
+        html: buildHtml(clientName, link),
       });
-
-      if (!res.ok) {
-        throw new Error(`Resend API error ${res.status}: ${await res.text()}`);
-      }
       await event.data.ref.update({ emailSentAt: FieldValue.serverTimestamp() });
     } catch (err) {
       logger.error("Failed to send client invite email", err);
@@ -158,6 +146,116 @@ exports.sendClientInvite = onDocumentCreated(
     }
   }
 );
+
+async function sendEmail({ to, subject, text, html }) {
+  const res = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${RESEND_API_KEY.value()}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ from: MAIL_FROM.value(), to: [to], subject, text, html }),
+  });
+  if (!res.ok) {
+    throw new Error(`Resend API error ${res.status}: ${await res.text()}`);
+  }
+}
+
+// Looks up the Firebase Auth email for the client-role account tied to a clientId, if that
+// account has been created yet (self-service signup via clientInvites -- see firestore.rules'
+// users/{uid} create rule). Returns null if no such account exists yet (invite not accepted).
+async function getClientAccountEmail(clientId) {
+  const usersSnap = await db
+    .collection("users")
+    .where("role", "==", "client")
+    .where("clientId", "==", clientId)
+    .limit(1)
+    .get();
+  if (usersSnap.empty) return null;
+  const userRecord = await getAuth().getUser(usersSnap.docs[0].id);
+  return userRecord.email || null;
+}
+
+async function getStaffEmails() {
+  const allowlistDoc = await db.collection("settings").doc("allowlist").get();
+  return allowlistDoc.exists ? allowlistDoc.data().emails || [] : [];
+}
+
+// Client-facing: staff sent a new engagement letter -- let the client know there's something to
+// sign. Silently does nothing if their account doesn't exist yet (invite not accepted), same as
+// sendClientInvite's own "nothing to send" cases above.
+exports.sendLetterEmail = onDocumentCreated(
+  { document: "clients/{clientId}/letters/{letterId}", secrets: [RESEND_API_KEY, MAIL_FROM] },
+  async (event) => {
+    const { clientId, letterId } = event.params;
+    const letter = event.data.data();
+    const email = await getClientAccountEmail(clientId);
+    if (!email) return;
+
+    try {
+      await sendEmail({
+        to: email,
+        subject: `A document is ready for your signature -- ${APP_NAME}`,
+        text: `${APP_NAME} sent you a document to review and sign: "${letter.title}".\n\nSign in to your Client Hub to review and sign it: ${APP_URL}/`,
+        html: buildLetterHtml("A document is ready for your signature", `<strong>${escapeHtml(letter.title)}</strong> is ready for you to review and sign in your Client Hub.`, "Review and sign"),
+      });
+    } catch (err) {
+      logger.error(`Failed to send letter-ready email for ${clientId}/${letterId}`, err);
+    }
+  }
+);
+
+// Staff-facing: a client just signed -- let every approved staff member know, same recipient
+// list computeAndSetClaims uses to decide who counts as staff.
+exports.notifyStaffOnLetterSigned = onDocumentWritten(
+  { document: "clients/{clientId}/letters/{letterId}", secrets: [RESEND_API_KEY, MAIL_FROM] },
+  async (event) => {
+    const before = event.data.before.exists ? event.data.before.data() : null;
+    const after = event.data.after.exists ? event.data.after.data() : null;
+    if (!after || after.status !== "signed" || before?.status === "signed") return;
+
+    const { clientId } = event.params;
+    const [staffEmails, clientSnap] = await Promise.all([
+      getStaffEmails(),
+      db.collection("clients").doc(clientId).get(),
+    ]);
+    if (staffEmails.length === 0) return;
+    const clientName = clientSnap.exists ? clientSnap.data().name : "A client";
+
+    try {
+      await Promise.all(
+        staffEmails.map((to) =>
+          sendEmail({
+            to,
+            subject: `${clientName} signed "${after.title}" -- ${APP_NAME}`,
+            text: `${clientName} just signed "${after.title}".\n\nOpen it in the Client Hub: ${APP_URL}/`,
+            html: buildLetterHtml("Letter signed", `<strong>${escapeHtml(clientName)}</strong> just signed <strong>${escapeHtml(after.title)}</strong>.`, "Open Client Hub"),
+          })
+        )
+      );
+    } catch (err) {
+      logger.error(`Failed to notify staff for signed letter ${clientId}`, err);
+    }
+  }
+);
+
+function buildLetterHtml(heading, bodyHtml, buttonLabel) {
+  return `
+<div style="font-family: -apple-system, 'Segoe UI', Roboto, sans-serif; max-width: 480px; margin: 0 auto;">
+  <div style="background: #2563eb; color: #ffffff; padding: 20px 24px; border-radius: 10px 10px 0 0;">
+    <strong style="font-size: 16px;">${APP_NAME}</strong>
+  </div>
+  <div style="border: 1px solid #e2e5eb; border-top: none; border-radius: 0 0 10px 10px; padding: 24px;">
+    <h1 style="font-size: 18px; margin: 0 0 12px; color: #1a1d23;">${heading}</h1>
+    <p style="font-size: 14px; line-height: 1.6; color: #444444; margin: 0 0 20px;">${bodyHtml}</p>
+    <div style="text-align: center; margin: 0 0 20px;">
+      <a href="${APP_URL}/" style="background: #2563eb; color: #ffffff; text-decoration: none; padding: 12px 28px; border-radius: 8px; font-size: 14px; font-weight: 600; display: inline-block;">
+        ${buttonLabel}
+      </a>
+    </div>
+  </div>
+</div>`;
+}
 
 function buildText(clientName, link) {
   return `${APP_NAME} has invited you to their Client Hub.

@@ -47,13 +47,24 @@ service firebase.storage {
         (isOwningClient(clientId) && resource.metadata.reviewed != 'true');
     }
 
-    // Generated engagement letters / signed PDFs -- staff-generated only, client can read theirs.
-    // create/update (not delete -- request.resource is null on delete, so checking .size there
-    // would throw and deny every delete attempt) get the same size ceiling as documents/.
-    match /clients/{clientId}/letters/{allPaths=**} {
+    function isAllowedPdf() {
+      return request.resource.size < 25 * 1024 * 1024 && request.resource.contentType == 'application/pdf';
+    }
+
+    // Engagement letters. Each letter has exactly two objects: the staff-uploaded original and
+    // the client-produced signed copy (see public/js/letters.js) -- naming them explicitly
+    // (rather than one shared {allPaths=**} match) is what lets the client side be write-once:
+    // isOwningClient can *create* signed.pdf but never update/delete it afterward, matching the
+    // Firestore letters rule's one-way "sent" -> "signed" transition.
+    match /clients/{clientId}/letters/{letterId}/original.pdf {
       allow read: if isApproved() || isOwningClient(clientId);
-      allow create, update: if isApproved() && request.resource.size < 25 * 1024 * 1024;
+      allow create, update: if isApproved() && isAllowedPdf();
       allow delete: if isApproved();
+    }
+    match /clients/{clientId}/letters/{letterId}/signed.pdf {
+      allow read: if isApproved() || isOwningClient(clientId);
+      allow create: if (isApproved() || isOwningClient(clientId)) && isAllowedPdf();
+      allow update, delete: if isApproved();
     }
   }
 }
