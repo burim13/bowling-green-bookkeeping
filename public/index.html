@@ -6,7 +6,8 @@
   <title>Bowling Green Bookkeeping &amp; Taxes — Client Hub</title>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" />
-  <link rel="stylesheet" href="css/styles.css?v=1788755519497" />
+  <link rel="stylesheet" href="css/styles.css?v=1788756359800" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
 <body>
 
@@ -36,6 +37,56 @@
           <button type="submit" class="btn btn-primary auth-submit">Sign in</button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- Shown instead of the password form when signInWithPassword throws
+       auth/multi-factor-auth-required (see wireAuthForms in js/app.js). -->
+  <div id="mfa-challenge-screen" hidden>
+    <div class="auth-box">
+      <div class="auth-brand">
+        <span class="brand-mark auth-brand-mark"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="14" height="13" rx="2"/><path d="M3 8h14"/><path d="M7 2.5v3"/><path d="M13 2.5v3"/><path d="m7 12 2 2 4-4"/></svg></span>
+        <h1>Bowling Green Bookkeeping &amp; Taxes</h1>
+        <p class="auth-subtitle">Enter the 6-digit code from your authenticator app</p>
+      </div>
+
+      <div id="mfa-challenge-error" class="auth-error" hidden></div>
+
+      <form id="mfa-challenge-form">
+        <label>Code<br/><input type="text" id="mfa-challenge-code" inputmode="numeric" pattern="[0-9]*" maxlength="6" required autocomplete="one-time-code" /></label>
+        <div class="auth-actions">
+          <button type="submit" class="btn btn-primary auth-submit">Verify</button>
+        </div>
+      </form>
+      <button type="button" id="mfa-challenge-cancel" class="btn btn-ghost" style="margin-top:0.75rem; width:100%;">Back to sign in</button>
+    </div>
+  </div>
+
+  <!-- Mandatory for staff/admin accounts: shown instead of #app-shell until MFA is enrolled
+       (see watchAuthState in js/app.js). Clients never see this. -->
+  <div id="mfa-enroll-screen" hidden>
+    <div class="auth-box" style="max-width:420px;">
+      <div class="auth-brand">
+        <span class="brand-mark auth-brand-mark"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="14" height="13" rx="2"/><path d="M3 8h14"/><path d="M7 2.5v3"/><path d="M13 2.5v3"/><path d="m7 12 2 2 4-4"/></svg></span>
+        <h1>Set up two-factor authentication</h1>
+        <p class="auth-subtitle">Required for staff accounts. Scan this with an authenticator app
+        (Google Authenticator, Authy, 1Password, etc.), then enter the 6-digit code it shows.</p>
+      </div>
+
+      <div id="mfa-qr-code" style="display:flex; justify-content:center; margin-bottom:1rem;"></div>
+      <p style="font-size:0.8rem; color:var(--color-text-muted); text-align:center; word-break:break-all; margin:0 0 1rem;">
+        Can't scan? Enter this key manually: <code id="mfa-secret-text"></code>
+      </p>
+
+      <div id="mfa-enroll-error" class="auth-error" hidden></div>
+
+      <form id="mfa-enroll-form">
+        <label>6-digit code<br/><input type="text" id="mfa-enroll-code" inputmode="numeric" pattern="[0-9]*" maxlength="6" required autocomplete="one-time-code" /></label>
+        <div class="auth-actions">
+          <button type="submit" class="btn btn-primary auth-submit">Enable two-factor authentication</button>
+        </div>
+      </form>
+      <button type="button" id="mfa-enroll-signout-btn" class="btn btn-ghost" style="margin-top:0.75rem; width:100%;">Sign out</button>
     </div>
   </div>
 
@@ -133,6 +184,6 @@
     </main>
   </div>
 
-  <script type="module" src="js/app.js?v=1788755519497"></script>
+  <script type="module" src="js/app.js?v=1788756359800"></script>
 </body>
 </html>

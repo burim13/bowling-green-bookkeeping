@@ -1,11 +1,19 @@
-import { isFirebaseConfigured, auth } from "./firebase-init.js?v=1788755519497";
-import { escapeHtml } from "./html-safety.js?v=1788755519497";
+import { isFirebaseConfigured, auth } from "./firebase-init.js?v=1788756359800";
+import { escapeHtml } from "./html-safety.js?v=1788756359800";
 import {
   watchAuthState,
   signInWithPassword,
   signOutUser,
   getOwnProfile,
-} from "./auth.js?v=1788755519497";
+  afterSignIn,
+} from "./auth.js?v=1788756359800";
+import {
+  isMfaEnrolled,
+  startMfaEnrollment,
+  finishMfaEnrollment,
+  getResolver,
+  completeMfaSignIn,
+} from "./mfa.js?v=1788756359800";
 import {
   startSync,
   stopSync,
@@ -24,12 +32,12 @@ import {
   unmarkComplete,
   isFullyLoaded,
   getClientRecord,
-} from "./data.js?v=1788755519497";
-import { renderCalendar } from "./calendar-view.js?v=1788755519497";
-import { renderList } from "./list-view.js?v=1788755519497";
-import { describeRecurrence, describeRecurrenceHistory, getLastDueOccurrence, toISODate } from "./recurrence.js?v=1788755519497";
-import { colorFor, tintFor } from "./colors.js?v=1788755519497";
-import { githubRepoSlug } from "./firebase-config.js?v=1788755519497";
+} from "./data.js?v=1788756359800";
+import { renderCalendar } from "./calendar-view.js?v=1788756359800";
+import { renderList } from "./list-view.js?v=1788756359800";
+import { describeRecurrence, describeRecurrenceHistory, getLastDueOccurrence, toISODate } from "./recurrence.js?v=1788756359800";
+import { colorFor, tintFor } from "./colors.js?v=1788756359800";
+import { githubRepoSlug } from "./firebase-config.js?v=1788756359800";
 import {
   DOC_TYPES,
   docTypeLabel,
@@ -38,10 +46,10 @@ import {
   setDocumentReviewed,
   getDocumentDownloadURL,
   deleteDocument,
-} from "./documents.js?v=1788755519497";
-import { createClientInvite, subscribeToInviteStatus } from "./invites.js?v=1788755519497";
-import { subscribeToOwnCompliance } from "./client-compliance.js?v=1788755519497";
-import { iconEdit, iconTrash, iconPlus, iconPlusLarge, iconCheck, iconTag, iconUpload, iconLogout, iconCalendar, iconListView, iconFolder, iconFolderLarge, iconHome, iconChevronRight, iconUsers, iconAlertTriangle, iconSignature, iconFile, iconUploadLarge, iconDownload, iconClock } from "./icons.js?v=1788755519497";
+} from "./documents.js?v=1788756359800";
+import { createClientInvite, subscribeToInviteStatus } from "./invites.js?v=1788756359800";
+import { subscribeToOwnCompliance } from "./client-compliance.js?v=1788756359800";
+import { iconEdit, iconTrash, iconPlus, iconPlusLarge, iconCheck, iconTag, iconUpload, iconLogout, iconCalendar, iconListView, iconFolder, iconFolderLarge, iconHome, iconChevronRight, iconUsers, iconAlertTriangle, iconSignature, iconFile, iconUploadLarge, iconDownload, iconClock } from "./icons.js?v=1788756359800";
 
 const DEFAULT_CATEGORIES = [
   "Payroll",
@@ -78,6 +86,9 @@ let viewState = {
 };
 
 let currentListRows = []; // rows currently rendered (unfiltered by completion) by the list view
+let mfaResolver = null; // pending sign-in challenge, set when signInWithPassword throws auth/multi-factor-auth-required
+let mfaEnrollSecret = null; // pending enrollment secret from startMfaEnrollment(), needed again by finishMfaEnrollment()
+let mfaEnrollUser = null; // the user object mid-enrollment -- watchAuthState hasn't shown a shell for them yet
 
 function qs(id) {
   return document.getElementById(id);
@@ -104,6 +115,8 @@ function init() {
   els.userBadge = qs("user-badge");
   els.clientHubScreen = qs("client-hub-screen");
   els.clientHubName = qs("client-hub-name");
+  els.mfaChallengeScreen = qs("mfa-challenge-screen");
+  els.mfaEnrollScreen = qs("mfa-enroll-screen");
 
   if (!isFirebaseConfigured) {
     els.configWarning.hidden = false;
@@ -122,6 +135,7 @@ function init() {
   qs("view-toggle-clienthub").innerHTML = iconFolder;
 
   wireAuthForms();
+  wireMfaScreens();
   wireToolbar();
   wireClientHubScreen();
 
@@ -161,16 +175,12 @@ function init() {
       els.appShell.hidden = true;
       stopSync();
       await showClientHub(profile);
+    } else if (isMfaEnrolled(user)) {
+      showStaffShell(user);
     } else {
-      els.clientHubScreen.hidden = true;
-      els.appShell.hidden = false;
-      const userColor = colorFor(user.email);
-      els.userBadge.innerHTML = `
-        <span class="avatar-badge" style="background:${tintFor(userColor)}; color:${userColor};">${user.email.slice(0, 2).toUpperCase()}</span>
-        <span class="user-badge-email">${escapeHtml(user.email)}</span>
-      `;
-      startSync();
-      seedCategoriesIfMissing(DEFAULT_CATEGORIES).catch((err) => console.error(err));
+      // Every staff/admin account must enroll TOTP MFA before it can see any client data --
+      // gate the app shell behind enrollment instead of just nudging toward it.
+      await startMfaEnrollmentFlow(user);
     }
   });
 
@@ -208,7 +218,15 @@ function wireAuthForms() {
     try {
       await signInWithPassword(email, password);
     } catch (err) {
-      showAuthError(err.message);
+      if (err.code === "auth/multi-factor-auth-required") {
+        mfaResolver = getResolver(err);
+        qs("mfa-challenge-code").value = "";
+        qs("mfa-challenge-error").hidden = true;
+        els.authScreen.hidden = true;
+        els.mfaChallengeScreen.hidden = false;
+      } else {
+        showAuthError(err.message);
+      }
     }
   });
 
@@ -219,6 +237,103 @@ function showAuthError(message) {
   const el = qs("auth-error");
   el.textContent = message;
   el.hidden = false;
+}
+
+// ---- MFA (staff-only) -------------------------------------------------------
+
+function wireMfaScreens() {
+  qs("mfa-challenge-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const code = qs("mfa-challenge-code").value.trim();
+    const errEl = qs("mfa-challenge-error");
+    errEl.hidden = true;
+    try {
+      const cred = await completeMfaSignIn(mfaResolver, code);
+      mfaResolver = null;
+      els.mfaChallengeScreen.hidden = true;
+      await afterSignIn(cred.user);
+      // watchAuthState's onAuthStateChanged fires now that sign-in is fully resolved; it
+      // picks the right shell from here (this account is already MFA-enrolled by definition).
+    } catch (err) {
+      errEl.textContent = err.message;
+      errEl.hidden = false;
+    }
+  });
+
+  qs("mfa-challenge-cancel").addEventListener("click", () => {
+    mfaResolver = null;
+    els.mfaChallengeScreen.hidden = true;
+    els.authScreen.hidden = false;
+  });
+
+  qs("mfa-enroll-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const code = qs("mfa-enroll-code").value.trim();
+    const errEl = qs("mfa-enroll-error");
+    errEl.hidden = true;
+    try {
+      await finishMfaEnrollment(mfaEnrollSecret, code);
+      const user = mfaEnrollUser;
+      mfaEnrollSecret = null;
+      mfaEnrollUser = null;
+      els.mfaEnrollScreen.hidden = true;
+      showStaffShell(user);
+    } catch (err) {
+      errEl.textContent = err.message;
+      errEl.hidden = false;
+    }
+  });
+
+  qs("mfa-enroll-signout-btn").addEventListener("click", () => {
+    mfaEnrollSecret = null;
+    mfaEnrollUser = null;
+    signOutUser();
+  });
+}
+
+// Kicks off mandatory TOTP enrollment for a signed-in staff/admin account that hasn't set it
+// up yet -- shows the QR code + manual key, and holds the app shell hidden until it's done.
+async function startMfaEnrollmentFlow(user) {
+  mfaEnrollUser = user;
+  els.clientHubScreen.hidden = true;
+  els.appShell.hidden = true;
+  qs("mfa-enroll-code").value = "";
+  qs("mfa-enroll-error").hidden = true;
+  qs("mfa-enroll-form").hidden = false;
+  els.mfaEnrollScreen.hidden = false;
+
+  try {
+    const { secret, qrCodeUrl, secretKey } = await startMfaEnrollment();
+    mfaEnrollSecret = secret;
+    const qrEl = qs("mfa-qr-code");
+    qrEl.innerHTML = "";
+    new QRCode(qrEl, qrCodeUrl);
+    qs("mfa-secret-text").textContent = secretKey;
+  } catch (err) {
+    // Most likely cause: TOTP multi-factor auth hasn't been turned on yet in Firebase Console
+    // -> Authentication -> Sign-in method -> Advanced (auth/operation-not-allowed). Surface that
+    // clearly rather than leaving staff stuck on a blank enrollment screen with no way forward.
+    qs("mfa-enroll-form").hidden = true;
+    const errEl = qs("mfa-enroll-error");
+    errEl.textContent =
+      err.code === "auth/operation-not-allowed"
+        ? "Two-factor authentication isn't enabled for this project yet. Contact your administrator."
+        : err.message;
+    errEl.hidden = false;
+  }
+}
+
+function showStaffShell(user) {
+  els.clientHubScreen.hidden = true;
+  els.mfaEnrollScreen.hidden = true;
+  els.appShell.hidden = false;
+  const userColor = colorFor(user.email);
+  els.userBadge.innerHTML = `
+    <span class="avatar-badge" style="background:${tintFor(userColor)}; color:${userColor};">${user.email.slice(0, 2).toUpperCase()}</span>
+    <span class="user-badge-email">${escapeHtml(user.email)}</span>
+  `;
+  startSync();
+  seedCategoriesIfMissing(DEFAULT_CATEGORIES).catch((err) => console.error(err));
 }
 
 // ---- toolbar / view switching ----------------------------------------------

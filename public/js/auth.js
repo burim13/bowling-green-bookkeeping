@@ -4,19 +4,28 @@ import {
   signOut,
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 import { doc, setDoc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
-import { auth, db } from "./firebase-init.js?v=1788755519497";
+import { auth, db } from "./firebase-init.js?v=1788756359800";
 
 export function watchAuthState(callback) {
   return onAuthStateChanged(auth, callback);
 }
 
 export async function signInWithPassword(email, password) {
+  // If this account has MFA enrolled, Firebase throws auth/multi-factor-auth-required here
+  // *before* completing sign-in -- afterSignIn() below never runs for that attempt. The caller
+  // (see wireAuthForms in app.js) catches that specific error and drives the code-entry
+  // challenge instead; afterSignIn() runs once that challenge resolves, via
+  // mfa.js's completeMfaSignIn.
   const cred = await signInWithEmailAndPassword(auth, email, password);
+  await afterSignIn(cred.user);
+}
+
+export async function afterSignIn(user) {
   await ensureUserDoc();
   // Picks up whatever role/clientId/approved custom claims functions/index.js's
   // syncUserClaims* triggers have set since this account's last login -- Storage rules read
   // these directly (see storage.rules), so a stale cached token could show outdated access.
-  await cred.user.getIdToken(true);
+  await user.getIdToken(true);
 }
 
 export async function signOutUser() {
