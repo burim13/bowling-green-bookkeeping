@@ -15,10 +15,13 @@ export const firebaseConfig = {
 // friendly setup message instead of a confusing Firebase error on first load.
 export const isFirebaseConfigured = !firebaseConfig.apiKey.startsWith("REPLACE_WITH");
 
-// App Check reCAPTCHA v3 site key (Firebase Console -> Build -> App Check -> Apps -> this web
-// app). Public by design, like firebaseConfig above -- it identifies the site to reCAPTCHA, it
-// doesn't grant access to anything by itself.
-export const recaptchaSiteKey = "6LfyTa0tAAAAAEHiAxshLmlT9fAn_Q0fLIfsJYdI";
+// App Check reCAPTCHA ENTERPRISE key ID (Google Cloud Console -> Security -> reCAPTCHA
+// Enterprise, score-based, mirrored into Firebase Console -> Build -> App Check -> Apps -> this
+// web app). Public by design, like firebaseConfig above -- it identifies the site, it doesn't
+// grant access to anything by itself. Must be paired with ReCaptchaEnterpriseProvider in
+// firebase-init.js, NOT ReCaptchaV3Provider -- those are different products with different site
+// key registries; a classic v3 key here (or vice versa) fails token exchange with a 400.
+export const recaptchaSiteKey = "6LehSa4tAAAAANaRiyLOUrts1mPf80oZb4Ahz-8L";
 
 // Used to build the "Run backup workflow" link on the export button.
 export const githubRepoSlug = "burim13/client-compliance-tracker";

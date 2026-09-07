@@ -112,6 +112,38 @@ exports.enableTotpMfa = onCall(async (request) => {
   }
 });
 
+// One-time admin op, same reasoning as enableTotpMfa above: Storage buckets have no CORS
+// config by default, which is invisible for how the app normally touches Storage (uploads via
+// the SDK, downloads via window.open -- neither is a cross-origin fetch()) but breaks the one
+// place that needs the actual bytes client-side: stampSignature in pdf-sign.js fetches the
+// original PDF via a plain fetch() to sign it, which the browser blocks without this. No
+// gsutil/gcloud available to run `gsutil cors set` locally, so this does the equivalent via the
+// Admin SDK's own Storage client, which needs no separate tooling or credentials.
+exports.setStorageCors = onCall(async (request) => {
+  if (!request.auth || request.auth.token.approved !== true) {
+    throw new HttpsError("permission-denied", "Approved staff only.");
+  }
+  try {
+    await getStorage().bucket().setMetadata({
+      cors: [
+        {
+          origin: [
+            "https://bowling-green-bookkeeping.web.app",
+            "https://client-compliance-tracker.web.app",
+            "https://client-compliance-tracker.firebaseapp.com",
+          ],
+          method: ["GET"],
+          maxAgeSeconds: 3600,
+        },
+      ],
+    });
+    return { ok: true };
+  } catch (err) {
+    logger.error("setStorageCors failed", err);
+    throw new HttpsError("internal", String(err.message || err));
+  }
+});
+
 const RESEND_API_KEY = defineSecret("RESEND_API_KEY");
 // e.g. "Bowling Green Bookkeeping & Taxes <onboarding@resend.dev>" if you haven't verified a
 // custom sending domain in Resend yet -- see README for how to set this.
