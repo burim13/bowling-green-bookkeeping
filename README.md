@@ -4,15 +4,16 @@ One app, two audiences:
 
 - **Staff** get the original compliance calendar/checklist -- tracking recurring deadlines
   (payroll, sales tax, quarterly estimates, annual filings, etc.) per client -- plus, from the
-  new "Client Hub" sidebar tab, client-facing tools (document intake, e-signature, engagement
-  letters -- rolling out across Milestones 2-5).
-- **Clients** get a separate, much simpler screen (no calendar, no other clients visible) for
-  the same document/signature tools, once staff creates their account (see "Client Hub roles"
-  below).
+  "Client Hub" sidebar tab, client-facing tools: document intake is live (Milestone 2);
+  e-signature and auto-generated engagement letters are still ahead (Milestones 3-5).
+- **Clients** get a separate, much simpler screen (no calendar, no other clients visible) with
+  their own document upload, once staff creates their account (see "Client Hub roles" below).
 
 No SSNs, account numbers, or dollar amounts are stored in Firestore -- only client names,
-task/category labels, dates, and document *metadata*. Actual uploaded files will live in Firebase
-Storage once that's enabled (Milestone 2 -- see "Client Hub roles").
+task/category labels, dates, and document *metadata* (filename, type, upload date, reviewed
+status). The actual uploaded files live in Firebase Storage (`storage.rules`), which requires
+the Blaze (pay-as-you-go) plan -- see "Client Hub roles" for the access model and
+[`public/js/documents.js`](public/js/documents.js) for the upload/review implementation.
 
 **Stack:** static HTML/CSS/JS on **Firebase Hosting** (`https://bowling-green-bookkeeping.web.app`
 -- not GitHub Pages; the repo is public only for free GitHub Actions minutes, and Pages was
@@ -387,8 +388,9 @@ public/css/tailwind.css              Tailwind source -- edit this (theme + compo
 public/css/styles.css                Compiled by Tailwind (`npm run build-css`) -- do not hand-edit
 public/js/firebase-config.js         Your Firebase web config (edit this)
 public/js/firebase-init.js           Initializes the Firebase SDK
-public/js/auth.js                    Sign in/up/out, email-link sign-in, one-time role lookup
-public/js/data.js                    Firestore CRUD + live sync (onSnapshot)
+public/js/auth.js                    Sign in/out, one-time role lookup
+public/js/data.js                    Firestore CRUD + live sync (onSnapshot) for compliance data
+public/js/documents.js               Client Hub document upload (Storage) + metadata (Firestore)
 public/js/recurrence.js              Due-date/period-key computation
 public/js/calendar-view.js           Month grid rendering
 public/js/list-view.js               Grouped checklist rendering
@@ -396,7 +398,8 @@ public/js/colors.js                  Stable color assignment for calendar coding
 public/js/icons.js                   Inline SVG icon set
 public/js/app.js                     Wiring: view state, modals, event handlers, role branching
 firestore.rules                      Security rules (deploy via console or Firebase CLI)
-firebase.json                        Points the Firebase CLI at firestore.rules + Hosting
+storage.rules                        Storage security rules (mirrors firestore.rules' checks)
+firebase.json                        Points the Firebase CLI at firestore.rules/storage.rules + Hosting
 scripts/export-backup.mjs            Used by the GitHub Actions backup workflow
 scripts/seed-data.mjs                One-time sample data seeder
 scripts/send-digest.mjs              Used by the GitHub Actions digest workflow
