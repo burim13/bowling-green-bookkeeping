@@ -173,6 +173,9 @@
   .auth-error {
     @apply bg-danger-bg text-danger px-3 py-[0.6rem] rounded-md mb-4 text-[0.9rem];
   }
+  .notice-warning {
+    @apply bg-warning-bg text-warning px-3 py-[0.6rem] rounded-md text-[0.85rem] leading-snug;
+  }
 
   /* ---- app shell ---- */
   .brand {

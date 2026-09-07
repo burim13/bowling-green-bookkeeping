@@ -1,19 +1,19 @@
-import { isFirebaseConfigured, auth } from "./firebase-init.js?v=1788759669832";
-import { escapeHtml } from "./html-safety.js?v=1788759669832";
+import { isFirebaseConfigured, auth } from "./firebase-init.js?v=1788760294461";
+import { escapeHtml } from "./html-safety.js?v=1788760294461";
 import {
   watchAuthState,
   signInWithPassword,
   signOutUser,
   getOwnProfile,
   afterSignIn,
-} from "./auth.js?v=1788759669832";
+} from "./auth.js?v=1788760294461";
 import {
   isMfaEnrolled,
   startMfaEnrollment,
   finishMfaEnrollment,
   getResolver,
   completeMfaSignIn,
-} from "./mfa.js?v=1788759669832";
+} from "./mfa.js?v=1788760294461";
 import {
   startSync,
   stopSync,
@@ -32,12 +32,12 @@ import {
   unmarkComplete,
   isFullyLoaded,
   getClientRecord,
-} from "./data.js?v=1788759669832";
-import { renderCalendar } from "./calendar-view.js?v=1788759669832";
-import { renderList } from "./list-view.js?v=1788759669832";
-import { describeRecurrence, describeRecurrenceHistory, getLastDueOccurrence, toISODate } from "./recurrence.js?v=1788759669832";
-import { colorFor, tintFor } from "./colors.js?v=1788759669832";
-import { githubRepoSlug } from "./firebase-config.js?v=1788759669832";
+} from "./data.js?v=1788760294461";
+import { renderCalendar } from "./calendar-view.js?v=1788760294461";
+import { renderList } from "./list-view.js?v=1788760294461";
+import { describeRecurrence, describeRecurrenceHistory, getLastDueOccurrence, toISODate } from "./recurrence.js?v=1788760294461";
+import { colorFor, tintFor } from "./colors.js?v=1788760294461";
+import { githubRepoSlug } from "./firebase-config.js?v=1788760294461";
 import {
   DOC_TYPES,
   docTypeLabel,
@@ -46,12 +46,12 @@ import {
   setDocumentReviewed,
   getDocumentDownloadURL,
   deleteDocument,
-} from "./documents.js?v=1788759669832";
-import { createClientInvite, subscribeToInviteStatus } from "./invites.js?v=1788759669832";
-import { subscribeToOwnCompliance } from "./client-compliance.js?v=1788759669832";
-import { subscribeToLetters, sendLetter, signLetter, deleteLetter, getLetterDownloadURL } from "./letters.js?v=1788759669832";
-import { stampSignature, renderTypedSignature, wireSignatureCanvas, fetchPublicIp } from "./pdf-sign.js?v=1788759669832";
-import { iconEdit, iconTrash, iconPlus, iconPlusLarge, iconCheck, iconTag, iconUpload, iconLogout, iconCalendar, iconListView, iconFolder, iconFolderLarge, iconHome, iconChevronRight, iconUsers, iconAlertTriangle, iconSignature, iconFile, iconUploadLarge, iconDownload, iconClock } from "./icons.js?v=1788759669832";
+} from "./documents.js?v=1788760294461";
+import { createClientInvite, subscribeToInviteStatus } from "./invites.js?v=1788760294461";
+import { subscribeToOwnCompliance } from "./client-compliance.js?v=1788760294461";
+import { subscribeToLetters, sendLetter, signLetter, deleteLetter, getLetterDownloadURL } from "./letters.js?v=1788760294461";
+import { stampSignature, renderTypedSignature, wireSignatureCanvas, fetchPublicIp } from "./pdf-sign.js?v=1788760294461";
+import { iconEdit, iconTrash, iconPlus, iconPlusLarge, iconCheck, iconTag, iconUpload, iconLogout, iconCalendar, iconListView, iconFolder, iconFolderLarge, iconHome, iconChevronRight, iconUsers, iconAlertTriangle, iconSignature, iconFile, iconUploadLarge, iconDownload, iconClock } from "./icons.js?v=1788760294461";
 
 const DEFAULT_CATEGORIES = [
   "Payroll",
@@ -920,6 +920,16 @@ function openSendLetterModal(client) {
     <form id="send-letter-form">
       <label>Title<br/><input type="text" id="letter-title-input" placeholder="2025 Engagement Letter" required /></label>
       <label style="display:block; margin-top:0.75rem;">PDF file<br/><input type="file" id="letter-file-input" accept="application/pdf" required /></label>
+      <div class="notice-warning" style="margin-top:0.75rem;">
+        <strong>Not for IRS forms.</strong> This signs with a typed/drawn signature and an audit
+        trail, which is enough for engagement letters and ACH-style authorizations -- but forms
+        like 8879 or 2848 legally require IRS identity verification (KBA) we don't do here. Get
+        those signed in person, or through a platform built for it.
+      </div>
+      <label class="confirm-checkbox" style="margin-top:0.75rem;">
+        <input type="checkbox" id="letter-irs-confirm" required />
+        This is not an IRS form requiring e-file/IRS signature authorization.
+      </label>
       <div id="send-letter-error" class="auth-error" hidden></div>
       <div class="modal-actions">
         <button type="button" class="btn" data-action="close">Cancel</button>

@@ -7,7 +7,14 @@ One app, two audiences:
   "Client Hub" sidebar tab, client-facing tools: document intake and engagement-letter
   e-signature are both live (Milestones 2-5). Signing is self-hosted (typed or drawn signature,
   stamped onto the PDF client-side with an audit line -- see public/js/pdf-sign.js), not a
-  legally-certified third-party e-signature platform.
+  legally-certified third-party e-signature platform. This is legally fine for engagement
+  letters and ACH-style authorizations (NACHA only requires the process to "similarly
+  authenticate" identity and assent, which an already-logged-in client account plus the audit
+  trail satisfies) -- but **not** for IRS forms like 8879 or 2848, which require IRS identity
+  verification (Knowledge-Based Authentication at NIST IAL2) for anyone signing remotely (IRS
+  Pub. 1345). The "Send letter" modal in the staff Letters tab requires an explicit
+  confirmation checkbox for exactly this reason -- don't route IRS forms through it; get those
+  signed in person, or through a platform built for IRS-compliant e-signature.
 - **Clients** get a separate, much simpler screen (no calendar, no other clients visible) with
   their own document upload, once staff creates their account (see "Client Hub roles" below).
 
