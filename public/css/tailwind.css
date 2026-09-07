@@ -220,49 +220,110 @@
   }
 
   /* ---- auth screen ---- */
+  /* Sign-in, the MFA challenge/enroll screens, and the client invite/create-account page
+     (invite.html) all share this one component -- redesigning it here upgrades all four
+     consistently instead of four separate passes. */
   #auth-screen,
   #mfa-challenge-screen,
   #mfa-enroll-screen {
-    @apply flex items-center justify-center min-h-screen p-6;
-    background: radial-gradient(circle at 50% 0%, rgba(37, 99, 235, 0.07), transparent 60%), var(--color-bg);
+    @apply relative flex items-center justify-center min-h-screen p-6 overflow-hidden;
+    background: var(--color-bg);
+  }
+  /* Soft blurred color fields behind the glass card -- the "aurora" background modern iOS/macOS
+     sign-in and marketing surfaces use instead of a flat color. Pure decoration (aria-hidden in
+     markup); pointer-events none here so they can never intercept a click/tap. */
+  .auth-bg-blob {
+    @apply absolute rounded-full pointer-events-none;
+    filter: blur(70px);
+    opacity: 0.28;
+  }
+  .auth-bg-blob-1 {
+    @apply w-[26rem] h-[26rem] -top-32 -left-28;
+    background: var(--color-primary);
+  }
+  .auth-bg-blob-2 {
+    @apply w-[24rem] h-[24rem] -bottom-36 -right-24;
+    background: #af52de;
   }
   .auth-box {
-    @apply w-full max-w-[380px] bg-panel border border-border border-t-[3px] border-t-primary rounded-xl p-8 shadow-lg;
+    @apply relative w-full max-w-[400px] rounded-[28px] p-9 shadow-2xl;
+    background: var(--color-glass-bg);
+    border: 1px solid var(--color-glass-border);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    backdrop-filter: blur(24px) saturate(180%);
+    animation: auth-rise 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+  @keyframes auth-rise {
+    from { opacity: 0; transform: translateY(12px) scale(0.98); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
   }
   .auth-brand {
-    @apply flex flex-col items-center text-center gap-1 mb-7;
+    @apply flex flex-col items-center text-center gap-1 mb-8;
   }
   .auth-brand-mark {
-    @apply w-11 h-11 rounded-[10px] mb-2;
+    @apply w-16 h-16 rounded-[20px] mb-3 flex items-center justify-center shrink-0;
+    background: linear-gradient(155deg, var(--color-primary), #5ac8fa);
+    box-shadow: 0 8px 20px -6px rgba(0, 122, 255, 0.5);
   }
   .auth-brand-mark svg {
-    @apply w-[22px] h-[22px];
+    @apply w-8 h-8;
+    color: #fff;
   }
   .auth-brand h1 {
-    @apply text-[1.15rem];
+    @apply text-[1.3rem] font-bold tracking-[-0.01em] mb-0;
   }
   .auth-subtitle {
-    @apply text-text-muted text-[0.85rem] m-0;
+    @apply text-text-muted text-[0.88rem] m-0 leading-snug;
+  }
+  /* Icon-prefixed field, replacing the old stacked visible-label+input -- the label stays in the
+     markup (sr-only) for accessibility, but is no longer shown, the same way a native iOS text
+     field relies on its placeholder/leading icon instead of a visible caption above it. */
+  .auth-field {
+    @apply relative mb-3;
+  }
+  .auth-field-icon {
+    @apply absolute left-4 top-1/2 -translate-y-1/2 text-text-muted flex pointer-events-none;
+  }
+  .auth-field input {
+    @apply w-full rounded-2xl border border-border py-[0.85rem] pl-11 pr-4 text-[0.95rem];
+    background: var(--color-bg);
+  }
+  .auth-field input:focus-visible {
+    @apply outline-none border-primary;
+    box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.15);
+  }
+  /* MFA's 6-digit code fields -- centered and letter-spaced like a native verification-code
+     input (Messages/Mail autofill prompts), not a scaled-down version of the icon-prefixed
+     fields above, which would put the icon awkwardly off-center next to centered digits. Its own
+     wrapper (not .auth-field) so its spacing doesn't fight the icon-field padding via the
+     .auth-field input selector's higher specificity. */
+  .auth-code-field {
+    @apply mb-3;
+  }
+  .auth-code-input {
+    @apply w-full rounded-2xl border border-border py-[0.85rem] px-4 text-center text-[1.3rem] font-semibold;
+    background: var(--color-bg);
+    letter-spacing: 0.4em;
+    text-indent: 0.4em; /* re-centers the glyphs -- letter-spacing adds its trailing gap after the last character too, visually shifting the whole string left */
+  }
+  .auth-code-input:focus-visible {
+    @apply outline-none border-primary;
+    box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.15);
   }
   .auth-actions {
-    @apply flex gap-2;
+    @apply flex gap-2 mt-6;
   }
   .auth-submit {
-    @apply w-full py-[0.6rem] text-[0.95rem] font-medium;
+    @apply w-full py-[0.85rem] text-[1rem] font-semibold rounded-full shadow-md;
+  }
+  .auth-secondary-btn {
+    @apply w-full rounded-full mt-3;
   }
   .auth-error {
-    @apply bg-danger-bg text-danger px-3 py-[0.6rem] rounded-md mb-4 text-[0.9rem];
+    @apply bg-danger-bg text-danger px-4 py-3 rounded-2xl mb-5 text-[0.88rem];
   }
   .notice-warning {
     @apply bg-warning-bg text-warning px-3 py-[0.6rem] rounded-md text-[0.85rem] leading-snug;
-  }
-
-  /* ---- app shell ---- */
-  .brand-mark {
-    @apply w-[26px] h-[26px] rounded-[7px] bg-primary text-white flex items-center justify-center shrink-0 shadow-sm;
-  }
-  .brand-mark svg {
-    @apply w-[15px] h-[15px];
   }
 
   /* ---- iOS design system: glass bars, bottom tab bar, grouped lists ---- */

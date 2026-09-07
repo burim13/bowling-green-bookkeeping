@@ -15,7 +15,7 @@
   </script>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" />
-  <link rel="stylesheet" href="css/styles.css?v=1788798319932" />
+  <link rel="stylesheet" href="css/styles.css?v=1788798832560" />
 </head>
 <body>
 
@@ -27,9 +27,11 @@
   </div>
 
   <div id="auth-screen">
+    <div class="auth-bg-blob auth-bg-blob-1" aria-hidden="true"></div>
+    <div class="auth-bg-blob auth-bg-blob-2" aria-hidden="true"></div>
     <div class="auth-box">
       <div class="auth-brand">
-        <span class="brand-mark auth-brand-mark"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="14" height="13" rx="2"/><path d="M3 8h14"/><path d="M7 2.5v3"/><path d="M13 2.5v3"/><path d="m7 12 2 2 4-4"/></svg></span>
+        <span class="auth-brand-mark"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="14" height="13" rx="2"/><path d="M3 8h14"/><path d="M7 2.5v3"/><path d="M13 2.5v3"/><path d="m7 12 2 2 4-4"/></svg></span>
         <h1>Bowling Green Bookkeeping &amp; Taxes</h1>
         <p class="auth-subtitle">Set up your Client Hub account</p>
       </div>
@@ -40,9 +42,21 @@
       </div>
 
       <form id="invite-form">
-        <label>Email<br/><input type="email" id="invite-email" required autocomplete="username" /></label>
-        <label>Password (at least 10 characters)<br/><input type="password" id="invite-password" required minlength="10" autocomplete="new-password" /></label>
-        <label>Confirm password<br/><input type="password" id="invite-password-confirm" required minlength="10" autocomplete="new-password" /></label>
+        <div class="auth-field">
+          <span class="auth-field-icon"><svg viewBox="0 0 20 20" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="4.5" width="15" height="11" rx="1.5"/><path d="m3 5.5 7 5.5 7-5.5"/></svg></span>
+          <label for="invite-email" class="sr-only">Email</label>
+          <input type="email" id="invite-email" placeholder="Email" required autocomplete="username" />
+        </div>
+        <div class="auth-field">
+          <span class="auth-field-icon"><svg viewBox="0 0 20 20" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="9" width="12" height="8" rx="1.5"/><path d="M6.5 9V6.5a3.5 3.5 0 0 1 7 0V9"/></svg></span>
+          <label for="invite-password" class="sr-only">Password (at least 10 characters)</label>
+          <input type="password" id="invite-password" placeholder="Password (min. 10 characters)" required minlength="10" autocomplete="new-password" />
+        </div>
+        <div class="auth-field">
+          <span class="auth-field-icon"><svg viewBox="0 0 20 20" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="9" width="12" height="8" rx="1.5"/><path d="M6.5 9V6.5a3.5 3.5 0 0 1 7 0V9"/></svg></span>
+          <label for="invite-password-confirm" class="sr-only">Confirm password</label>
+          <input type="password" id="invite-password-confirm" placeholder="Confirm password" required minlength="10" autocomplete="new-password" />
+        </div>
         <div class="auth-actions">
           <button type="submit" class="btn btn-primary auth-submit">Create account</button>
         </div>
@@ -50,6 +64,6 @@
     </div>
   </div>
 
-  <script type="module" src="js/invite-page.js?v=1788798319932"></script>
+  <script type="module" src="js/invite-page.js?v=1788798832560"></script>
 </body>
 </html>

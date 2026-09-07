@@ -4,7 +4,7 @@
 // completions subcollections directly. So this builds the same state shape list-view.js and
 // clientCompletionStats expect ({ clients, items, completions } Maps), just scoped to one client.
 import { collection, getDocs, onSnapshot } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
-import { db } from "./firebase-init.js?v=1788798319932";
+import { db } from "./firebase-init.js?v=1788798832560";
 
 export function subscribeToOwnCompliance(clientId, clientName, callback) {
   const state = {

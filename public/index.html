@@ -18,7 +18,7 @@
   </script>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Dancing+Script:wght@600&display=swap" />
-  <link rel="stylesheet" href="css/styles.css?v=1788798319932" />
+  <link rel="stylesheet" href="css/styles.css?v=1788798832560" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
 </head>
@@ -34,9 +34,11 @@
   </div>
 
   <div id="auth-screen">
+    <div class="auth-bg-blob auth-bg-blob-1" aria-hidden="true"></div>
+    <div class="auth-bg-blob auth-bg-blob-2" aria-hidden="true"></div>
     <div class="auth-box">
       <div class="auth-brand">
-        <span class="brand-mark auth-brand-mark"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="14" height="13" rx="2"/><path d="M3 8h14"/><path d="M7 2.5v3"/><path d="M13 2.5v3"/><path d="m7 12 2 2 4-4"/></svg></span>
+        <span class="auth-brand-mark"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="14" height="13" rx="2"/><path d="M3 8h14"/><path d="M7 2.5v3"/><path d="M13 2.5v3"/><path d="m7 12 2 2 4-4"/></svg></span>
         <h1>Bowling Green Bookkeeping &amp; Taxes</h1>
         <p class="auth-subtitle">Sign in to your account</p>
       </div>
@@ -44,8 +46,16 @@
       <div id="auth-error" class="auth-error" hidden></div>
 
       <form id="password-signin-form">
-        <label>Email<br/><input type="email" id="auth-email" required autocomplete="email" /></label>
-        <label>Password<br/><input type="password" id="auth-password" required autocomplete="current-password" /></label>
+        <div class="auth-field">
+          <span class="auth-field-icon"><svg viewBox="0 0 20 20" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="4.5" width="15" height="11" rx="1.5"/><path d="m3 5.5 7 5.5 7-5.5"/></svg></span>
+          <label for="auth-email" class="sr-only">Email</label>
+          <input type="email" id="auth-email" placeholder="Email" required autocomplete="email" />
+        </div>
+        <div class="auth-field">
+          <span class="auth-field-icon"><svg viewBox="0 0 20 20" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="9" width="12" height="8" rx="1.5"/><path d="M6.5 9V6.5a3.5 3.5 0 0 1 7 0V9"/></svg></span>
+          <label for="auth-password" class="sr-only">Password</label>
+          <input type="password" id="auth-password" placeholder="Password" required autocomplete="current-password" />
+        </div>
         <div class="auth-actions">
           <button type="submit" class="btn btn-primary auth-submit">Sign in</button>
         </div>
@@ -56,9 +66,11 @@
   <!-- Shown instead of the password form when signInWithPassword throws
        auth/multi-factor-auth-required (see wireAuthForms in js/app.js). -->
   <div id="mfa-challenge-screen" hidden>
+    <div class="auth-bg-blob auth-bg-blob-1" aria-hidden="true"></div>
+    <div class="auth-bg-blob auth-bg-blob-2" aria-hidden="true"></div>
     <div class="auth-box">
       <div class="auth-brand">
-        <span class="brand-mark auth-brand-mark"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="14" height="13" rx="2"/><path d="M3 8h14"/><path d="M7 2.5v3"/><path d="M13 2.5v3"/><path d="m7 12 2 2 4-4"/></svg></span>
+        <span class="auth-brand-mark"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="14" height="13" rx="2"/><path d="M3 8h14"/><path d="M7 2.5v3"/><path d="M13 2.5v3"/><path d="m7 12 2 2 4-4"/></svg></span>
         <h1>Bowling Green Bookkeeping &amp; Taxes</h1>
         <p class="auth-subtitle">Enter the 6-digit code from your authenticator app</p>
       </div>
@@ -66,21 +78,26 @@
       <div id="mfa-challenge-error" class="auth-error" hidden></div>
 
       <form id="mfa-challenge-form">
-        <label>Code<br/><input type="text" id="mfa-challenge-code" inputmode="numeric" pattern="[0-9]*" maxlength="6" required autocomplete="one-time-code" /></label>
+        <div class="auth-code-field">
+          <label for="mfa-challenge-code" class="sr-only">6-digit code</label>
+          <input type="text" id="mfa-challenge-code" class="auth-code-input" inputmode="numeric" pattern="[0-9]*" maxlength="6" placeholder="000000" required autocomplete="one-time-code" />
+        </div>
         <div class="auth-actions">
           <button type="submit" class="btn btn-primary auth-submit">Verify</button>
         </div>
       </form>
-      <button type="button" id="mfa-challenge-cancel" class="btn btn-ghost" style="margin-top:0.75rem; width:100%;">Back to sign in</button>
+      <button type="button" id="mfa-challenge-cancel" class="btn btn-ghost auth-secondary-btn">Back to sign in</button>
     </div>
   </div>
 
   <!-- Mandatory for staff/admin accounts: shown instead of #app-shell until MFA is enrolled
        (see watchAuthState in js/app.js). Clients never see this. -->
   <div id="mfa-enroll-screen" hidden>
-    <div class="auth-box" style="max-width:420px;">
+    <div class="auth-bg-blob auth-bg-blob-1" aria-hidden="true"></div>
+    <div class="auth-bg-blob auth-bg-blob-2" aria-hidden="true"></div>
+    <div class="auth-box" style="max-width:440px;">
       <div class="auth-brand">
-        <span class="brand-mark auth-brand-mark"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="14" height="13" rx="2"/><path d="M3 8h14"/><path d="M7 2.5v3"/><path d="M13 2.5v3"/><path d="m7 12 2 2 4-4"/></svg></span>
+        <span class="auth-brand-mark"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="14" height="13" rx="2"/><path d="M3 8h14"/><path d="M7 2.5v3"/><path d="M13 2.5v3"/><path d="m7 12 2 2 4-4"/></svg></span>
         <h1>Set up two-factor authentication</h1>
         <p class="auth-subtitle">Required for staff accounts. Scan this with an authenticator app
         (Google Authenticator, Authy, 1Password, etc.), then enter the 6-digit code it shows.</p>
@@ -94,12 +111,15 @@
       <div id="mfa-enroll-error" class="auth-error" hidden></div>
 
       <form id="mfa-enroll-form">
-        <label>6-digit code<br/><input type="text" id="mfa-enroll-code" inputmode="numeric" pattern="[0-9]*" maxlength="6" required autocomplete="one-time-code" /></label>
+        <div class="auth-code-field">
+          <label for="mfa-enroll-code" class="sr-only">6-digit code</label>
+          <input type="text" id="mfa-enroll-code" class="auth-code-input" inputmode="numeric" pattern="[0-9]*" maxlength="6" placeholder="000000" required autocomplete="one-time-code" />
+        </div>
         <div class="auth-actions">
           <button type="submit" class="btn btn-primary auth-submit">Enable two-factor authentication</button>
         </div>
       </form>
-      <button type="button" id="mfa-enroll-signout-btn" class="btn btn-ghost" style="margin-top:0.75rem; width:100%;">Sign out</button>
+      <button type="button" id="mfa-enroll-signout-btn" class="btn btn-ghost auth-secondary-btn">Sign out</button>
     </div>
   </div>
 
@@ -189,6 +209,6 @@
     <nav class="ios-glass-bar ios-glass-bar-bottom ios-tab-bar" id="client-tab-bar"></nav>
   </div>
 
-  <script type="module" src="js/app.js?v=1788798319932"></script>
+  <script type="module" src="js/app.js?v=1788798832560"></script>
 </body>
 </html>
