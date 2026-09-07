@@ -237,8 +237,20 @@ console (**Firestore Database -> Data -> users -> their document**).
 
 A `client`-role account sees a completely different, much simpler screen instead of the staff
 app -- their own Client Hub only, no calendar, no other clients' data reachable (enforced in
-`firestore.rules`, not just hidden in the UI). There's no client self-signup, same as staff: you
-create these accounts by hand, in this order (order matters -- see below):
+`firestore.rules`, not just hidden in the UI).
+
+**Recommended: invite link.** Open the client in the Client Hub tab -> their **Overview**
+sub-tab -> **Invite to Client Hub**. This generates a single-use link (`invite.html?token=...`)
+-- copy it and send it to the client however you like (email, text). They pick their own email
+and password on that page; submitting it creates their Firebase Auth account and `users/{uid}`
+doc in one step, with `role`/`clientId` set automatically and correctly. No console work, and
+no separate step needs to happen "before" anything else -- the link only works once, and only
+ever produces a `role: "client"` account scoped to that one client (see the `clientInvites`
+rules in [`firestore.rules`](firestore.rules) for exactly how that's enforced). If they don't
+use the link, generate a fresh one from the same button.
+
+**Fallback: by hand.** If you'd rather set an account up yourself (e.g. picking their email for
+them), the manual steps still work, in this order:
 
 1. **Add the client as a regular client record first** (if not already), via **Add client** in the
    app, and note its **client ID** (open it in the Firestore console -- `clients` -> their
@@ -257,27 +269,32 @@ automatically the first time *any* new account without one signs in (see `ensure
 **not** add a client's email to the staff `allowlist` (Client Hub access doesn't use it at all --
 only the `role`/`clientId` on their user doc controls what they can see).
 
-Note that a client account does **not** need to be on the staff allowlist described above --
+Either way, a client account does **not** need to be on the staff allowlist described above --
 that allowlist only gates the staff-side compliance calendar. Client Hub access is controlled
 entirely by the `role`/`clientId` fields on their `users/{uid}` doc.
 
 ---
 
-## 3. Firebase Spark (free) plan quotas
+## 3. Firebase plan and quotas
 
-This app runs entirely on Firebase's free "Spark" plan. Spark has **daily/monthly hard caps** --
-once hit, reads/writes fail until the quota resets (or you upgrade):
+This project is on Firebase's pay-as-you-go **Blaze** plan (required for Cloud Storage, which
+Client Hub document uploads need -- Storage isn't available at all on the free Spark plan,
+regardless of usage). Blaze still applies the same free tier Spark has automatically every
+month; you're only ever billed for usage past it:
 
-| Resource | Spark plan limit |
+| Resource | Free tier (still applies on Blaze) |
 |---|---|
 | Firestore reads | 50,000 / day |
 | Firestore writes | 20,000 / day |
-| Firestore stored data | 1 GB |
+| Firestore stored data | 1 GiB |
+| Storage stored | 5 GB (running total, not per-month) |
+| Storage downloaded | 1 GB / day |
 | Auth monthly active users | 50,000 / month |
 
-A single practice with a handful of staff checking a calendar throughout the day will use a tiny
-fraction of this. If it's ever exceeded, the fix is to enable the pay-as-you-go **Blaze** plan in
-the Firebase console (Blaze still has a generous free tier -- you only pay for usage past it).
+A single practice with a handful of staff and clients uploading a handful of documents each will
+use a tiny fraction of this -- realistically $0/month. Set a budget alert (Google Cloud Console
+-> Billing -> Budgets & alerts) so you'd get an email long before anything ever approached being
+billed.
 
 ---
 
