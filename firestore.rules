@@ -86,7 +86,40 @@ service cloud.firestore {
       // for them. Approved staff can still read anyone's doc (nothing sensitive in it).
       allow read: if isApproved() || request.auth.uid == uid;
       allow create: if isApproved() && request.auth.uid == uid && request.resource.data.role == 'staff';
+
+      // Self-service signup, but ONLY into a role/clientId a staff member already committed to
+      // by creating the matching /clientInvites/{token} doc below. The client picks the token
+      // (it's in the URL staff sent them) and the clientId (also in that URL, for convenience)
+      // -- but this rule re-derives clientId from the invite doc itself, so a tampered or
+      // made-up clientId in the write is simply rejected, never trusted from the request alone.
+      // This is the only way a `role: "client"` doc can ever be created -- there is no
+      // equivalent path for `role: "staff"` or `"admin"` via self-signup.
+      allow create: if request.auth.uid == uid &&
+        request.resource.data.role == 'client' &&
+        request.resource.data.keys().hasOnly(['role', 'clientId', 'inviteToken', 'email', 'createdAt']) &&
+        get(/databases/$(database)/documents/clientInvites/$(request.resource.data.inviteToken)).data.used == false &&
+        get(/databases/$(database)/documents/clientInvites/$(request.resource.data.inviteToken)).data.clientId == request.resource.data.clientId;
+
       allow update: if isApproved() && request.auth.uid == uid && request.resource.data.role == resource.data.role;
+    }
+
+    // Invite links staff sends to clients. Never directly readable (not even by the invitee) --
+    // only ever consulted via get() from inside the users/{uid} create rule above and the
+    // consumption rule below, which is enough; the invite page never needs to read this doc,
+    // it just attempts the account-creation write and lets that succeed or fail.
+    match /clientInvites/{token} {
+      allow read: if false;
+      allow create, delete: if isApproved();
+
+      // Marking an invite used happens right after the matching user doc was created (see
+      // public/js/invite.js) -- allowed only by the exact account that invite was just consumed
+      // into, and only turning used false -> true, never back.
+      allow update: if isSignedIn() &&
+        resource.data.used == false &&
+        request.resource.data.used == true &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['used']) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'client' &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.clientId == resource.data.clientId;
     }
   }
 }

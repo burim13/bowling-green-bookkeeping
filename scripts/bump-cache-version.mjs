@@ -16,9 +16,11 @@ import { fileURLToPath } from "url";
 const rootDir = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
 const version = Date.now();
 
+const publicDir = path.join(rootDir, "public");
 const targets = [
-  path.join(rootDir, "public", "index.html"),
-  ...fs.readdirSync(path.join(rootDir, "public", "js")).map((f) => path.join(rootDir, "public", "js", f)),
+  // Every standalone HTML page (index.html, invite.html, any future one) -- not just index.html.
+  ...fs.readdirSync(publicDir).filter((f) => f.endsWith(".html")).map((f) => path.join(publicDir, f)),
+  ...fs.readdirSync(path.join(publicDir, "js")).map((f) => path.join(publicDir, "js", f)),
 ];
 
 // Matches a local (non-http) reference to a .js or .css file, with an optional existing

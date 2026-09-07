@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Bowling Green Bookkeeping &amp; Taxes — Set up your account</title>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" />
+  <link rel="stylesheet" href="css/styles.css?v=1788749658461" />
+</head>
+<body>
+
+  <div id="config-warning" hidden>
+    <div class="config-warning-box">
+      <h1>Firebase isn't configured yet</h1>
+      <p>Edit <code>js/firebase-config.js</code> and paste in your Firebase project's web app config.</p>
+    </div>
+  </div>
+
+  <div id="auth-screen">
+    <div class="auth-box">
+      <div class="auth-brand">
+        <span class="brand-mark auth-brand-mark"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="14" height="13" rx="2"/><path d="M3 8h14"/><path d="M7 2.5v3"/><path d="M13 2.5v3"/><path d="m7 12 2 2 4-4"/></svg></span>
+        <h1>Bowling Green Bookkeeping &amp; Taxes</h1>
+        <p class="auth-subtitle">Set up your Client Hub account</p>
+      </div>
+
+      <div id="invite-error" class="auth-error" hidden></div>
+      <div id="invite-invalid" class="auth-error" hidden>
+        This invite link is invalid, expired, or already used. Contact your accountant for a new one.
+      </div>
+
+      <form id="invite-form">
+        <label>Email<br/><input type="email" id="invite-email" required autocomplete="username" /></label>
+        <label>Password<br/><input type="password" id="invite-password" required minlength="6" autocomplete="new-password" /></label>
+        <label>Confirm password<br/><input type="password" id="invite-password-confirm" required minlength="6" autocomplete="new-password" /></label>
+        <div class="auth-actions">
+          <button type="submit" class="btn btn-primary auth-submit">Create account</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script type="module" src="js/invite-page.js?v=1788749658461"></script>
+</body>
+</html>
