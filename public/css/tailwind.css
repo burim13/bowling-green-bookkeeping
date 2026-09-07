@@ -411,6 +411,56 @@
     to { transform: rotate(360deg); }
   }
 
+  /* ---- client hub document intake (client-facing screen + staff Documents tab) ---- */
+  .chub-welcome {
+    @apply text-[1.1rem] mb-4;
+  }
+  .chub-card {
+    @apply bg-panel border border-border rounded-xl p-5 mb-6 max-w-[520px];
+  }
+  .chub-section-title {
+    @apply text-[0.9rem] font-semibold mb-3;
+  }
+  .dropzone {
+    @apply flex flex-col items-center text-center gap-1 border-2 border-dashed border-border rounded-lg py-8 px-4 mt-3 cursor-pointer text-text-muted transition-colors;
+  }
+  .dropzone:hover, .dropzone:focus-visible {
+    @apply border-primary bg-[rgba(37,99,235,0.04)] outline-none;
+  }
+  .dropzone-active {
+    @apply border-primary bg-[rgba(37,99,235,0.06)];
+  }
+  .dropzone p {
+    @apply text-[0.85rem] m-0 mt-1;
+  }
+  .doc-row {
+    @apply flex items-center gap-3 px-3 py-2.5 border-b border-border;
+  }
+  .doc-row:last-child {
+    @apply border-b-0;
+  }
+  .doc-row-icon {
+    @apply w-8 h-8 rounded-lg bg-[#eef0f4] text-text-muted flex items-center justify-center shrink-0;
+  }
+  .doc-row-name {
+    @apply text-[0.9rem];
+  }
+  .doc-row-meta {
+    @apply text-[0.78rem] text-text-muted;
+  }
+  .doc-type-badge {
+    @apply text-[0.75rem] px-2 py-[2px] rounded-md bg-[#eef0f4] text-text-muted shrink-0;
+  }
+  .doc-status-badge {
+    @apply text-[0.75rem] px-2 py-[2px] rounded-md shrink-0;
+  }
+  .doc-status-pending {
+    @apply bg-warning-bg text-warning;
+  }
+  .doc-status-reviewed {
+    @apply bg-success-bg text-success;
+  }
+
   .client-row {
     @apply flex items-center gap-2 px-[0.4rem] py-[0.45rem] rounded-md transition-colors;
     cursor: default;

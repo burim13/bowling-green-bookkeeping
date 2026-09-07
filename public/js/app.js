@@ -1,10 +1,10 @@
-import { isFirebaseConfigured, auth } from "./firebase-init.js?v=1788748809642";
+import { isFirebaseConfigured, auth } from "./firebase-init.js?v=1788749152210";
 import {
   watchAuthState,
   signInWithPassword,
   signOutUser,
   getOwnProfile,
-} from "./auth.js?v=1788748809642";
+} from "./auth.js?v=1788749152210";
 import {
   startSync,
   stopSync,
@@ -23,13 +23,21 @@ import {
   unmarkComplete,
   isFullyLoaded,
   getClientRecord,
-} from "./data.js?v=1788748809642";
-import { renderCalendar } from "./calendar-view.js?v=1788748809642";
-import { renderList } from "./list-view.js?v=1788748809642";
-import { describeRecurrence, describeRecurrenceHistory, getLastDueOccurrence, toISODate } from "./recurrence.js?v=1788748809642";
-import { colorFor, tintFor } from "./colors.js?v=1788748809642";
-import { githubRepoSlug } from "./firebase-config.js?v=1788748809642";
-import { iconEdit, iconTrash, iconPlus, iconPlusLarge, iconCheck, iconTag, iconUpload, iconLogout, iconCalendar, iconListView, iconFolder, iconFolderLarge, iconHome, iconChevronRight, iconUsers, iconAlertTriangle, iconSignature } from "./icons.js?v=1788748809642";
+} from "./data.js?v=1788749152210";
+import { renderCalendar } from "./calendar-view.js?v=1788749152210";
+import { renderList } from "./list-view.js?v=1788749152210";
+import { describeRecurrence, describeRecurrenceHistory, getLastDueOccurrence, toISODate } from "./recurrence.js?v=1788749152210";
+import { colorFor, tintFor } from "./colors.js?v=1788749152210";
+import { githubRepoSlug } from "./firebase-config.js?v=1788749152210";
+import {
+  DOC_TYPES,
+  docTypeLabel,
+  subscribeToDocuments,
+  uploadDocument,
+  setDocumentReviewed,
+  getDocumentDownloadURL,
+} from "./documents.js?v=1788749152210";
+import { iconEdit, iconTrash, iconPlus, iconPlusLarge, iconCheck, iconTag, iconUpload, iconLogout, iconCalendar, iconListView, iconFolder, iconFolderLarge, iconHome, iconChevronRight, iconUsers, iconAlertTriangle, iconSignature, iconFile, iconUploadLarge, iconDownload } from "./icons.js?v=1788749152210";
 
 const DEFAULT_CATEGORIES = [
   "Payroll",
@@ -108,7 +116,6 @@ function init() {
   qs("view-toggle-calendar").innerHTML = iconCalendar;
   qs("view-toggle-list").innerHTML = iconListView;
   qs("view-toggle-clienthub").innerHTML = iconFolder;
-  qs("client-hub-icon").innerHTML = iconFolderLarge;
 
   wireAuthForms();
   wireToolbar();
@@ -120,6 +127,10 @@ function init() {
       els.appShell.hidden = true;
       els.clientHubScreen.hidden = true;
       stopSync();
+      clientDocsUnsub?.();
+      clientDocsUnsub = null;
+      staffDocsUnsub?.();
+      staffDocsUnsub = null;
       return;
     }
 
@@ -244,6 +255,10 @@ function setActiveView(view) {
   els.viewToggleClientHub.classList.toggle("active", view === "clienthub");
   qs("list-filter-wrap").hidden = view !== "list";
   els.markAllCompleteBtn.hidden = view !== "list";
+  if (view !== "clienthub") {
+    staffDocsUnsub?.();
+    staffDocsUnsub = null;
+  }
   // Category filtering and bulk item-add only mean anything for the compliance calendar/list --
   // showing them on Overview or Client Hub reads as unrelated clutter with nothing to act on.
   const isComplianceView = view === "calendar" || view === "list";
@@ -401,8 +416,12 @@ const CLIENT_HUB_TABS = [
 
 let clientHubExpandedId = null;
 let clientHubActiveTab = "overview";
+let staffDocsUnsub = null;
 
 function renderClientHubStaffView() {
+  staffDocsUnsub?.();
+  staffDocsUnsub = null;
+
   const clients = [...latestState.clients.values()]
     .filter((c) => !c.archived)
     .sort((a, b) => a.name.localeCompare(b.name));
@@ -481,7 +500,6 @@ function renderClientHubStaffView() {
 }
 
 const CLIENT_HUB_PLACEHOLDER_COPY = {
-  documents: "Document upload lands here in Milestone 2, once Firebase Storage is enabled.",
   signatures: "Signature requests land here in Milestones 3-4.",
   letters: "Auto-generated engagement letters land here in Milestone 5.",
 };
@@ -510,13 +528,130 @@ function renderClientHubTabContent(container, client, tab) {
     }</p>`;
     return;
   }
+  if (tab === "documents") {
+    container.innerHTML = `<div class="loading-hint"><span class="spinner"></span> Loading…</div>`;
+    staffDocsUnsub = subscribeToDocuments(
+      client.id,
+      (documents) => renderDocumentList(container, documents, client.id, { allowReviewToggle: true }),
+      (err) => {
+        container.innerHTML = `<p class="client-tab-content">Could not load documents: ${escapeHtml(err.message)}</p>`;
+      }
+    );
+    return;
+  }
   container.innerHTML = `<p class="client-tab-content">${CLIENT_HUB_PLACEHOLDER_COPY[tab]}</p>`;
+}
+
+// ---- document list rendering (shared by the staff Documents tab and the client-facing screen) --
+
+function renderDocumentList(container, documents, clientId, { allowReviewToggle }) {
+  if (documents.length === 0) {
+    container.innerHTML = `<div class="empty-hint">No documents uploaded yet.</div>`;
+    return;
+  }
+  container.innerHTML = documents.map((d) => documentRowHtml(d, allowReviewToggle)).join("");
+  wireDocumentRows(container, clientId);
+}
+
+function documentRowHtml(d, allowReviewToggle) {
+  const date = d.uploadedAt?.toDate ? d.uploadedAt.toDate().toLocaleDateString() : "Uploading…";
+  const statusBadge = allowReviewToggle
+    ? `<button class="doc-status-badge ${d.reviewed ? "doc-status-reviewed" : "doc-status-pending"}" data-action="toggle-reviewed" data-doc-id="${d.id}" data-reviewed="${d.reviewed ? "1" : ""}">${d.reviewed ? "Reviewed" : "Mark reviewed"}</button>`
+    : `<span class="doc-status-badge ${d.reviewed ? "doc-status-reviewed" : "doc-status-pending"}">${d.reviewed ? "Reviewed" : "Pending review"}</span>`;
+  return `
+    <div class="doc-row">
+      <span class="doc-row-icon">${iconFile}</span>
+      <span style="flex:1; min-width:0;">
+        <div class="doc-row-name">${escapeHtml(d.fileName)}</div>
+        <div class="doc-row-meta">${date} &middot; ${docTypeLabel(d.docType)}</div>
+      </span>
+      ${statusBadge}
+      <button class="icon-btn" data-action="download" data-storage-path="${escapeHtml(d.storagePath)}" title="Download" aria-label="Download ${escapeHtml(d.fileName)}">${iconDownload}</button>
+    </div>`;
+}
+
+function wireDocumentRows(container, clientId) {
+  container.querySelectorAll('[data-action="download"]').forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      try {
+        const url = await getDocumentDownloadURL(btn.dataset.storagePath);
+        window.open(url, "_blank", "noopener");
+      } catch (err) {
+        alert("Could not open document: " + err.message);
+      }
+    });
+  });
+  container.querySelectorAll('[data-action="toggle-reviewed"]').forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const nextReviewed = !btn.dataset.reviewed;
+      btn.disabled = true;
+      try {
+        await setDocumentReviewed(clientId, btn.dataset.docId, nextReviewed);
+      } catch (err) {
+        alert("Could not update: " + err.message);
+        btn.disabled = false;
+      }
+    });
+  });
 }
 
 // ---- client hub (client-facing screen) --------------------------------------------------
 
+let clientHubClientId = null;
+let clientDocsUnsub = null;
+
 function wireClientHubScreen() {
   qs("client-hub-signout-btn").addEventListener("click", () => signOutUser());
+  qs("chub-doctype").innerHTML = DOC_TYPES.map((t) => `<option value="${t.id}">${t.label}</option>`).join("");
+  qs("chub-dropzone-icon").innerHTML = iconUploadLarge;
+
+  const dropzone = qs("chub-dropzone");
+  const fileInput = qs("chub-file-input");
+
+  dropzone.addEventListener("click", () => fileInput.click());
+  dropzone.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      fileInput.click();
+    }
+  });
+  dropzone.addEventListener("dragover", (e) => {
+    e.preventDefault();
+    dropzone.classList.add("dropzone-active");
+  });
+  dropzone.addEventListener("dragleave", () => dropzone.classList.remove("dropzone-active"));
+  dropzone.addEventListener("drop", (e) => {
+    e.preventDefault();
+    dropzone.classList.remove("dropzone-active");
+    const file = e.dataTransfer.files[0];
+    if (file) handleClientUpload(file);
+  });
+  fileInput.addEventListener("change", () => {
+    const file = fileInput.files[0];
+    if (file) handleClientUpload(file);
+    fileInput.value = "";
+  });
+}
+
+async function handleClientUpload(file) {
+  if (!clientHubClientId || !auth.currentUser) return;
+  const errorEl = qs("chub-upload-error");
+  errorEl.hidden = true;
+  const progressWrap = qs("chub-upload-progress");
+  const progressFill = progressWrap.querySelector(".progress-fill");
+  progressWrap.hidden = false;
+  progressFill.style.width = "0%";
+
+  try {
+    await uploadDocument(clientHubClientId, file, qs("chub-doctype").value, auth.currentUser.email, (pct) => {
+      progressFill.style.width = `${pct}%`;
+    });
+  } catch (err) {
+    errorEl.textContent = "Could not upload: " + err.message;
+    errorEl.hidden = false;
+  } finally {
+    progressWrap.hidden = true;
+  }
 }
 
 async function showClientHub(profile) {
@@ -526,12 +661,20 @@ async function showClientHub(profile) {
     els.clientHubName.textContent = " -- ask your accountant to finish setting up your account (missing clientId).";
     return;
   }
+  clientHubClientId = profile.clientId;
   try {
     const client = await getClientRecord(profile.clientId);
     els.clientHubName.textContent = client ? `, ${client.name}` : "";
   } catch (err) {
     console.error(err);
   }
+
+  clientDocsUnsub?.();
+  clientDocsUnsub = subscribeToDocuments(
+    profile.clientId,
+    (documents) => renderDocumentList(qs("chub-document-list"), documents, profile.clientId, { allowReviewToggle: false }),
+    (err) => console.error(err)
+  );
 }
 
 async function handleMarkAllShownComplete() {

@@ -58,3 +58,15 @@ export const iconAlertTriangle = svg(
 export const iconSignature = svg(
   `<path d="M2.5 15c2-0.8 3-3.6 4-5.6s1.8-1.8 2.3 0 .3 3 1.8 1 2-2.8 3.4-2.8 1.5 1.8 2 2.8"/><path d="M2.5 17h15"/>`
 );
+
+// Document list / dropzone icons.
+export const iconFile = svg(
+  `<path d="M6 2.5h5.5L15 6v11a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1z"/><path d="M11.5 2.5V6H15"/>`
+);
+export const iconUploadLarge = svg(
+  `<path d="M10 13V4"/><path d="M6.5 7.5 10 4l3.5 3.5"/><path d="M4 13.5v1.5a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-1.5"/>`,
+  { size: 22 }
+);
+export const iconDownload = svg(
+  `<path d="M10 3v9"/><path d="M6.5 8.5 10 12l3.5-3.5"/><path d="M4 15.5h12"/>`
+);
