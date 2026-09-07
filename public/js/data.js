@@ -15,7 +15,7 @@ import {
   serverTimestamp,
   writeBatch,
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
-import { db, auth } from "./firebase-init.js?v=1788797110972";
+import { db, auth } from "./firebase-init.js?v=1788797594712";
 
 // ---- live store ----------------------------------------------------------
 
@@ -25,10 +25,15 @@ const state = {
   completions: new Map(), // itemId -> Map(periodKey -> { completedOn, completedBy })
   categories: [],
   letters: new Map(), // letterId -> { id, clientId, title, status, ... } -- staff only, see firestore.rules
+  // docId -> { id, clientId, reviewed, ... } -- staff only. Loaded globally purely so the Client
+  // Hub accordion can badge each client's "pending review" count without opening them one at a
+  // time; the Documents tab itself still uses its own per-client subscription (documents.js) for
+  // full list rendering.
+  documents: new Map(),
   currentUserRole: null, // "admin" | "staff" | null, for the signed-in user
   // Whether each live listener has received its first snapshot yet -- lets the UI show a
   // loading state instead of momentarily flashing "no clients yet" while data is still en route.
-  loaded: { clients: false, items: false, completions: false, categories: false, letters: false },
+  loaded: { clients: false, items: false, completions: false, categories: false, letters: false, documents: false },
 };
 
 export function isFullyLoaded() {
@@ -65,6 +70,7 @@ export function startSync() {
   state.loaded.completions = false;
   state.loaded.categories = false;
   state.loaded.letters = false;
+  state.loaded.documents = false;
 
   unsubscribers.push(
     onSnapshot(
@@ -149,6 +155,24 @@ export function startSync() {
           state.letters.set(d.id, { id: d.id, clientId, ...d.data() });
         });
         state.loaded.letters = true;
+        notifyData();
+      },
+      (err) => setSaveStatus("error", err.message)
+    )
+  );
+
+  // Lightweight metadata only (see state.documents above) -- just enough to count each client's
+  // unreviewed uploads for the accordion badges.
+  unsubscribers.push(
+    onSnapshot(
+      collectionGroup(db, "documents"),
+      (snap) => {
+        state.documents.clear();
+        snap.forEach((d) => {
+          const clientId = d.ref.parent.parent.id;
+          state.documents.set(d.id, { id: d.id, clientId, ...d.data() });
+        });
+        state.loaded.documents = true;
         notifyData();
       },
       (err) => setSaveStatus("error", err.message)

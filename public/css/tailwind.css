@@ -607,6 +607,18 @@
   .client-tab-btn-active {
     @apply bg-[#eef0f4] text-text;
   }
+  /* iOS-style unread/attention count bubble -- next to a client's name in the accordion row, and
+     on each tab button once expanded, so it's obvious at a glance which client (and which tab)
+     has something waiting without opening it. Never rendered when the count is 0. */
+  .notif-badge {
+    @apply inline-flex items-center justify-center min-w-[18px] h-[18px] px-[5px] rounded-full bg-danger text-white text-[0.68rem] font-bold leading-none align-middle;
+  }
+  .client-accordion-row .notif-badge {
+    @apply ml-[0.4rem];
+  }
+  .client-tab-btn .notif-badge {
+    @apply ml-1 -mt-[1px];
+  }
   .client-tab-content {
     @apply text-[0.85rem] text-text-muted;
   }

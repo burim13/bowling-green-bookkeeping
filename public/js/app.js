@@ -1,7 +1,7 @@
-import { isFirebaseConfigured, auth } from "./firebase-init.js?v=1788797110972";
-import { escapeHtml } from "./html-safety.js?v=1788797110972";
-import { friendlyAuthError } from "./auth-errors.js?v=1788797110972";
-import { getEffectiveTheme, toggleTheme } from "./theme.js?v=1788797110972";
+import { isFirebaseConfigured, auth } from "./firebase-init.js?v=1788797594712";
+import { escapeHtml } from "./html-safety.js?v=1788797594712";
+import { friendlyAuthError } from "./auth-errors.js?v=1788797594712";
+import { getEffectiveTheme, toggleTheme } from "./theme.js?v=1788797594712";
 import {
   watchAuthState,
   signInWithPassword,
@@ -9,14 +9,14 @@ import {
   getOwnProfile,
   afterSignIn,
   updateOwnDisplayName,
-} from "./auth.js?v=1788797110972";
+} from "./auth.js?v=1788797594712";
 import {
   isMfaEnrolled,
   startMfaEnrollment,
   finishMfaEnrollment,
   getResolver,
   completeMfaSignIn,
-} from "./mfa.js?v=1788797110972";
+} from "./mfa.js?v=1788797594712";
 import {
   startSync,
   stopSync,
@@ -35,12 +35,12 @@ import {
   unmarkComplete,
   isFullyLoaded,
   getClientRecord,
-} from "./data.js?v=1788797110972";
-import { renderCalendar } from "./calendar-view.js?v=1788797110972";
-import { renderList } from "./list-view.js?v=1788797110972";
-import { describeRecurrence, describeRecurrenceHistory, getLastDueOccurrence, toISODate } from "./recurrence.js?v=1788797110972";
-import { colorFor, tintFor } from "./colors.js?v=1788797110972";
-import { githubRepoSlug } from "./firebase-config.js?v=1788797110972";
+} from "./data.js?v=1788797594712";
+import { renderCalendar } from "./calendar-view.js?v=1788797594712";
+import { renderList } from "./list-view.js?v=1788797594712";
+import { describeRecurrence, describeRecurrenceHistory, getLastDueOccurrence, toISODate } from "./recurrence.js?v=1788797594712";
+import { colorFor, tintFor } from "./colors.js?v=1788797594712";
+import { githubRepoSlug } from "./firebase-config.js?v=1788797594712";
 import {
   DOC_TYPES,
   docTypeLabel,
@@ -49,10 +49,10 @@ import {
   setDocumentReviewed,
   getDocumentDownloadURL,
   deleteDocument,
-} from "./documents.js?v=1788797110972";
-import { createClientInvite, subscribeToInviteStatus } from "./invites.js?v=1788797110972";
-import { subscribeToOwnCompliance } from "./client-compliance.js?v=1788797110972";
-import { subscribeToLetters, sendLetter, signLetter, deleteLetter, getLetterDownloadURL } from "./letters.js?v=1788797110972";
+} from "./documents.js?v=1788797594712";
+import { createClientInvite, subscribeToInviteStatus } from "./invites.js?v=1788797594712";
+import { subscribeToOwnCompliance } from "./client-compliance.js?v=1788797594712";
+import { subscribeToLetters, sendLetter, signLetter, deleteLetter, getLetterDownloadURL } from "./letters.js?v=1788797594712";
 import {
   stampSignature,
   stampFields,
@@ -62,8 +62,8 @@ import {
   loadPdfDocument,
   renderPdfPageToCanvas,
   FIELD_DEFAULT_SIZE,
-} from "./pdf-sign.js?v=1788797110972";
-import { iconEdit, iconTrash, iconPlus, iconPlusLarge, iconCheck, iconTag, iconUpload, iconLogout, iconCalendar, iconListView, iconFolder, iconFolderLarge, iconHome, iconChevronRight, iconUsers, iconAlertTriangle, iconSignature, iconFile, iconUploadLarge, iconDownload, iconClock, iconSun, iconMoon, iconSearch } from "./icons.js?v=1788797110972";
+} from "./pdf-sign.js?v=1788797594712";
+import { iconEdit, iconTrash, iconPlus, iconPlusLarge, iconCheck, iconTag, iconUpload, iconLogout, iconCalendar, iconListView, iconFolder, iconFolderLarge, iconHome, iconChevronRight, iconUsers, iconAlertTriangle, iconSignature, iconFile, iconUploadLarge, iconDownload, iconClock, iconSun, iconMoon, iconSearch } from "./icons.js?v=1788797594712";
 
 const DEFAULT_CATEGORIES = [
   "Payroll",
@@ -761,6 +761,7 @@ function renderClientHubStaffView() {
     const color = colorFor(client.id);
     const stats = clientCompletionStats(client.id);
     const pct = stats && stats.total ? Math.round((stats.current / stats.total) * 100) : null;
+    const attention = clientAttentionCounts(client.id, stats);
 
     const head = document.createElement("button");
     head.className = "client-accordion-row";
@@ -768,7 +769,7 @@ function renderClientHubStaffView() {
       <span class="client-accordion-chevron${isOpen ? " client-accordion-chevron-open" : ""}">${iconChevronRight}</span>
       <span class="avatar-badge" style="background:${tintFor(color)}; color:${color};">${client.name.slice(0, 2).toUpperCase()}</span>
       <span style="flex:1; min-width:0;">
-        <span>${escapeHtml(client.name)}</span>
+        <span>${escapeHtml(client.name)}${badgeHtml(attention.total)}</span>
         ${
           pct === null
             ? ""
@@ -788,12 +789,18 @@ function renderClientHubStaffView() {
       const body = document.createElement("div");
       body.className = "client-accordion-body";
 
+      const tabCounts = {
+        overview: attention.total,
+        compliance: attention.overdue,
+        documents: attention.pendingDocs,
+        letters: attention.awaitingSignature,
+      };
       const tabBar = document.createElement("div");
       tabBar.className = "client-tab-bar";
       CLIENT_HUB_TABS.forEach((tab) => {
         const btn = document.createElement("button");
         btn.className = `client-tab-btn${clientHubActiveTab === tab.id ? " client-tab-btn-active" : ""}`;
-        btn.textContent = tab.label;
+        btn.innerHTML = `${escapeHtml(tab.label)}${badgeHtml(tabCounts[tab.id])}`;
         btn.addEventListener("click", () => {
           clientHubActiveTab = tab.id;
           renderCurrentView();
@@ -2014,6 +2021,20 @@ function clientCompletionStats(clientId) {
     if (!overdue) current++;
   }
   return { current, total: items.length };
+}
+
+// Powers the Client Hub accordion's badges (collapsed-row bubble + per-tab counts) -- everything
+// that's actually waiting on someone, for one client. stats is clientCompletionStats(clientId)'s
+// result, passed in since callers already have it (avoids recomputing it twice per client).
+function clientAttentionCounts(clientId, stats) {
+  const overdue = stats ? stats.total - stats.current : 0;
+  const pendingDocs = [...latestState.documents.values()].filter((d) => d.clientId === clientId && !d.reviewed).length;
+  const awaitingSignature = [...latestState.letters.values()].filter((l) => l.clientId === clientId && l.status === "sent").length;
+  return { overdue, pendingDocs, awaitingSignature, total: overdue + pendingDocs + awaitingSignature };
+}
+
+function badgeHtml(count) {
+  return count > 0 ? `<span class="notif-badge">${count > 99 ? "99+" : count}</span>` : "";
 }
 
 function renderClientList() {

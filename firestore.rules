@@ -106,6 +106,14 @@ service cloud.firestore {
     match /{path=**}/letters/{letterId} {
       allow read: if isApproved();
     }
+    // ADDITIONAL to (not a replacement for) the nested /clients/{clientId}/documents/{docId} rule
+    // above -- this only exists so the Client Hub accordion can collectionGroup() across every
+    // client's documents at once to badge each one's pending-review count (see
+    // public/js/data.js). Clients never need this: they only ever read their own client's
+    // documents directly, which the nested rule already allows.
+    match /{path=**}/documents/{docId} {
+      allow read: if isApproved();
+    }
 
     // The allowlist is the actual security boundary (see isApproved() above) -- letting any
     // approved staff account edit it would mean any one of them could grant themselves/anyone
