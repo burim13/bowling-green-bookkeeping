@@ -4,7 +4,7 @@
 // the signup itself. If recipientEmail is given, functions/index.js's Firestore trigger emails
 // the link automatically; if not, this is a link-only invite for staff to share themselves.
 import { doc, setDoc, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
-import { db } from "./firebase-init.js?v=1788800373942";
+import { db } from "./firebase-init.js?v=1788800698718";
 
 export async function createClientInvite(clientId, recipientEmail) {
   const token = crypto.randomUUID();

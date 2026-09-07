@@ -474,24 +474,6 @@
     @apply text-danger font-semibold;
   }
 
-  /* Lives inside .ios-glass-bar-top now (see index.html), right below the large title -- no
-     background of its own, so it reads as one continuous blurred bar rather than a second,
-     opaque strip stacked underneath it. */
-  .toolbar {
-    @apply flex items-center gap-[0.6rem] px-4 pb-3 flex-wrap;
-  }
-  .toolbar-spacer {
-    @apply flex-1;
-  }
-  .list-filter-wrap {
-    @apply flex items-center gap-2;
-  }
-  .list-filter-wrap label {
-    @apply m-0 flex items-center gap-[0.4rem];
-  }
-  .list-filter-wrap select {
-    @apply w-auto;
-  }
 
   /* #app-shell is a full-height flex column (header, toolbar, this, bottom tab bar) -- .app-body
      is the one flexible child, so it just fills whatever's left rather than needing a hardcoded
@@ -621,15 +603,6 @@
   .stat-card-value-muted {
     @apply text-[1.5rem] font-semibold mt-1 text-text-muted;
   }
-  .attention-row {
-    @apply flex items-center gap-3 px-3 py-2 rounded-md border-0 bg-transparent w-full text-left cursor-pointer;
-  }
-  .attention-row:hover {
-    background: color-mix(in srgb, var(--color-text) 6%, transparent);
-  }
-  .attention-badge {
-    @apply text-[0.75rem] px-2 py-[2px] rounded-full bg-warning-bg text-warning shrink-0;
-  }
   .stat-card-header {
     @apply flex items-center gap-2 mb-2;
   }
@@ -715,9 +688,6 @@
   #client-hub-screen .view-container {
     @apply max-w-[760px] mx-auto w-full flex-1 overflow-y-auto;
   }
-  .chub-welcome {
-    @apply text-[1.3rem] mb-1;
-  }
   .chub-subtitle {
     @apply text-text-muted text-[0.9rem] mb-5 mt-0;
   }
@@ -726,9 +696,6 @@
   }
   .chub-section-title {
     @apply text-[0.9rem] font-semibold mb-3;
-  }
-  .chub-tab-bar {
-    @apply mb-5 pb-0 border-b border-border;
   }
   .dropzone {
     @apply flex flex-col items-center text-center gap-1 border-2 border-dashed border-border rounded-2xl py-10 px-4 mt-3 cursor-pointer text-text-muted transition-colors;
@@ -762,9 +729,6 @@
   }
   .doc-row-meta {
     @apply text-[0.78rem] text-text-muted;
-  }
-  .doc-type-badge {
-    @apply text-[0.75rem] px-2 py-[2px] rounded-full bg-border text-text-muted shrink-0;
   }
   .doc-status-badge {
     @apply text-[0.75rem] px-2 py-[2px] rounded-full shrink-0;
@@ -1154,11 +1118,17 @@
     @apply text-[0.8rem] text-text-muted mb-2;
   }
 
+  /* Same rounded-card-with-dividers look as .ios-grouped-list, applied directly to the <ul>
+     itself rather than needing an extra wrapper -- a plain border-bottom list read as flat next
+     to the rest of the app's grouped-card lists. */
   .category-list {
-    @apply list-none p-0 m-0 mb-4;
+    @apply list-none p-0 m-0 mb-4 bg-card rounded-[14px] overflow-hidden shadow-sm;
   }
   .category-list li {
-    @apply flex justify-between items-center py-[0.35rem] border-b border-border text-[0.9rem];
+    @apply flex justify-between items-center gap-3 px-3 py-2.5 border-b border-border text-[0.9rem] text-text;
+  }
+  .category-list li:last-child {
+    @apply border-b-0;
   }
 
   #add-category-form {
@@ -1182,10 +1152,13 @@
     @apply flex items-center gap-[0.35rem] text-[0.85rem] text-text-muted;
   }
   .bulk-clients-list {
-    @apply max-h-[220px] overflow-y-auto border border-border rounded-md px-[0.6rem] py-[0.4rem];
+    @apply max-h-[220px] overflow-y-auto border border-border rounded-xl px-[0.6rem] py-[0.4rem];
   }
   .bulk-client-row {
-    @apply flex items-center gap-2 py-[0.3rem] text-[0.9rem] cursor-pointer;
+    @apply flex items-center gap-2 py-[0.4rem] px-[0.3rem] rounded-lg text-[0.9rem] cursor-pointer transition-colors;
+  }
+  .bulk-client-row:hover {
+    background: color-mix(in srgb, var(--color-text) 6%, transparent);
   }
   .bulk-excluded-note {
     @apply text-[0.8rem] text-text-muted pt-[0.4rem];
@@ -1205,24 +1178,10 @@
     .header-right {
       @apply gap-2;
     }
-    /* Text labels would blow past the viewport at this width (three buttons' worth of text is
-       wider than a phone screen) -- collapse to icon-only, relying on the button's title
-       attribute for the accessible name/tooltip, same as the icon-only buttons elsewhere. */
-    .btn-header-label {
-      @apply hidden;
-    }
     .btn-header {
       @apply p-[0.45rem];
     }
 
-    .toolbar {
-      @apply px-3 py-[0.6rem] gap-2;
-    }
-    /* A zero-height, full-width flex item forces everything after it onto its own row, so the
-       "Add" actions don't get visually squeezed against the filters on a narrow screen. */
-    .toolbar-spacer {
-      @apply basis-full h-0;
-    }
     .app-body {
       @apply flex-col min-h-0;
     }
