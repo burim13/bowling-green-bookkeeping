@@ -2,17 +2,62 @@
 // recipient email attached (see openInviteClientModal in public/js/app.js). Reuses the exact
 // same Resend integration pattern as scripts/send-digest.mjs -- same API, same secret-based
 // credential handling, just triggered by a Firestore write instead of a cron schedule.
-const { onDocumentCreated } = require("firebase-functions/v2/firestore");
+const { onDocumentCreated, onDocumentWritten } = require("firebase-functions/v2/firestore");
 const { defineSecret } = require("firebase-functions/params");
 const { setGlobalOptions } = require("firebase-functions/v2");
 const logger = require("firebase-functions/logger");
 const { initializeApp } = require("firebase-admin/app");
+const { getAuth } = require("firebase-admin/auth");
 const { getFirestore, FieldValue } = require("firebase-admin/firestore");
 
 initializeApp();
 setGlobalOptions({ maxInstances: 5 });
 
 const db = getFirestore();
+
+// ---- custom claims sync (role/clientId/approved -> Firebase Auth token) --------------------
+//
+// storage.rules originally tried to read /users/{uid} and /settings/allowlist directly via
+// firestore.get(), the documented pattern for Storage rules needing Firestore data. That
+// reliably failed for this project (confirmed by bisection: even the simplest single-field
+// cross-service read was denied for every account, staff included) -- root cause undetermined,
+// but custom claims sidestep it entirely, since request.auth.token.* is available in Storage
+// rules natively, no cross-service call at all. Firestore rules are unaffected by any of this
+// -- they use plain same-service get(), which always worked.
+//
+// Whenever a /users/{uid} doc changes, recompute that one user's claims. Whenever
+// /settings/allowlist changes, every staff/admin user's "approved" claim could be stale, so
+// resync all of them.
+
+async function computeAndSetClaims(uid) {
+  const userDoc = await db.collection("users").doc(uid).get();
+  if (!userDoc.exists) return;
+  const data = userDoc.data();
+
+  let approved = false;
+  if (data.role === "staff" || data.role === "admin") {
+    const allowlistDoc = await db.collection("settings").doc("allowlist").get();
+    const emails = allowlistDoc.exists ? allowlistDoc.data().emails || [] : [];
+    const userRecord = await getAuth().getUser(uid);
+    approved = emails.includes(userRecord.email);
+  }
+
+  await getAuth().setCustomUserClaims(uid, {
+    role: data.role || null,
+    clientId: data.clientId || null,
+    approved,
+  });
+}
+
+exports.syncUserClaimsOnUserWrite = onDocumentWritten("users/{uid}", async (event) => {
+  if (!event.data.after.exists) return; // doc deleted -- nothing to sync
+  await computeAndSetClaims(event.params.uid);
+});
+
+exports.syncUserClaimsOnAllowlistWrite = onDocumentWritten("settings/allowlist", async () => {
+  const staffSnap = await db.collection("users").where("role", "in", ["staff", "admin"]).get();
+  await Promise.all(staffSnap.docs.map((d) => computeAndSetClaims(d.id)));
+});
 
 const RESEND_API_KEY = defineSecret("RESEND_API_KEY");
 // e.g. "Bowling Green Bookkeeping & Taxes <onboarding@resend.dev>" if you haven't verified a

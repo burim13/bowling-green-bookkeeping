@@ -7,20 +7,20 @@ service firebase.storage {
       return request.auth != null;
     }
 
-    // Mirrors firestore.rules' isApproved() exactly -- same allowlist document, same boundary.
-    // Storage rules can't read Firestore directly except via this firestore.get() bridge.
+    // Set by functions/index.js's syncUserClaims* triggers whenever /users/{uid} or
+    // settings/allowlist changes in Firestore. Deliberately NOT using firestore.get() here
+    // (the documented pattern for Storage rules reading Firestore) -- it reliably failed for
+    // this project even for the simplest possible single-field read, confirmed by bisection
+    // testing every account, staff included. Custom claims sidestep the cross-service call
+    // entirely: request.auth.token.* is native to Storage rules, no bridge needed.
     function isApproved() {
-      return isSignedIn() &&
-        request.auth.token.email in
-          firestore.get(/databases/(default)/documents/settings/allowlist).data.emails;
+      return isSignedIn() && request.auth.token.approved == true;
     }
 
-    // Mirrors firestore.rules' isOwningClient() -- a client-role account can only touch its own
-    // client's files, identified by the clientId on their own /users/{uid} Firestore doc.
     function isOwningClient(clientId) {
       return isSignedIn() &&
-        firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.role == 'client' &&
-        firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.clientId == clientId;
+        request.auth.token.role == 'client' &&
+        request.auth.token.clientId == clientId;
     }
 
     // Staff manage everything; the owning client can read their own folder and upload new

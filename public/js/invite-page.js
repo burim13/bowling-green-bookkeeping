@@ -3,7 +3,7 @@
 // that's true: turn a valid invite token into a brand new role:"client" account.
 import { createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 import { doc, setDoc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
-import { auth, db, isFirebaseConfigured } from "./firebase-init.js?v=1788751373741";
+import { auth, db, isFirebaseConfigured } from "./firebase-init.js?v=1788752726623";
 
 function qs(id) {
   return document.getElementById(id);
@@ -61,6 +61,14 @@ function init() {
         createdAt: serverTimestamp(),
       });
       await updateDoc(doc(db, "clientInvites", token), { used: true });
+
+      // functions/index.js's syncUserClaimsOnUserWrite trigger sets role/clientId as custom
+      // claims on this account, which Storage rules need -- but it's async and won't have run
+      // yet at this exact instant. Give it a moment, then force a fresh ID token so the very
+      // first thing this client does (likely uploading a document) doesn't fail.
+      submitBtn.textContent = "Setting up your account…";
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+      await cred.user.getIdToken(true);
       window.location.href = "index.html";
     } catch (err) {
       if (err.code === "permission-denied") {

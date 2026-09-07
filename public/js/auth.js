@@ -4,15 +4,19 @@ import {
   signOut,
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 import { doc, setDoc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
-import { auth, db } from "./firebase-init.js?v=1788751373741";
+import { auth, db } from "./firebase-init.js?v=1788752726623";
 
 export function watchAuthState(callback) {
   return onAuthStateChanged(auth, callback);
 }
 
 export async function signInWithPassword(email, password) {
-  await signInWithEmailAndPassword(auth, email, password);
+  const cred = await signInWithEmailAndPassword(auth, email, password);
   await ensureUserDoc();
+  // Picks up whatever role/clientId/approved custom claims functions/index.js's
+  // syncUserClaims* triggers have set since this account's last login -- Storage rules read
+  // these directly (see storage.rules), so a stale cached token could show outdated access.
+  await cred.user.getIdToken(true);
 }
 
 export async function signOutUser() {
