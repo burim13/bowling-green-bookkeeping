@@ -1,10 +1,10 @@
-import { isFirebaseConfigured, auth } from "./firebase-init.js?v=1788754176801";
+import { isFirebaseConfigured, auth } from "./firebase-init.js?v=1788754530291";
 import {
   watchAuthState,
   signInWithPassword,
   signOutUser,
   getOwnProfile,
-} from "./auth.js?v=1788754176801";
+} from "./auth.js?v=1788754530291";
 import {
   startSync,
   stopSync,
@@ -23,12 +23,12 @@ import {
   unmarkComplete,
   isFullyLoaded,
   getClientRecord,
-} from "./data.js?v=1788754176801";
-import { renderCalendar } from "./calendar-view.js?v=1788754176801";
-import { renderList } from "./list-view.js?v=1788754176801";
-import { describeRecurrence, describeRecurrenceHistory, getLastDueOccurrence, toISODate } from "./recurrence.js?v=1788754176801";
-import { colorFor, tintFor } from "./colors.js?v=1788754176801";
-import { githubRepoSlug } from "./firebase-config.js?v=1788754176801";
+} from "./data.js?v=1788754530291";
+import { renderCalendar } from "./calendar-view.js?v=1788754530291";
+import { renderList } from "./list-view.js?v=1788754530291";
+import { describeRecurrence, describeRecurrenceHistory, getLastDueOccurrence, toISODate } from "./recurrence.js?v=1788754530291";
+import { colorFor, tintFor } from "./colors.js?v=1788754530291";
+import { githubRepoSlug } from "./firebase-config.js?v=1788754530291";
 import {
   DOC_TYPES,
   docTypeLabel,
@@ -36,10 +36,10 @@ import {
   uploadDocument,
   setDocumentReviewed,
   getDocumentDownloadURL,
-} from "./documents.js?v=1788754176801";
-import { createClientInvite, subscribeToInviteStatus } from "./invites.js?v=1788754176801";
-import { subscribeToOwnCompliance } from "./client-compliance.js?v=1788754176801";
-import { iconEdit, iconTrash, iconPlus, iconPlusLarge, iconCheck, iconTag, iconUpload, iconLogout, iconCalendar, iconListView, iconFolder, iconFolderLarge, iconHome, iconChevronRight, iconUsers, iconAlertTriangle, iconSignature, iconFile, iconUploadLarge, iconDownload, iconClock } from "./icons.js?v=1788754176801";
+} from "./documents.js?v=1788754530291";
+import { createClientInvite, subscribeToInviteStatus } from "./invites.js?v=1788754530291";
+import { subscribeToOwnCompliance } from "./client-compliance.js?v=1788754530291";
+import { iconEdit, iconTrash, iconPlus, iconPlusLarge, iconCheck, iconTag, iconUpload, iconLogout, iconCalendar, iconListView, iconFolder, iconFolderLarge, iconHome, iconChevronRight, iconUsers, iconAlertTriangle, iconSignature, iconFile, iconUploadLarge, iconDownload, iconClock } from "./icons.js?v=1788754530291";
 
 const DEFAULT_CATEGORIES = [
   "Payroll",

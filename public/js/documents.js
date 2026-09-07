@@ -15,12 +15,18 @@ import {
   uploadBytesResumable,
   getDownloadURL,
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-storage.js";
-import { db, storage } from "./firebase-init.js?v=1788754176801";
+import { db, storage } from "./firebase-init.js?v=1788754530291";
 
 export const DOC_TYPES = [
   { id: "w2", label: "W-2" },
   { id: "1099", label: "1099" },
+  { id: "k1", label: "K-1" },
+  { id: "1098", label: "1098 (Mortgage Interest)" },
+  { id: "bank-statement", label: "Bank Statement" },
   { id: "receipts", label: "Receipts" },
+  { id: "prior-return", label: "Prior Year Tax Return" },
+  { id: "payroll-report", label: "Payroll Report" },
+  { id: "invoice", label: "Invoice" },
   { id: "other", label: "Other" },
 ];
 

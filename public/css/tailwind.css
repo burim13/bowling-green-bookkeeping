@@ -412,6 +412,13 @@
   }
 
   /* ---- client hub document intake (client-facing screen + staff Documents tab) ---- */
+  /* The client-facing screen has no sidebar, so .view-container's default width is the whole
+     page -- a left-aligned card with its own max-width just floats in a sea of empty space on
+     anything wider than a laptop. Centering the whole content column (not just the card) reads
+     as a deliberately designed page instead of a form dropped onto a blank canvas. */
+  #client-hub-screen .view-container {
+    @apply max-w-[760px] mx-auto w-full;
+  }
   .chub-welcome {
     @apply text-[1.3rem] mb-1;
   }
@@ -419,7 +426,7 @@
     @apply text-text-muted text-[0.9rem] mb-5 mt-0;
   }
   .chub-card {
-    @apply bg-panel border border-border rounded-xl p-5 mb-6 max-w-[520px];
+    @apply bg-panel border border-border rounded-xl p-5 mb-6;
   }
   .chub-section-title {
     @apply text-[0.9rem] font-semibold mb-3;
