@@ -1,7 +1,7 @@
-import { isFirebaseConfigured, auth } from "./firebase-init.js?v=1788799716251";
-import { escapeHtml } from "./html-safety.js?v=1788799716251";
-import { friendlyAuthError } from "./auth-errors.js?v=1788799716251";
-import { getEffectiveTheme, toggleTheme } from "./theme.js?v=1788799716251";
+import { isFirebaseConfigured, auth } from "./firebase-init.js?v=1788800047877";
+import { escapeHtml } from "./html-safety.js?v=1788800047877";
+import { friendlyAuthError } from "./auth-errors.js?v=1788800047877";
+import { getEffectiveTheme, toggleTheme } from "./theme.js?v=1788800047877";
 import {
   watchAuthState,
   signInWithPassword,
@@ -9,14 +9,14 @@ import {
   getOwnProfile,
   afterSignIn,
   updateOwnDisplayName,
-} from "./auth.js?v=1788799716251";
+} from "./auth.js?v=1788800047877";
 import {
   isMfaEnrolled,
   startMfaEnrollment,
   finishMfaEnrollment,
   getResolver,
   completeMfaSignIn,
-} from "./mfa.js?v=1788799716251";
+} from "./mfa.js?v=1788800047877";
 import {
   startSync,
   stopSync,
@@ -35,12 +35,12 @@ import {
   unmarkComplete,
   isFullyLoaded,
   getClientRecord,
-} from "./data.js?v=1788799716251";
-import { renderCalendar } from "./calendar-view.js?v=1788799716251";
-import { renderList } from "./list-view.js?v=1788799716251";
-import { describeRecurrence, describeRecurrenceHistory, getLastDueOccurrence, toISODate } from "./recurrence.js?v=1788799716251";
-import { colorFor, tintFor } from "./colors.js?v=1788799716251";
-import { githubRepoSlug } from "./firebase-config.js?v=1788799716251";
+} from "./data.js?v=1788800047877";
+import { renderCalendar } from "./calendar-view.js?v=1788800047877";
+import { renderList } from "./list-view.js?v=1788800047877";
+import { describeRecurrence, describeRecurrenceHistory, getLastDueOccurrence, toISODate } from "./recurrence.js?v=1788800047877";
+import { colorFor, tintFor } from "./colors.js?v=1788800047877";
+import { githubRepoSlug } from "./firebase-config.js?v=1788800047877";
 import {
   DOC_TYPES,
   docTypeLabel,
@@ -49,10 +49,10 @@ import {
   setDocumentReviewed,
   getDocumentDownloadURL,
   deleteDocument,
-} from "./documents.js?v=1788799716251";
-import { createClientInvite, subscribeToInviteStatus } from "./invites.js?v=1788799716251";
-import { subscribeToOwnCompliance } from "./client-compliance.js?v=1788799716251";
-import { subscribeToLetters, sendLetter, signLetter, deleteLetter, getLetterDownloadURL } from "./letters.js?v=1788799716251";
+} from "./documents.js?v=1788800047877";
+import { createClientInvite, subscribeToInviteStatus } from "./invites.js?v=1788800047877";
+import { subscribeToOwnCompliance } from "./client-compliance.js?v=1788800047877";
+import { subscribeToLetters, sendLetter, signLetter, deleteLetter, getLetterDownloadURL } from "./letters.js?v=1788800047877";
 import {
   stampSignature,
   stampFields,
@@ -62,8 +62,8 @@ import {
   loadPdfDocument,
   renderPdfPageToCanvas,
   FIELD_DEFAULT_SIZE,
-} from "./pdf-sign.js?v=1788799716251";
-import { iconEdit, iconTrash, iconPlus, iconPlusLarge, iconCheck, iconTag, iconUpload, iconLogout, iconCalendar, iconListView, iconFolder, iconFolderLarge, iconHome, iconChevronRight, iconUsers, iconAlertTriangle, iconSignature, iconFile, iconUploadLarge, iconDownload, iconClock, iconSun, iconMoon, iconSearch } from "./icons.js?v=1788799716251";
+} from "./pdf-sign.js?v=1788800047877";
+import { iconEdit, iconTrash, iconPlus, iconPlusLarge, iconCheck, iconTag, iconUpload, iconLogout, iconCalendar, iconListView, iconFolder, iconFolderLarge, iconHome, iconChevronRight, iconUsers, iconAlertTriangle, iconSignature, iconFile, iconUploadLarge, iconDownload, iconClock, iconSun, iconMoon, iconSearch } from "./icons.js?v=1788800047877";
 
 const DEFAULT_CATEGORIES = [
   "Payroll",
@@ -993,7 +993,7 @@ function renderDocumentList(container, documents, clientId, { allowReviewToggle 
     container.innerHTML = `<div class="empty-hint">No documents uploaded yet.</div>`;
     return;
   }
-  container.innerHTML = documents.map((d) => documentRowHtml(d, allowReviewToggle)).join("");
+  container.innerHTML = `<div class="ios-grouped-list">${documents.map((d) => documentRowHtml(d, allowReviewToggle)).join("")}</div>`;
   wireDocumentRows(container, clientId);
 }
 
@@ -1011,7 +1011,7 @@ function documentRowHtml(d, allowReviewToggle) {
       : "";
   return `
     <div class="doc-row">
-      <span class="doc-row-icon">${iconFile}</span>
+      <span class="doc-row-icon" style="background:${tintFor("#2563eb")}; color:#2563eb;">${iconFile}</span>
       <span style="flex:1; min-width:0;">
         <div class="doc-row-name">${escapeHtml(d.fileName)}</div>
         <div class="doc-row-meta">${date} &middot; ${docTypeLabel(d.docType)}</div>
@@ -1066,7 +1066,7 @@ function renderLetterListStaff(container, letters, clientId) {
     container.innerHTML = `<div class="empty-hint">No letters sent yet.</div>`;
     return;
   }
-  container.innerHTML = letters.map(letterRowHtml).join("");
+  container.innerHTML = `<div class="ios-grouped-list">${letters.map(letterRowHtml).join("")}</div>`;
   wireLetterRowsStaff(container, clientId);
 }
 
@@ -1088,7 +1088,7 @@ function letterRowHtml(l) {
       : "";
   return `
     <div class="doc-row">
-      <span class="doc-row-icon">${iconSignature}</span>
+      <span class="doc-row-icon" style="background:${tintFor("#7c3aed")}; color:#7c3aed;">${iconSignature}</span>
       <span style="flex:1; min-width:0;">
         <div class="doc-row-name">${escapeHtml(l.title)}</div>
         <div class="doc-row-meta">${meta}</div>
@@ -1570,7 +1570,7 @@ function renderLetterListClient(container, letters, clientId) {
     container.innerHTML = `<div class="empty-hint">No letters yet.</div>`;
     return;
   }
-  container.innerHTML = letters.map(letterRowHtmlClient).join("");
+  container.innerHTML = `<div class="ios-grouped-list">${letters.map(letterRowHtmlClient).join("")}</div>`;
   wireLetterRowsClient(container, clientId, letters);
 }
 
@@ -1589,7 +1589,7 @@ function letterRowHtmlClient(l) {
       : `<button class="icon-btn" data-action="download" data-storage-path="${escapeHtml(l.signedPdfPath || l.storagePath)}" title="Download" aria-label="Download signed copy">${iconDownload}</button>`;
   return `
     <div class="doc-row">
-      <span class="doc-row-icon">${iconSignature}</span>
+      <span class="doc-row-icon" style="background:${tintFor("#7c3aed")}; color:#7c3aed;">${iconSignature}</span>
       <span style="flex:1; min-width:0;">
         <div class="doc-row-name">${escapeHtml(l.title)}</div>
         <div class="doc-row-meta">${meta}</div>
