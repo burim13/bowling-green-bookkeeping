@@ -17,7 +17,7 @@ import {
   getDownloadURL,
   deleteObject,
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-storage.js";
-import { db, storage } from "./firebase-init.js?v=1788758232058";
+import { db, storage } from "./firebase-init.js?v=1788758519319";
 
 export const DOC_TYPES = [
   { id: "w2", label: "W-2" },
